@@ -1,0 +1,5 @@
+Hi <%= @user.name %>,
+
+Welcome to Yellow Book! Your account (<%= @user.email %>) is ready to use.
+
+You can sign in any time at <%= ENV.fetch("APP_FRONTEND_URL", "http://localhost:4200") %>.

@@ -1,0 +1,112 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3000"
+    environment:
+      RAILS_ENV: development
+      DATABASE_PATH: /data/development.sqlite3
+      JWT_SECRET: 315c7a0599f813bd86f819d49d92b13b950c4247d304c9d27199b7994d279d94
+      CORS_ORIGINS: "http://localhost:4200"
+      RAILS_LOG_TO_STDOUT: "true"
+      APP_HOST: localhost
+      APP_PORT: 3001
+      APP_FRONTEND_URL: http://localhost:4200
+      MAILER_DOMAIN: yellowbook.local
+      MAILPIT_SMTP_HOST: mailpit
+      MAILPIT_SMTP_PORT: 1025
+      ACTIVE_STORAGE_SERVICE: fly
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio-secret
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL_S3: http://minio:9000
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      BUCKET_NAME: yellow-book-files
+    depends_on:
+      mailpit:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+      - sqlite_dev_data:/data
+      - /app/frontend
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "
+        bundle install &&
+        bundle exec rails db:prepare &&
+        bundle exec puma -C config/puma.rb
+      "
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      RAILS_ENV: test
+      DATABASE_PATH: storage/test.sqlite3
+      JWT_SECRET: test-jwt-secret
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+      - /app/frontend
+    command: >
+      bash -c "
+        bundle install &&
+        bin/rails db:test:prepare &&
+        bundle exec rspec
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minio minio-secret; do sleep 1; done &&
+      mc mb --ignore-existing local/yellow-book-files &&
+      mc anonymous set private local/yellow-book-files
+      "
+
+volumes:
+  bundle_cache:
+  sqlite_dev_data:
+  frontend_node_modules:
+  minio_data:
