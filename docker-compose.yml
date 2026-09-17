@@ -14,6 +14,8 @@ services:
       APP_HOST: localhost
       APP_PORT: 3001
       APP_FRONTEND_URL: http://localhost:4200
+      ALLOW_AUTH_DEBUG_RESPONSES: "true"
+      AUTO_APPROVE_COMPANIES: "true"
       MAILER_DOMAIN: yellowbook.local
       MAILPIT_SMTP_HOST: mailpit
       MAILPIT_SMTP_PORT: 1025
@@ -51,6 +53,7 @@ services:
       RAILS_ENV: test
       DATABASE_PATH: storage/test.sqlite3
       JWT_SECRET: test-jwt-secret
+      DISABLE_RATE_LIMIT: "true"
     volumes:
       - .:/app
       - bundle_cache:/usr/local/bundle

@@ -1,35 +1,67 @@
 module Api
   module V1
     class AuthController < ApplicationController
-      skip_before_action :authenticate!, only: %i[sign_in sign_up]
+      before_action :require_account!, only: %i[me logout]
+      before_action -> { Auth::RateLimiter.check!(:register, request.remote_ip) }, only: :register
+      before_action -> { Auth::RateLimiter.check!(:login, request.remote_ip) }, only: :login
+      before_action -> { Auth::RateLimiter.check!(:email_code_request, request.remote_ip) }, only: :request_email_code
+      before_action -> { Auth::RateLimiter.check!(:email_code_verify, request.remote_ip) }, only: :verify_email_code
+      before_action -> { Auth::RateLimiter.check!(:oauth_authorize, request.remote_ip) }, only: :oauth_authorize
+      before_action -> { Auth::RateLimiter.check!(:oauth_callback, request.remote_ip) }, only: %i[oauth_callback oauth_callback_get]
 
-      def sign_in
-        user = Auth::AuthenticateUser.call(email: params[:email], password: params[:password])
-        if user
-          render json: { token: Auth::JwtService.encode(user), user: user_json(user) }
-        else
-          render json: { error: I18n.t("auth.invalid_credentials") }, status: :unauthorized
-        end
+      def register
+        render_data(Auth::RegisterAccount.call(payload: body_params, request: request), http_status: :created)
       end
 
-      def sign_up
-        user = User.new(sign_up_params)
-        if user.save
-          UserMailer.welcome(user).deliver_later
-          render json: { token: Auth::JwtService.encode(user), user: user_json(user) }, status: :created
-        else
-          render json: { error: user.errors.full_messages }, status: :unprocessable_content
-        end
+      def login
+        render_data(Auth::LoginAccount.call(payload: body_params, request: request), http_status: :created)
+      end
+
+      def request_email_code
+        render_data(Auth::RequestEmailCode.call(payload: body_params), http_status: :created)
+      end
+
+      def verify_email_code
+        render_data(Auth::VerifyEmailCode.call(payload: body_params, request: request), http_status: :created)
+      end
+
+      def logout
+        Session.find_by(id: current_account.session_id)&.revoke!
+        render_data({ message: "Logged out successfully" }, http_status: :created)
       end
 
       def me
-        render json: user_json(current_user)
+        if current_account.admin?
+          admin = Admin.find_by(id: current_account.id) or raise Api::Unauthorized, "Account not found"
+          return render_data(token: current_account.token, user: AuthSerializer.admin_item(admin))
+        end
+        user = User.find_by(id: current_account.id) or raise Api::Unauthorized, "Account not found"
+        user.sync_role!
+        company = user.companies.order(created_at: :desc).first
+        render_data(token: current_account.token, user: AuthSerializer.user_item(user, company ? "company" : "user", company&.id))
       end
 
-      private
+      def oauth_authorize
+        render_data(Auth::GoogleOauth.authorize(params[:provider], query_params))
+      end
 
-      def sign_up_params
-        params.permit(:email, :password, :password_confirmation, :name)
+      def oauth_callback_get
+        redirect_to Auth::GoogleOauth.callback_redirect(params[:provider], query_params, request), allow_other_host: true, status: :found
+      end
+
+      def oauth_callback
+        render_data(Auth::GoogleOauth.callback_with_id_token(params[:provider], body_params, request), http_status: :created)
+      end
+
+      def forgot_password
+        email = Api::Params.normalize_email(body_params["email"])
+        user = User.find_by(email: email)
+        Auth::SendPasswordReset.call(user: user) if user
+        render_data({ message: "Password reset instructions sent" }, http_status: :created)
+      end
+
+      def reset_password
+        render_data(Auth::ResetPassword.call(payload: body_params), http_status: :created)
       end
     end
   end

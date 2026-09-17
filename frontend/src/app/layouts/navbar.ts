@@ -1,0 +1,300 @@
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+import { ApiService } from '../core/services/api.service';
+import { AuthService } from '../core/services/auth.service';
+import { LoginModalService } from '../core/services/login-modal.service';
+import { Listing } from '../core/models';
+import { getDefaultRouteForUser } from '../core/utils/role-access';
+import { normalizeName, slugify } from '../core/utils/status-class';
+import { PanelProfileMenu } from '../shared/panel-profile-menu';
+
+/** Home hero: logo, links, login/profile, "List Your Agency", headline and listing search. */
+@Component({
+  selector: 'app-navbar',
+  imports: [RouterLink, FormsModule, PanelProfileMenu],
+  template: `
+    <header
+      class="bg-[#fff9e6] font-jakarta"
+      style="border-bottom-left-radius: 50% 52px; border-bottom-right-radius: 50% 52px"
+    >
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-5">
+        <a routerLink="/" aria-label="Yellow Book home"
+          ><img src="/logo/logo.png" alt="Yellow Book" width="140" height="34"
+        /></a>
+        <nav class="hidden items-center gap-8 md:flex">
+          <a
+            routerLink="/catagory"
+            class="text-sm font-medium"
+            [class.text-[#212121]]="isActive('/catagory')"
+            [class.text-[#616161]]="!isActive('/catagory')"
+            >Category</a
+          >
+          <a
+            href="/#home-popular-listings"
+            class="text-sm font-medium text-[#616161]"
+            (click)="scrollPopular($event)"
+            >Popular Listing</a
+          >
+          <a
+            routerLink="/faq"
+            class="text-sm font-medium"
+            [class.text-[#212121]]="isActive('/faq')"
+            [class.text-[#616161]]="!isActive('/faq')"
+            >FAQ</a
+          >
+        </nav>
+        <div class="hidden items-center gap-4 md:flex">
+          @if (auth.isAuthenticated()) {
+            <app-panel-profile-menu roleLabel="Account" [dashboardTo]="dashboardTo()" />
+          } @else {
+            <button
+              type="button"
+              class="text-sm font-semibold text-[#212121]"
+              (click)="modal.openModal('navbar')"
+            >
+              Login
+            </button>
+          }
+          <button type="button" class="yb-btn yb-btn-outline" (click)="listAgency()">
+            List Your Agency
+          </button>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg border border-[#fcc207] p-2 md:hidden"
+          aria-label="Toggle menu"
+          [attr.aria-expanded]="menuOpen()"
+          (click)="menuOpen.set(!menuOpen())"
+        >
+          <span class="block h-0.5 w-5 bg-[#212121]"></span>
+          <span class="mt-1 block h-0.5 w-5 bg-[#212121]"></span>
+          <span class="mt-1 block h-0.5 w-5 bg-[#212121]"></span>
+        </button>
+      </div>
+
+      @if (menuOpen()) {
+        <div class="fixed inset-0 z-40 bg-black/40 md:hidden" (click)="menuOpen.set(false)"></div>
+        <aside
+          class="fixed top-0 right-0 z-50 flex h-full w-[80vw] max-w-[400px] flex-col gap-4 bg-white p-6 shadow-xl md:hidden"
+          role="dialog"
+          aria-label="Mobile menu"
+        >
+          <button
+            type="button"
+            class="self-end text-gray-500"
+            aria-label="Close menu"
+            (click)="menuOpen.set(false)"
+          >
+            ✕
+          </button>
+          <a routerLink="/catagory" (click)="menuOpen.set(false)" class="text-base font-medium"
+            >Category</a
+          >
+          <a
+            href="/#home-popular-listings"
+            (click)="scrollPopular($event)"
+            class="text-base font-medium"
+            >Popular Listing</a
+          >
+          <a routerLink="/faq" (click)="menuOpen.set(false)" class="text-base font-medium">FAQ</a>
+          @if (auth.isAuthenticated()) {
+            <a
+              [routerLink]="dashboardTo()"
+              (click)="menuOpen.set(false)"
+              class="text-base font-medium"
+              >My Dashboard</a
+            >
+            <button
+              type="button"
+              class="text-left text-base font-medium text-red-600"
+              (click)="auth.logout()"
+            >
+              Logout
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="text-left text-base font-medium"
+              (click)="menuOpen.set(false); modal.openModal('navbar')"
+            >
+              Login
+            </button>
+          }
+          <button type="button" class="yb-btn yb-btn-gold" (click)="listAgency()">
+            List Your Agency
+          </button>
+        </aside>
+      }
+
+      <div class="mx-auto max-w-4xl px-4 pt-10 pb-16 text-center">
+        <h1 class="text-3xl font-bold leading-tight text-[#212121] md:text-5xl">
+          Trusted Help, Right When<br />You Need It
+        </h1>
+        <p class="mt-4 text-sm text-[#616161] md:text-base">
+          Reliable support from real people, solving everyday problems with care, speed, and
+          integrity.
+        </p>
+        <form
+          class="relative mx-auto mt-8 flex max-w-2xl items-center gap-2 rounded-full bg-[#feecb2] p-2"
+          (ngSubmit)="submitSearch()"
+          role="search"
+        >
+          <input
+            class="flex-1 rounded-full bg-[#fff9e6] px-5 py-3 text-sm outline-none"
+            type="search"
+            name="q"
+            [placeholder]="placeholder()"
+            [(ngModel)]="query"
+            (ngModelChange)="onQueryChange()"
+            (focus)="dropdownOpen.set(true)"
+            aria-label="Search agencies"
+            autocomplete="off"
+          />
+          <button type="submit" class="yb-btn yb-btn-gold rounded-full px-6">🔍 Search</button>
+          @if (dropdownOpen()) {
+            <ul
+              class="absolute top-full right-2 left-2 z-30 mt-2 max-h-[300px] overflow-y-auto rounded-2xl border border-gray-100 bg-white text-left shadow-xl"
+              role="listbox"
+            >
+              @if (searching()) {
+                <li class="px-4 py-3 text-sm text-gray-500">Loading search options...</li>
+              } @else if (results().length === 0) {
+                <li class="px-4 py-3 text-sm text-gray-500">No matches found</li>
+              } @else {
+                @for (item of results(); track item.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full px-4 py-3 text-left hover:bg-[#fff9e6]"
+                      role="option"
+                      (click)="pick(item)"
+                    >
+                      <span class="block text-sm font-semibold text-[#212121]">{{
+                        item.name
+                      }}</span>
+                      <span class="block text-xs text-gray-500"
+                        >{{ item.category }} • {{ item.serviceType || item.category }} •
+                        {{ item.location || 'Anywhere' }}</span
+                      >
+                      <span class="mt-1 flex flex-wrap gap-1">
+                        @for (tag of tags(item); track tag) {
+                          <span
+                            class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600"
+                            >{{ tag }}</span
+                          >
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              }
+            </ul>
+          }
+        </form>
+      </div>
+    </header>
+  `,
+})
+export class Navbar implements OnInit {
+  readonly auth = inject(AuthService);
+  readonly modal = inject(LoginModalService);
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
+  readonly menuOpen = signal(false);
+  readonly dropdownOpen = signal(false);
+  readonly searching = signal(false);
+  readonly results = signal<Listing[]>([]);
+  readonly placeholder = signal('Search agencies');
+  readonly dashboardTo = computed(() => getDefaultRouteForUser(this.auth.user()));
+  query = '';
+  private timer: ReturnType<typeof setTimeout> | null = null;
+
+  ngOnInit(): void {
+    void this.search('');
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.host.nativeElement.contains(event.target as Node)) this.dropdownOpen.set(false);
+  }
+
+  isActive(path: string): boolean {
+    return this.router.url.split('?')[0] === path;
+  }
+
+  onQueryChange(): void {
+    this.dropdownOpen.set(true);
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => void this.search(this.query), 200);
+  }
+
+  async search(term: string): Promise<void> {
+    this.searching.set(true);
+    try {
+      const data = await this.api.getData<{ listings: Listing[] }>(
+        'listings',
+        { search: term, limit: 12 },
+        { toast: { showError: false } },
+      );
+      this.results.set(data?.listings ?? []);
+    } catch {
+      this.results.set([]);
+    } finally {
+      this.searching.set(false);
+    }
+  }
+
+  tags(item: Listing): string[] {
+    const list = [
+      item.revenue,
+      item.specialization,
+      item.price ? `Avg. $${item.price}` : null,
+      item.emergencyService ? '24/7 support' : null,
+    ];
+    return list.filter((t): t is string => Boolean(t)).slice(0, 3);
+  }
+
+  pick(item: Listing): void {
+    this.query = item.name;
+    this.dropdownOpen.set(false);
+    void this.router.navigate(['/agency'], {
+      queryParams: { slug: item.slug || slugify(item.name), id: item.id },
+    });
+  }
+
+  submitSearch(): void {
+    const exact = this.results().find((r) => normalizeName(r.name) === normalizeName(this.query));
+    const target = exact ?? this.results()[0];
+    if (target) {
+      this.pick(target);
+    } else if (this.query.trim()) {
+      void this.router.navigate(['/catagory'], { queryParams: { q: this.query.trim() } });
+    }
+  }
+
+  scrollPopular(event: Event): void {
+    this.menuOpen.set(false);
+    if (this.router.url.split('?')[0] === '/') {
+      event.preventDefault();
+      document.getElementById('home-popular-listings')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  listAgency(): void {
+    this.menuOpen.set(false);
+    void this.router.navigateByUrl(
+      this.auth.isAuthenticated() ? '/popular-list' : '/auth/register',
+    );
+  }
+}

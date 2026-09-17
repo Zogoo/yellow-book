@@ -1,21 +1,15 @@
 require "rails_helper"
 
 RSpec.describe Auth::JwtService do
-  let(:user) { create(:user) }
-
-  it "round-trips a user id through encode/decode" do
-    token = described_class.encode(user)
+  it "round-trips a payload" do
+    token = described_class.encode(kind: "user", id: 7, session_id: 3, expires_at: 1.hour.from_now)
     payload = described_class.decode(token)
-    expect(payload[:sub]).to eq(user.id)
-    expect(payload[:email]).to eq(user.email)
+    expect(payload).to include(sub: 7, kind: "user", sid: 3)
   end
 
-  it "raises on an expired token" do
-    token = described_class.encode(user, expiry: -1.hour)
-    expect { described_class.decode(token) }.to raise_error(JWT::ExpiredSignature)
-  end
-
-  it "raises on a tampered token" do
-    expect { described_class.decode("not.a.jwt") }.to raise_error(JWT::DecodeError)
+  it "returns nil for expired or tampered tokens" do
+    token = described_class.encode(kind: "user", id: 7, session_id: 3, expires_at: 1.minute.ago)
+    expect(described_class.decode(token)).to be_nil
+    expect(described_class.decode("garbage")).to be_nil
   end
 end

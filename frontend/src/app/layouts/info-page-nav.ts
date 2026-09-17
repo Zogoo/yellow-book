@@ -1,0 +1,108 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+
+import { AuthService } from '../core/services/auth.service';
+import { LoginModalService } from '../core/services/login-modal.service';
+import { ToastService } from '../core/services/toast.service';
+import { getDefaultRouteForUser } from '../core/utils/role-access';
+import { PanelProfileMenu } from '../shared/panel-profile-menu';
+
+/** Compact navigation used by the category, popular-list and FAQ pages. */
+@Component({
+  selector: 'app-info-page-nav',
+  imports: [RouterLink, PanelProfileMenu],
+  template: `
+    <header class="bg-[#fff9e6]">
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <a routerLink="/" aria-label="Yellow Book home"
+          ><img src="/logo/logo.png" alt="Yellow Book" width="140" height="34"
+        /></a>
+        <nav class="hidden items-center gap-8 md:flex">
+          <a routerLink="/catagory" class="text-sm font-medium text-[#616161] hover:text-[#212121]"
+            >Category</a
+          >
+          <a
+            routerLink="/popular-list"
+            class="text-sm font-medium text-[#616161] hover:text-[#212121]"
+            >Popular Listing</a
+          >
+          <a routerLink="/faq" class="text-sm font-medium text-[#616161] hover:text-[#212121]"
+            >FAQ</a
+          >
+        </nav>
+        <div class="hidden items-center gap-4 md:flex">
+          @if (auth.isAuthenticated()) {
+            <app-panel-profile-menu roleLabel="Account" [dashboardTo]="dashboardTo()" />
+          } @else {
+            <button
+              type="button"
+              class="text-sm font-semibold"
+              (click)="modal.openModal('info-nav')"
+            >
+              Login
+            </button>
+          }
+          <button type="button" class="yb-btn yb-btn-outline" (click)="listAgency()">
+            List Your Agency
+          </button>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg border border-[#fcc207] p-2 md:hidden"
+          aria-label="Toggle menu"
+          (click)="open.set(!open())"
+        >
+          ☰
+        </button>
+      </div>
+      @if (open()) {
+        <div class="fixed inset-0 z-40 bg-black/40 md:hidden" (click)="open.set(false)"></div>
+        <aside
+          class="fixed top-0 right-0 z-50 flex h-full w-[80vw] max-w-[400px] flex-col gap-4 bg-white p-6 shadow-xl md:hidden"
+        >
+          <button type="button" class="self-end" aria-label="Close menu" (click)="open.set(false)">
+            ✕
+          </button>
+          <a routerLink="/catagory" (click)="open.set(false)">Category</a>
+          <a routerLink="/popular-list" (click)="open.set(false)">Popular Listing</a>
+          <a routerLink="/faq" (click)="open.set(false)">FAQ</a>
+          @if (auth.isAuthenticated()) {
+            <a [routerLink]="dashboardTo()" (click)="open.set(false)">My Dashboard</a>
+            <button type="button" class="text-left text-red-600" (click)="auth.logout()">
+              Logout
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="text-left"
+              (click)="open.set(false); modal.openModal('info-nav')"
+            >
+              Login
+            </button>
+          }
+          <button type="button" class="yb-btn yb-btn-gold" (click)="listAgency()">
+            List Your Agency
+          </button>
+        </aside>
+      }
+    </header>
+  `,
+})
+export class InfoPageNav {
+  readonly auth = inject(AuthService);
+  readonly modal = inject(LoginModalService);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+  readonly open = signal(false);
+  readonly dashboardTo = computed(() => getDefaultRouteForUser(this.auth.user()));
+
+  listAgency(): void {
+    this.open.set(false);
+    if (!this.auth.isAuthenticated()) {
+      this.toast.info('Please login to list your agency');
+      this.modal.openModal('info-nav');
+      return;
+    }
+    void this.router.navigateByUrl('/popular-list');
+  }
+}

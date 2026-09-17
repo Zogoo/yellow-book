@@ -1,21 +1,26 @@
 module Auth
+  # Signed bearer tokens. The payload binds the token to one session row so a
+  # logout (session revoke) or password reset invalidates it immediately.
   class JwtService
     ALGORITHM = "HS256"
-    DEFAULT_EXPIRY = 24.hours
+    DEFAULT_TTL = 8.hours
 
     class << self
-      def encode(user, expiry: DEFAULT_EXPIRY)
-        payload = {
-          sub: user.id,
-          email: user.email,
-          exp: expiry.from_now.to_i,
-          iat: Time.current.to_i
-        }
+      def encode(kind:, id:, session_id:, expires_at:)
+        payload = { sub: id, kind: kind, sid: session_id, exp: expires_at.to_i, iat: Time.current.to_i, jti: SecureRandom.hex(8) }
         JWT.encode(payload, secret_key, ALGORITHM)
       end
 
+      # nil for anything that is not a valid, unexpired token signed by us.
       def decode(token)
         JWT.decode(token, secret_key, true, { algorithm: ALGORITHM }).first.symbolize_keys
+      rescue JWT::DecodeError
+        nil
+      end
+
+      def access_ttl
+        seconds = ENV.fetch("ACCESS_TOKEN_TTL_SECONDS", DEFAULT_TTL.to_i).to_i
+        seconds.positive? ? seconds.seconds : DEFAULT_TTL
       end
 
       private

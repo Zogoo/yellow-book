@@ -1,37 +1,25 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
-import { AuthService } from './core/services/auth.service';
+import { DirectoryService } from './core/services/directory.service';
+import { ApiConnectionBadge } from './shared/api-connection-badge';
+import { LoginModal } from './shared/login-modal';
+import { ToastContainer } from './shared/toast-container';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, TranslatePipe],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
+  imports: [RouterOutlet, LoginModal, ToastContainer, ApiConnectionBadge],
+  template: `
+    <router-outlet />
+    <app-login-modal />
+    <app-toast-container />
+    <app-api-connection-badge />
+  `,
 })
 export class App implements OnInit {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-
-  protected readonly ready = signal(false);
-  protected readonly user = this.auth.user;
+  private readonly directory = inject(DirectoryService);
 
   ngOnInit(): void {
-    // Restore the session before the first render so guards see a real user.
-    if (!this.auth.token) {
-      this.ready.set(true);
-      return;
-    }
-
-    this.auth.loadCurrentUser().subscribe({
-      next: () => this.ready.set(true),
-      error: () => this.ready.set(true),
-    });
-  }
-
-  protected signOut(): void {
-    this.auth.signOut();
-    void this.router.navigate(['/sign-in']);
+    void this.directory.ensureHydrated();
   }
 }

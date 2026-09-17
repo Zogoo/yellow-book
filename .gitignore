@@ -31,3 +31,10 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+
+# Ignore the Angular bundle copied into public/ (built by `npm run build` or the Docker build).
+/public/*
+!/public/robots.txt
+
+# macOS
+.DS_Store
