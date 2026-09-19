@@ -4,36 +4,64 @@ import { Component, computed, input, model } from '@angular/core';
 @Component({
   selector: 'app-star-rating-box',
   template: `
-    <div class="inline-flex items-center gap-1" role="radiogroup" [attr.aria-label]="ariaLabel()">
-      @for (star of stars; track star) {
-        <button
-          type="button"
-          role="radio"
-          [attr.aria-checked]="star <= rating()"
-          [attr.aria-label]="star + ' star'"
-          [disabled]="readonly()"
-          (click)="select(star)"
-          class="flex items-center justify-center rounded border"
-          [class.pointer-events-none]="readonly()"
-          [style.width.px]="boxSize()"
-          [style.height.px]="boxSize()"
-          [style.borderColor]="borderColor()"
-          [style.background]="star <= rating() ? filledBg() : '#fff'"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            [attr.width]="iconSize()"
-            [attr.height]="iconSize()"
-            [attr.fill]="star <= rating() ? filledColor() : emptyColor()"
-            aria-hidden="true"
+    @if (readonly()) {
+      <span
+        class="inline-flex items-center gap-1"
+        role="img"
+        [attr.aria-label]="ariaLabel() + ': ' + rating() + ' out of 5'"
+      >
+        @for (star of stars; track star) {
+          <span
+            class="flex items-center justify-center rounded border"
+            [style.width.px]="boxSize()"
+            [style.height.px]="boxSize()"
+            [style.borderColor]="borderColor()"
+            [style.background]="star <= rating() ? filledBg() : '#fff'"
           >
-            <path
-              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            />
-          </svg>
-        </button>
-      }
-    </div>
+            <svg
+              viewBox="0 0 24 24"
+              [attr.width]="iconSize()"
+              [attr.height]="iconSize()"
+              [attr.fill]="star <= rating() ? filledColor() : emptyColor()"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              />
+            </svg>
+          </span>
+        }
+      </span>
+    } @else {
+      <div class="inline-flex items-center gap-1" role="radiogroup" [attr.aria-label]="ariaLabel()">
+        @for (star of stars; track star) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="star <= rating()"
+            [attr.aria-label]="star + ' star'"
+            (click)="select(star)"
+            class="flex items-center justify-center rounded border"
+            [style.width.px]="boxSize()"
+            [style.height.px]="boxSize()"
+            [style.borderColor]="borderColor()"
+            [style.background]="star <= rating() ? filledBg() : '#fff'"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              [attr.width]="iconSize()"
+              [attr.height]="iconSize()"
+              [attr.fill]="star <= rating() ? filledColor() : emptyColor()"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              />
+            </svg>
+          </button>
+        }
+      </div>
+    }
   `,
 })
 export class StarRatingBox {
@@ -50,7 +78,6 @@ export class StarRatingBox {
   readonly rounded = computed(() => Math.round(this.rating()));
 
   select(star: number): void {
-    if (this.readonly()) return;
     this.rating.set(this.rating() === star ? 0 : star);
   }
 }

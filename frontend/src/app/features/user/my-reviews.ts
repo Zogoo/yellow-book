@@ -50,7 +50,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
     } @else {
       <div class="space-y-4">
         @for (review of reviews(); track review.id) {
-          <article class="yb-card p-5">
+          <article class="yb-card p-5" [attr.data-testid]="'user-review-' + review.id">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 class="font-semibold text-[#212121]">{{ review.companyName }}</h2>

@@ -76,6 +76,9 @@ export class ResetPasswordPage {
     this.busy.set(true);
     try {
       await this.auth.resetPassword(this.token, this.password);
+      // A reset link may be opened while another account is signed in here;
+      // drop that session so the person lands on the login page.
+      this.auth.clearSession();
       this.toast.success('Password updated. Please sign in.');
       await this.router.navigateByUrl('/auth/login');
     } catch (e) {

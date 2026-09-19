@@ -124,7 +124,14 @@ const PERMISSIONS = [
             </div>
             <div>
               <label class="text-sm font-medium">Confirm Password *</label
-              ><input class="yb-input" type="password" name="confirm" [(ngModel)]="form.confirm" />
+              ><input
+                class="yb-input"
+                id="subadmin-confirm"
+                type="password"
+                name="confirm"
+                aria-label="Confirm password"
+                [(ngModel)]="form.confirm"
+              />
             </div>
             <div>
               <label class="text-sm font-medium">Role *</label

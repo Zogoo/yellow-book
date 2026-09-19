@@ -99,6 +99,7 @@ export class LoginModal {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   readonly loading = signal<string | null>(null);
+  private handled = false;
   readonly formKey = signal(1);
   readonly providers = [
     { key: 'google', label: 'Google' },
@@ -111,8 +112,10 @@ export class LoginModal {
       if (!this.modal.open()) this.formKey.update((k) => k + 1);
     });
     effect(() => {
+      // Same reason as the login page: the form is removed as soon as the
+      // session exists, so the redirect is driven by the session.
       if (this.modal.open() && this.auth.isAuthenticated() && this.auth.user()) {
-        this.modal.closeModal();
+        this.onAuthenticated();
       }
     });
     effect(() => {
@@ -137,6 +140,8 @@ export class LoginModal {
   }
 
   onAuthenticated(): void {
+    if (this.handled) return;
+    this.handled = true;
     const target = resolvePostLoginRedirect(this.auth.user(), this.nextParam(), '/user/dashboard');
     this.modal.closeModal();
     void this.router.navigateByUrl(target);

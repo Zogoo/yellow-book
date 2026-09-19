@@ -575,7 +575,8 @@ export class ManageCompaniesPage implements OnInit {
         {
           name: this.add.name.trim(),
           website: this.add.website,
-          category: this.add.category || 'General',
+          // No category picked: let the API fall back instead of inventing one.
+          category: this.add.category || undefined,
           mobile: this.add.phone ? `${this.add.countryCode}${this.add.phone}` : '',
           status: 'pending',
           verified: false,

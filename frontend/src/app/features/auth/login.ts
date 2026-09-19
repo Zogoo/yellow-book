@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 
@@ -94,12 +94,20 @@ export class LoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly socialLoading = signal(false);
+  private handled = false;
 
   constructor() {
     inject(Title).setTitle('Sign in • Yellow Book');
+    // The sign-in form is swapped out the moment the session lands, which can
+    // drop its output event, so the redirect is driven by the session itself.
+    effect(() => {
+      if (this.auth.isAuthenticated() && this.auth.user()) void this.onAuthenticated();
+    });
   }
 
   async onAuthenticated(): Promise<void> {
+    if (this.handled) return;
+    this.handled = true;
     const user = this.auth.user();
     const role = resolveUserRole(user);
     if (role !== 'user') {

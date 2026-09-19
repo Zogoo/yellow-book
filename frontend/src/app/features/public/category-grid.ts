@@ -30,6 +30,7 @@ const ICONS = new Set([
           <button
             type="button"
             class="flex h-[150px] flex-col items-center justify-center gap-3 rounded-2xl border border-[#DCDCDC] bg-white transition hover:scale-[1.02] hover:border-[#fcc207] hover:shadow-lg md:h-[180px] lg:h-[200px]"
+            [attr.aria-label]="category.name"
             (click)="open(category)"
           >
             <lucide-angular [name]="iconName(category.icon)" [size]="40" [class]="category.color" />
