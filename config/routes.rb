@@ -10,6 +10,8 @@ Rails.application.routes.draw do
       post "auth/email-code/verify", to: "auth#verify_email_code"
       post "auth/logout", to: "auth#logout"
       get  "auth/me", to: "auth#me"
+      put "auth/password", to: "auth#change_password"
+      patch "auth/password", to: "auth#change_password"
       post "auth/forgot-password", to: "auth#forgot_password"
       post "auth/reset-password", to: "auth#reset_password"
       get  "auth/oauth/:provider/authorize", to: "auth#oauth_authorize"
@@ -116,6 +118,12 @@ Rails.application.routes.draw do
       patch "notifications/:id", to: "notifications#update"
       delete "notifications/:id", to: "notifications#destroy"
       get "sessions", to: "sessions#index"
+      delete "sessions/:id", to: "sessions#destroy"
+      get "stats", to: "stats#show"
+      post "support/messages", to: "support_messages#create"
+      get "support/messages", to: "support_messages#index"
+      put "support/messages/:id", to: "support_messages#update"
+      patch "support/messages/:id", to: "support_messages#update"
 
       match "*path", to: "/application#not_found", via: :all
     end

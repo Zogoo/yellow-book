@@ -4,85 +4,76 @@ import { Title } from '@angular/platform-browser';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { resolvePostLoginRedirect, resolveUserRole } from '../../core/utils/role-access';
+import { resolvePostLoginRedirect } from '../../core/utils/role-access';
 import { AuthUserSummary } from '../../shared/auth-user-summary';
-import { EmailCodeLoginForm } from '../../shared/email-code-login-form';
+import { SignInFlow } from '../../shared/sign-in-flow';
 
-/** `/auth/login` — customer sign-in via Google or a one-time email code. */
+/**
+ * `/auth/login` and `/auth/signup` — one page, one flow, every role.
+ * Where you land afterwards is decided by the account, never by a tab.
+ */
 @Component({
   selector: 'app-login-page',
-  imports: [RouterLink, EmailCodeLoginForm, AuthUserSummary],
+  imports: [RouterLink, SignInFlow, AuthUserSummary],
   template: `
     <div class="min-h-screen bg-[#fff9e6] font-jakarta">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
+      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
         <a routerLink="/"><img src="/logo/logo.png" alt="Yellow Book" width="140" height="34" /></a>
-        <a routerLink="/" class="yb-btn yb-btn-outline">Back to Home</a>
+        <a routerLink="/" class="yb-btn yb-btn-outline">Back to home</a>
       </div>
-      <div class="mx-auto grid max-w-6xl gap-6 px-4 pb-16 md:grid-cols-2">
+      <div class="mx-auto grid max-w-5xl gap-6 px-4 pb-16 md:grid-cols-[1fr_420px]">
         <section class="rounded-3xl bg-[#fef4d2] p-8">
           <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">
-            Welcome back
+            {{ signUp() ? 'Join Yellow Book' : 'Welcome' }}
           </p>
-          <h1 class="mt-2 text-3xl font-bold text-[#212121]">Sign in with your preferred method</h1>
+          <h1 class="mt-2 text-3xl font-bold text-[#212121]">
+            {{ signUp() ? 'Create your account' : 'Sign in to Yellow Book' }}
+          </h1>
           <p class="mt-3 text-gray-600">
-            Join trusted travelers and agencies who rely on Yellow.Book to manage their presence.
+            One account for everything: write reviews, save companies you like, and — if you run a
+            business — manage your page and reply to customers.
           </p>
-          <button
-            type="button"
-            class="yb-btn mt-6 w-full border border-gray-200 bg-white"
-            [disabled]="socialLoading()"
-            (click)="social('google')"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                fill="#4285F4"
-                d="M21.35 11.1H12v2.9h5.35c-.25 1.5-1.7 4.4-5.35 4.4-3.2 0-5.8-2.65-5.8-5.9s2.6-5.9 5.8-5.9c1.85 0 3.05.8 3.75 1.45l2.55-2.45C16.7 4.05 14.55 3 12 3 7.05 3 3 7.05 3 12s4.05 9 9 9c5.2 0 8.65-3.65 8.65-8.8 0-.6-.05-.9-.3-1.1z"
-              />
-            </svg>
-            {{ socialLoading() ? 'Redirecting...' : 'Login with Google' }}
-          </button>
-          <ul class="mt-6 space-y-2 text-sm text-gray-600">
-            <li>
-              Need an agency account?
-              <a routerLink="/auth/register" class="font-semibold text-[#1877f2]"
-                >Register your business</a
-              >
+          <ul class="mt-6 space-y-3 text-sm text-gray-700">
+            <li class="flex gap-2">
+              <span aria-hidden="true">✓</span> Reviews published under your own name
             </li>
-            <li>
-              Company owner?
-              <a routerLink="/auth/company/login" class="font-semibold text-[#1877f2]"
-                >Company sign in</a
-              >
+            <li class="flex gap-2">
+              <span aria-hidden="true">✓</span> You are told when a company replies
             </li>
-            <li>
-              Admin or sub-admin?
-              <a routerLink="/auth/staff/login" class="font-semibold text-[#1877f2]"
-                >Staff sign in</a
-              >
-            </li>
-            <li>
-              Prefer browsing?
-              <a routerLink="/" class="font-semibold text-[#1877f2]">Return home</a>
+            <li class="flex gap-2">
+              <span aria-hidden="true">✓</span> No password needed — a one-time code works
             </li>
           </ul>
-        </section>
-        <section class="yb-card p-8">
-          <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">
-            Secure access
+          <p class="mt-8 text-sm text-gray-600">
+            Running a business?
+            <a routerLink="/business/signup" class="font-semibold text-[#1877f2]"
+              >List your business</a
+            >
           </p>
-          <h2 class="mt-2 text-2xl font-bold text-[#212121]">Email code login</h2>
-          <p class="mt-1 mb-6 text-gray-600">Use a one-time passcode delivered to your inbox.</p>
+        </section>
+
+        <section class="yb-card p-8">
           @if (auth.isAuthenticated()) {
             <app-auth-user-summary />
           } @else {
-            <app-email-code-login-form (authenticated)="onAuthenticated()" />
+            <app-sign-in-flow
+              [intro]="intro()"
+              [startInSignUp]="signUp()"
+              [nextPath]="nextPath()"
+              (authenticated)="onAuthenticated()"
+            />
+            <p class="mt-6 text-sm text-gray-500">
+              @if (signUp()) {
+                Already have an account?
+                <a routerLink="/auth/login" class="font-semibold text-[#1877f2]">Sign in</a>
+              } @else {
+                New to Yellow Book?
+                <a routerLink="/auth/signup" class="font-semibold text-[#1877f2]"
+                  >Create an account</a
+                >
+              }
+            </p>
           }
-          <p class="mt-6 text-sm text-gray-500">
-            Trouble signing in?
-            <a routerLink="/auth/forgot-password" class="font-semibold text-[#1877f2]"
-              >Reset access</a
-            >
-          </p>
         </section>
       </div>
     </div>
@@ -93,13 +84,16 @@ export class LoginPage {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  readonly socialLoading = signal(false);
+  readonly signUp = signal(false);
+  readonly intro = signal('');
+  readonly nextPath = signal('');
   private handled = false;
 
   constructor() {
     inject(Title).setTitle('Sign in • Yellow Book');
-    // The sign-in form is swapped out the moment the session lands, which can
-    // drop its output event, so the redirect is driven by the session itself.
+    this.signUp.set(this.route.snapshot.data['mode'] === 'signup');
+    this.nextPath.set(this.route.snapshot.queryParamMap.get('next') ?? '');
+    this.intro.set(this.route.snapshot.queryParamMap.get('reason') ?? '');
     effect(() => {
       if (this.auth.isAuthenticated() && this.auth.user()) void this.onAuthenticated();
     });
@@ -109,35 +103,7 @@ export class LoginPage {
     if (this.handled) return;
     this.handled = true;
     const user = this.auth.user();
-    const role = resolveUserRole(user);
-    if (role !== 'user') {
-      this.auth.clearSession();
-      await this.router.navigateByUrl(
-        role === 'company' ? '/auth/company/login' : '/auth/staff/login',
-      );
-      return;
-    }
-    this.toast.success('Signed in successfully');
-    await this.router.navigateByUrl(
-      resolvePostLoginRedirect(
-        user,
-        this.route.snapshot.queryParamMap.get('next'),
-        '/user/dashboard',
-      ),
-    );
-  }
-
-  async social(provider: string): Promise<void> {
-    this.socialLoading.set(true);
-    try {
-      await this.auth.startOauthLogin(provider, {
-        intent: 'login',
-        next: this.route.snapshot.queryParamMap.get('next') ?? '',
-      });
-    } catch {
-      this.toast.alert('Unable to continue with social login');
-    } finally {
-      this.socialLoading.set(false);
-    }
+    this.toast.success(`Signed in as ${user?.name || user?.email}`);
+    await this.router.navigateByUrl(resolvePostLoginRedirect(user, this.nextPath()));
   }
 }

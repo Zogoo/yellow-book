@@ -1,5 +1,5 @@
 class Review < ApplicationRecord
-  STATUSES = %w[pending approved rejected hold on_hold banned suspended].freeze
+  STATUSES = %w[pending approved rejected on_hold banned].freeze
   REPLY_STATUSES = %w[pending approved rejected on_hold].freeze
 
   belongs_to :company

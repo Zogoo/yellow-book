@@ -13,6 +13,7 @@ export interface DetailItem {
       <div
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         (click)="close.emit()"
+        (keydown.escape)="close.emit()"
       >
         <div
           class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"

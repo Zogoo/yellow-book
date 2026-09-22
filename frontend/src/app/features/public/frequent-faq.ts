@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 
 @Component({
   selector: 'app-frequent-faq',
   template: `
     <section class="space-y-3">
-      <h2 class="mb-4 text-2xl font-bold text-[#212121]">Frequently Asked Questions</h2>
+      @if (heading()) {
+        <h2 class="mb-4 text-2xl font-bold text-[#212121]">{{ heading() }}</h2>
+      }
       @for (item of items; track item.q; let i = $index) {
         <div class="rounded-2xl bg-[#feecb2]">
           <button
@@ -29,6 +31,7 @@ import { Component, signal } from '@angular/core';
   `,
 })
 export class FrequentFaq {
+  readonly heading = input('Frequently Asked Questions');
   readonly open = signal<number | null>(0);
   readonly items = [
     {

@@ -34,6 +34,8 @@ module Auth
 
     def signup(email)
       user = User.find_by(email: email)
+      raise Api::Forbidden, "Account is not allowed to sign in" if user && !user.active?
+
       if user.nil?
         raw_name = Api::Params.string(@body["name"]).presence || email.split("@").first || "User"
         names = Api::Params.split_name(raw_name)
@@ -51,12 +53,16 @@ module Auth
 
     def login(email)
       if (admin = Admin.find_by(email: email))
+        raise Api::Forbidden, "Account is not allowed to sign in" unless admin.active?
+
         admin.update!(verified: true, last_login_at: Time.current) unless admin.verified
         session = Auth::IssueSession.call(admin: admin, request: @request)
         return { token: session.token, user: AuthSerializer.admin_item(admin) }
       end
 
       if (user = User.find_by(email: email))
+        raise Api::Forbidden, "Account is not allowed to sign in" unless user.active?
+
         user.update!(email_verified_at: Time.current) if user.email_verified_at.nil?
         user.sync_role!
         owned = user.companies.order(created_at: :asc).first
@@ -66,6 +72,7 @@ module Auth
 
       company = Company.includes(:owner).find_by(email: email)
       raise Api::NotFound, "No account exists for this email" unless company&.owner
+      raise Api::Forbidden, "Account is not allowed to sign in" unless company.owner.active?
 
       session = Auth::IssueSession.call(user: company.owner, request: @request)
       { token: session.token, user: AuthSerializer.user_item(company.owner, "company", company.id) }

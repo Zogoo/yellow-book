@@ -26,9 +26,6 @@ import { getDefaultRouteForUser } from '../core/utils/role-access';
       >
         <span class="sr-only">Open profile menu</span>
         <span aria-hidden="true">{{ initials() }}</span>
-        <span
-          class="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"
-        ></span>
       </button>
       @if (open()) {
         <div
@@ -69,7 +66,7 @@ export class PanelProfileMenu {
   readonly dashboardTo = input<string | null>(null);
   readonly open = signal(false);
   readonly displayName = computed(
-    () => this.auth.user()?.name || this.auth.user()?.email || 'Guest user',
+    () => this.auth.user()?.name || this.auth.user()?.email || 'Your account',
   );
   readonly initials = computed(() => {
     const name = String(this.displayName());

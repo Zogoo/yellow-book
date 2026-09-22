@@ -30,7 +30,7 @@ const PAGE_SIZE = 5;
   selector: 'app-catagory-page',
   imports: [FormsModule, CategoryGrid, Pagination, StarRatingBox],
   template: `
-    @if (!categoryName()) {
+    @if (!categoryName() && !queryTerm()) {
       <section class="mx-auto max-w-7xl px-4 py-12">
         <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">All listings</p>
         <h1 class="mt-2 text-3xl font-bold text-[#212121]">Discover categories</h1>
@@ -52,8 +52,18 @@ const PAGE_SIZE = 5;
         <img src="/logo/Cat.jpeg" alt="" class="mb-6 h-48 w-full rounded-3xl object-cover" />
         <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p class="text-xs text-gray-500">Main Category</p>
-            <h1 class="text-3xl font-bold text-[#28aed8]">{{ categoryName() }}</h1>
+            <p class="text-xs text-gray-500">
+              {{ categoryName() ? 'Category' : 'Search results' }}
+            </p>
+            <h1 class="text-3xl font-bold text-[#28aed8]">
+              {{ categoryName() || '“' + queryTerm() + '”' }}
+            </h1>
+            @if (!loading()) {
+              <p class="text-sm text-gray-500">
+                {{ filtered().length }}
+                {{ filtered().length === 1 ? 'company' : 'companies' }}
+              </p>
+            }
           </div>
           <form class="flex gap-2" (ngSubmit)="submitSearch()" role="search">
             <input
@@ -78,25 +88,27 @@ const PAGE_SIZE = 5;
               Filters
             </button>
             <div class="space-y-6" [class.hidden]="!filtersOpen()" [class.lg:block]="true">
-              <div class="yb-card p-4">
-                <h3 class="mb-3 text-sm font-semibold">Price range (consultation)</h3>
-                <div class="flex justify-between text-xs text-gray-500">
-                  <span>min\${{ priceBounds().min }}</span
-                  ><span>max\${{ priceBounds().max }}</span>
+              @if (hasPrices()) {
+                <div class="yb-card p-4">
+                  <h3 class="mb-3 text-sm font-semibold">Price range (consultation)</h3>
+                  <div class="flex justify-between text-xs text-gray-500">
+                    <span>min\${{ priceBounds().min }}</span
+                    ><span>max\${{ priceBounds().max }}</span>
+                  </div>
+                  <input
+                    type="range"
+                    class="w-full accent-[#28AED8]"
+                    [min]="priceBounds().min"
+                    [max]="priceBounds().max"
+                    [value]="priceValue()"
+                    (input)="onPrice($event)"
+                    aria-label="Maximum price"
+                  />
+                  <p class="mt-1 text-center text-xs font-semibold text-[#28AED8]">
+                    \${{ priceValue() }}
+                  </p>
                 </div>
-                <input
-                  type="range"
-                  class="w-full accent-[#28AED8]"
-                  [min]="priceBounds().min"
-                  [max]="priceBounds().max"
-                  [value]="priceValue()"
-                  (input)="onPrice($event)"
-                  aria-label="Maximum price"
-                />
-                <p class="mt-1 text-center text-xs font-semibold text-[#28AED8]">
-                  \${{ priceValue() }}
-                </p>
-              </div>
+              }
               @if (category().filters.emergencyService) {
                 <div class="yb-card p-4">
                   <h3 class="mb-3 text-sm font-semibold">Emergency Service Available</h3>
@@ -181,7 +193,7 @@ const PAGE_SIZE = 5;
                   aria-haspopup="true"
                   [attr.aria-expanded]="sortOpen()"
                 >
-                  Sort ☰
+                  Rating ☰
                 </button>
                 @if (sortOpen()) {
                   <div
@@ -355,6 +367,7 @@ export class CatagoryPage implements OnInit {
   searchInput = '';
   private lastKey = '';
 
+  readonly hasPrices = computed(() => this.listings().some((l) => Number(l.price ?? 0) > 0));
   readonly priceBounds = computed(() => {
     const prices = this.listings()
       .map((l) => Number(l.price ?? 0))
@@ -440,7 +453,8 @@ export class CatagoryPage implements OnInit {
       const key = `${params.get('name') ?? ''}|${params.get('q') ?? ''}`;
       if (key !== this.lastKey) {
         this.lastKey = key;
-        if (params.get('name')) void this.load();
+        // A search with no category still has to return results.
+        if (params.get('name') || params.get('q')) void this.load();
       }
     });
   }

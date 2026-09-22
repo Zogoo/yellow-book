@@ -11,7 +11,7 @@ module Api
       def index
         admin_view = current_account&.admin?
         listing_projection = query_params["projection"].to_s.strip.downcase == "listing" || !admin_view
-        companies, meta = paginate(CompaniesQuery.new(Company.all).call(query_params, admin_view: admin_view))
+        companies, meta = paginate(CompaniesQuery.new(readable_companies).call(query_params, admin_view: admin_view))
         ratings = Companies::RatingMap.call(company_ids: companies.map(&:id))
         if listing_projection
           render_data({ listings: companies.map { |c| CompanySerializer.listing(c, ratings[c.id]) } }, meta)
@@ -56,7 +56,7 @@ module Api
       end
 
       def recent
-        companies, meta = paginate(CompaniesQuery.new(Company.all).recent(query_params))
+        companies, meta = paginate(CompaniesQuery.new(readable_companies).recent(query_params))
         render_data(companies.map { |c| CompanySerializer.recent(c) }, meta)
       end
 
@@ -73,6 +73,13 @@ module Api
       end
 
       private
+
+      # Agents are scoped to their assignments on reads, exactly as they are on writes.
+      def readable_companies
+        return Company.all unless current_account&.agent?
+
+        Company.where(id: CompanyAssignment.where(admin_id: current_account.id).select(:company_id))
+      end
 
       def find_company
         Company.includes(:category, :owner).find_by(id: route_id) or raise Api::NotFound, "Company not found"

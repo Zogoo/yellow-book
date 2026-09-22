@@ -9,19 +9,26 @@ import {
 } from './helpers';
 
 test.describe('Yellow Book production smoke', () => {
-  test('homepage renders and protected routes redirect to the scoped login', async ({ page }) => {
+  test('homepage renders and every protected route leads to the one sign-in page', async ({
+    page,
+  }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /trusted help/i })).toBeVisible();
     await expect(page.getByText('Beauty Haven').first()).toBeVisible();
 
-    await page.goto('/admin/dashboard');
-    await expect(page).toHaveURL(/\/auth\/staff\/login\?next=/);
+    for (const target of ['/admin/dashboard', '/company/dashboard', '/user/dashboard']) {
+      await page.goto(target);
+      await expect(page).toHaveURL(
+        new RegExp(`/auth/login\\?next=${encodeURIComponent(target).replace(/\//g, '%2F')}`),
+      );
+      await expect(page.getByRole('heading', { name: /sign in to yellow book/i })).toBeVisible();
+    }
 
-    await page.goto('/company/dashboard');
-    await expect(page).toHaveURL(/\/auth\/company\/login\?next=/);
-
-    await page.goto('/user/dashboard');
-    await expect(page).toHaveURL(/\/auth\/login\?next=/);
+    // The old role-specific doors still work, and lead to the same place.
+    await page.goto('/auth/company/login');
+    await expect(page).toHaveURL(/\/auth\/login/);
+    await page.goto('/auth/staff/login');
+    await expect(page).toHaveURL(/\/auth\/login/);
   });
 
   test('agency review deep-link highlights and scrolls the target review into view', async ({
@@ -243,8 +250,9 @@ test.describe('Yellow Book production smoke', () => {
     const context = await createContextForRole(browser, 'agent');
     const page = await context.newPage();
     await page.goto('/agent/my-profile');
-    await page.getByPlaceholder('Wade Warren').fill('Wade Warren');
-    await page.getByPlaceholder('+52 4164532').fill('+976 8811 2233');
+    // Placeholders are generic now; address the fields by their labels.
+    await page.getByLabel('Full Name').fill('Wade Warren');
+    await page.getByLabel('Mobile').fill('+976 8811 2233');
     await page.getByRole('button', { name: /update profile/i }).click();
     await expect(page.getByText(/last saved/i)).toBeVisible();
     await context.close();
@@ -317,7 +325,7 @@ test.describe('Yellow Book production smoke', () => {
     const context = await createContextForRole(browser, 'user');
     const page = await context.newPage();
     await page.goto(`/agency?id=${listing.id}&slug=${listing.slug}`);
-    await page.getByText('Give me your rating & feedback').click();
+    await page.getByRole('button', { name: 'Write a review' }).click();
 
     const dialog = page.getByRole('dialog', { name: /write a review/i });
     await expect(dialog).toBeVisible();

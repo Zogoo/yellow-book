@@ -56,7 +56,7 @@ import { StatusDropdown } from '../../shared/status-dropdown';
             [(ngModel)]="filters.timeRange"
             (ngModelChange)="load(1)"
           >
-            <option value="">Today</option>
+            <option value="">Any time</option>
             <option value="yesterday">Yesterday</option>
             <option value="last7days">Last 7 days</option>
             <option value="last30days">Last 30 days</option>
@@ -89,14 +89,6 @@ import { StatusDropdown } from '../../shared/status-dropdown';
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
             <tr>
-              <th class="px-3 py-3">
-                <input
-                  type="checkbox"
-                  [checked]="allSelected()"
-                  (change)="toggleAll()"
-                  aria-label="Select all"
-                />
-              </th>
               <th class="px-3 py-3">No</th>
               <th class="px-3 py-3">Admin Name</th>
               <th class="px-3 py-3">Email</th>
@@ -110,14 +102,6 @@ import { StatusDropdown } from '../../shared/status-dropdown';
           <tbody>
             @for (a of rows(); track a.id; let i = $index) {
               <tr class="border-t border-gray-100">
-                <td class="px-3 py-3">
-                  <input
-                    type="checkbox"
-                    [checked]="selected().has(a.id)"
-                    (change)="toggleOne(a.id)"
-                    [attr.aria-label]="'Select ' + a.name"
-                  />
-                </td>
                 <td class="px-3 py-3 text-gray-500">
                   {{ pad((meta().page - 1) * meta().limit + i + 1) }}
                 </td>
@@ -299,10 +283,33 @@ export class AdminManagementPage implements OnInit {
   readonly selected = signal(new Set<number>());
   readonly detail = signal<AdminRecord | null>(null);
   readonly editing = signal<AdminRecord | null>(null);
-  readonly roles = ['Super Admin', 'Admin', 'Moderator', 'Support'];
+  readonly roles = ['Super Admin', 'Admin', 'Agent', 'Moderator', 'Support', 'Viewer'];
+  readonly permissionOptions = [
+    { key: 'users_read', label: 'View users' },
+    { key: 'users_write', label: 'Manage users' },
+    { key: 'companies_read', label: 'View companies' },
+    { key: 'companies_write', label: 'Manage companies' },
+    { key: 'categories_read', label: 'View categories' },
+    { key: 'categories_write', label: 'Manage categories' },
+    { key: 'specializations_read', label: 'View specializations' },
+    { key: 'specializations_write', label: 'Manage specializations' },
+    { key: 'reviews_read', label: 'View reviews' },
+    { key: 'reviews_moderate', label: 'Moderate reviews' },
+    { key: 'admins_read', label: 'View admins' },
+    { key: 'agents_write', label: 'Manage agents' },
+    { key: 'settings_read', label: 'View settings' },
+    { key: 'settings_write', label: 'Manage settings' },
+  ];
   readonly statuses = ['Active', 'Inactive', 'Suspended'];
   filters = { search: '', dateFrom: '', dateTo: '', timeRange: '', role: '', status: '' };
-  edit = { name: '', email: '', role: 'Admin', status: 'Active', verified: true };
+  edit = {
+    name: '',
+    email: '',
+    role: 'Admin',
+    status: 'Active',
+    verified: true,
+    permissions: new Set<string>(),
+  };
   private timer: ReturnType<typeof setTimeout> | null = null;
   readonly allSelected = computed(
     () => this.rows().length > 0 && this.rows().every((r) => this.selected().has(r.id)),
@@ -438,8 +445,14 @@ export class AdminManagementPage implements OnInit {
       role: a.role,
       status: titleCase(a.status),
       verified: a.verified,
+      permissions: new Set((a.permissions ?? []).map(String)),
     };
     this.editing.set(a);
+  }
+
+  toggleEditPermission(key: string): void {
+    if (this.edit.permissions.has(key)) this.edit.permissions.delete(key);
+    else this.edit.permissions.add(key);
   }
 
   async saveEdit(a: AdminRecord): Promise<void> {
@@ -453,6 +466,7 @@ export class AdminManagementPage implements OnInit {
           role: this.edit.role,
           status: toApiStatus(this.edit.status),
           verified: this.edit.verified,
+          permissions: [...this.edit.permissions],
         },
         { toast: { showError: false } },
       );

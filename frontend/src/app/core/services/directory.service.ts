@@ -122,9 +122,8 @@ export function enrichListing(entry: Listing): DirectoryListing {
     normalizedTitle: normalizeName(title),
     normalizedCategory: normalizeName(entry.category),
     image: entry.image || getDefaultListingImage(entry.category),
-    description:
-      entry.description ||
-      `Leading ${serviceType} specialist serving ${entry.location || 'your area'}.`,
+    // No invented marketing copy: if the company wrote nothing, we show nothing.
+    description: entry.description ?? '',
     rating: Number(entry.rating ?? 0),
     ratingCount: Number(entry.ratingCount ?? 0),
   };

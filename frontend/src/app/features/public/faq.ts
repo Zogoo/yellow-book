@@ -13,7 +13,7 @@ import { FrequentFaq } from './frequent-faq';
         Everything you need to know about using Yellow Book. Can't find the answer you're looking
         for? Reach out anytime.
       </p>
-      <app-frequent-faq />
+      <app-frequent-faq heading="" />
     </section>
   `,
 })

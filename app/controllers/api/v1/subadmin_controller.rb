@@ -12,7 +12,12 @@ module Api
         elsif query_params["adminId"].present?
           scope = scope.where(admin_id: Api::Params.parse_id(query_params["adminId"], "adminId"))
         end
-        scope = scope.where(status: query_params["status"].to_s) if query_params["status"].present?
+        # `status` means the company's verification status, which is what the queue shows.
+        if query_params["status"].present?
+          status = Api::Params.parse_required_enum(query_params["status"], Company::STATUSES, "status")
+          scope = scope.joins(:company).where(companies: { status: status })
+        end
+        scope = scope.where(status: query_params["assignmentStatus"].to_s) if query_params["assignmentStatus"].present?
         if (search = Api::Params.string(query_params["search"])).present?
           like = Api::Params.like(search)
           scope = scope.joins(:company).where("companies.name LIKE :q OR companies.category_label LIKE :q OR companies.email LIKE :q", q: like)

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -8,7 +9,7 @@ import { CompanyProfile } from '../../core/models';
 /** `/company/my-profile` — owner-facing contact profile with avatar upload. */
 @Component({
   selector: 'app-company-profile-page',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <header>
       <h1 class="text-2xl font-bold text-[#212121]">Welcome {{ form.fullName || 'there' }}</h1>
@@ -45,7 +46,7 @@ import { CompanyProfile } from '../../core/models';
           ><input
             class="yb-input"
             name="fullName"
-            placeholder="Tech Solutions Inc."
+            placeholder="Your full name"
             [(ngModel)]="form.fullName"
           />
         </div>
@@ -54,7 +55,7 @@ import { CompanyProfile } from '../../core/models';
           ><input
             class="yb-input"
             name="phoneNumber"
-            placeholder="+1 (555) 123-4567"
+            placeholder="+976 8811 2233"
             [(ngModel)]="form.phoneNumber"
           />
         </div>
@@ -64,7 +65,7 @@ import { CompanyProfile } from '../../core/models';
             class="yb-input"
             type="email"
             name="email"
-            placeholder="contact@techsolutions.com"
+            placeholder="you@company.com"
             [(ngModel)]="form.email"
           />
         </div>
@@ -84,13 +85,10 @@ import { CompanyProfile } from '../../core/models';
             rows="3"
             name="about"
             maxlength="200"
-            placeholder="Tell customers about yourself (max 24 words)"
+            placeholder="A sentence or two about you, for customers who read your replies"
             [(ngModel)]="form.about"
-            (ngModelChange)="clampWords()"
           ></textarea>
-          <p class="text-xs text-gray-400">
-            {{ wordCount() }}/24 words · {{ form.about.length }}/200 characters
-          </p>
+          <p class="text-xs text-gray-400">{{ form.about.length }}/200 characters</p>
         </div>
         @if (success()) {
           <p class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700" role="status">
@@ -125,15 +123,6 @@ export class CompanyProfilePage implements OnInit {
     } catch {
       this.toast.alert('Unable to load profile');
     }
-  }
-
-  wordCount(): number {
-    return this.form.about.trim() ? this.form.about.trim().split(/\s+/).length : 0;
-  }
-
-  clampWords(): void {
-    const words = this.form.about.trim().split(/\s+/).filter(Boolean);
-    if (words.length > 24) this.form.about = words.slice(0, 24).join(' ');
   }
 
   onFile(event: Event): void {

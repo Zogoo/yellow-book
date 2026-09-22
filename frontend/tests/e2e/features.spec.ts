@@ -3,23 +3,27 @@ import { expect, request, test } from '@playwright/test';
 import { apiLogin, apiRequest, createContextForRole } from './helpers';
 
 test.describe('Yellow Book feature walkthrough', () => {
-  test('guest cannot react to reviews and is asked to sign in before writing one', async ({
-    page,
-  }) => {
+  test('a guest is offered sign-in, with the reason, instead of a dead end', async ({ page }) => {
     const api = await request.newContext();
     const listings = await apiRequest(api, 'get', '/listings?limit=10');
     const beauty = listings.body.data.listings.find((l: any) => l.name === 'Beauty Haven');
+
+    // The public feed never carries a reviewer's email address.
+    const feed = await apiRequest(api, 'get', `/agency/reviews?companyId=${beauty.id}&limit=1`);
+    expect(feed.body.data[0].reviewerEmail).toBeNull();
     await api.dispose();
 
     await page.goto(`/agency?id=${beauty.id}&slug=${beauty.slug}`);
-    await expect(page.getByRole('heading', { name: 'Beauty Haven' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Beauty Haven', exact: true })).toBeVisible();
 
-    const like = page.getByRole('button', { name: 'Like review' }).first();
-    await expect(like).toBeDisabled();
+    await page.getByRole('button', { name: 'Write a review' }).click();
+    const dialog = page.getByRole('dialog', { name: /sign in or create an account/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(/sign in to review beauty haven/i)).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
 
-    await page.getByText('Give me your rating & feedback').click();
-    await expect(page.getByText(/please log in to submit a review/i)).toBeVisible();
-    await expect(page.getByRole('dialog', { name: /write a review/i })).toBeHidden();
+    await page.getByRole('button', { name: 'Like review' }).first().click();
+    await expect(page.getByRole('dialog', { name: /sign in or create an account/i })).toBeVisible();
   });
 
   test('category filters narrow the listing set and clear again', async ({ page }) => {
@@ -323,10 +327,12 @@ test.describe('Yellow Book feature walkthrough', () => {
     await context.close();
   });
 
-  test('a customer signs in with a one-time email code', async ({ page }) => {
+  test('a returning customer signs in with a one-time code from the single front door', async ({
+    page,
+  }) => {
     await page.goto('/auth/login');
     await page.getByLabel('Email address').fill('user@yellowbook.local');
-    await page.getByRole('button', { name: 'Send code' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Development returns the code in the response so no inbox is needed.
     const hint = page.getByText(/dev code:/i);
@@ -334,11 +340,178 @@ test.describe('Yellow Book feature walkthrough', () => {
     const code = ((await hint.textContent()) ?? '').match(/\d{6}/)?.[0];
     expect(code).toBeTruthy();
 
-    await page.getByLabel('Verification code').fill(code!);
-    await page.getByRole('button', { name: 'Verify & sign in' }).click();
+    await page.getByLabel('6-digit code').fill(code!);
+    await page.getByRole('button', { name: 'Verify and continue' }).click();
 
     await expect(page).toHaveURL(/\/user\/dashboard/);
     await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
+  test('a new visitor creates a customer account from the same form', async ({ page }) => {
+    const email = `e2e-new-${Date.now()}@example.com`;
+
+    await page.goto('/auth/login');
+    await page.getByLabel('Email address').fill(email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    // An unknown email turns the form into sign-up rather than an error.
+    await expect(page.getByLabel('Your name')).toBeVisible();
+    await page.getByLabel('Your name').fill('E2E Newcomer');
+    await page.getByLabel('Choose a password').fill('E2eNewcomerPass1!');
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    await expect(page).toHaveURL(/\/user\/dashboard/);
+    await expect(page.getByRole('heading', { name: /welcome back, e2e newcomer/i })).toBeVisible();
+
+    const api = await request.newContext();
+    const admin = await apiLogin('admin');
+    const found = await apiRequest(
+      api,
+      'get',
+      `/users?search=${encodeURIComponent(email)}&limit=1`,
+      {
+        token: admin.token,
+      },
+    );
+    expect(found.body.data[0].email).toBe(email);
+    await apiRequest(api, 'delete', `/users/${found.body.data[0].id}`, { token: admin.token });
+    await api.dispose();
+  });
+
+  test('the password rules are stated once and enforced', async ({ page }) => {
+    await page.goto('/auth/signup');
+    await page.getByLabel('Email address').fill(`e2e-weak-${Date.now()}@example.com`);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.getByLabel('Your name').fill('Weak Password');
+    await page.getByLabel('Choose a password').fill('password');
+    await page.getByRole('button', { name: 'Create account' }).click();
+    await expect(page.getByRole('alert')).toContainText(/at least 12 characters/i);
+  });
+
+  test('signing in resumes the review the visitor came to write', async ({ page }) => {
+    const api = await request.newContext();
+    const listings = await apiRequest(api, 'get', '/listings?limit=10');
+    const target = listings.body.data.listings.find((l: any) => l.name === 'Gobi Adventures');
+    const email = `e2e-resume-${Date.now()}@example.com`;
+
+    await page.goto(`/agency?id=${target.id}&slug=${target.slug}`);
+    await page.getByRole('button', { name: 'Write a review' }).click();
+
+    const dialog = page.getByRole('dialog', { name: /sign in or create an account/i });
+    await dialog.getByLabel('Email address').fill(email);
+    await dialog.getByRole('button', { name: 'Continue' }).click();
+    await dialog.getByLabel('Your name').fill('Resumed Reviewer');
+    await dialog.getByLabel('Choose a password').fill('ResumedReviewer1!');
+    await dialog.getByRole('button', { name: 'Create account' }).click();
+
+    // Straight into the composer, on the same page, without asking again.
+    await expect(page.getByRole('dialog', { name: /write a review/i })).toBeVisible();
+
+    const admin = await apiLogin('admin');
+    const found = await apiRequest(
+      api,
+      'get',
+      `/users?search=${encodeURIComponent(email)}&limit=1`,
+      {
+        token: admin.token,
+      },
+    );
+    await apiRequest(api, 'delete', `/users/${found.body.data[0].id}`, { token: admin.token });
+    await api.dispose();
+  });
+
+  test('a customer may review a company once, and is sent to their review instead', async ({
+    browser,
+  }) => {
+    const api = await request.newContext();
+    const user = await apiLogin('user');
+    const listings = await apiRequest(api, 'get', '/listings?limit=10');
+    const target = listings.body.data.listings.find((l: any) => l.name === 'Tech Solutions');
+
+    const context = await createContextForRole(browser, 'user');
+    const page = await context.newPage();
+    await page.goto(`/agency?id=${target.id}&slug=${target.slug}`);
+
+    // The seed user already reviewed this company.
+    await expect(page.getByRole('heading', { name: /you reviewed this company/i })).toBeVisible();
+    await page.getByRole('button', { name: 'Edit your review' }).click();
+    await expect(page).toHaveURL(/\/user\/my-reviews/);
+
+    const second = await apiRequest(api, 'post', '/agency/reviews', {
+      token: user.token,
+      data: { companyId: target.id, rating: 1, content: 'Trying to review twice' },
+      expectStatus: [409],
+    });
+    expect(second.body.message).toMatch(/already reviewed/i);
+
+    await context.close();
+    await api.dispose();
+  });
+
+  test('the contact form reaches an administrator', async ({ page }) => {
+    const marker = `Contact probe ${Date.now()}`;
+    await page.goto('/contact');
+    await page.getByLabel('Your name').fill('Concerned Visitor');
+    await page.getByLabel('Your email').fill('visitor@example.com');
+    await page.getByLabel('Message').fill(`${marker} — my review disappeared, can you check?`);
+    await page.getByRole('button', { name: 'Send message' }).click();
+    await expect(page.getByRole('heading', { name: /message received/i })).toBeVisible();
+
+    const api = await request.newContext();
+    const admin = await apiLogin('admin');
+    const queue = await apiRequest(api, 'get', '/support/messages?limit=5', { token: admin.token });
+    const received = queue.body.data.find((m: any) => m.message.includes(marker));
+    expect(received).toBeTruthy();
+
+    // Close it out the way an administrator would.
+    const handled = await apiRequest(api, 'put', `/support/messages/${received.id}`, {
+      token: admin.token,
+      data: { status: 'handled' },
+    });
+    expect(handled.body.data.status).toBe('handled');
+    await api.dispose();
+  });
+
+  test('changing a password really changes it', async ({ browser }) => {
+    const api = await request.newContext();
+    const admin = await apiLogin('admin');
+    const email = `e2e-pw-${Date.now()}@example.com`;
+    const created = await apiRequest(api, 'post', '/users', {
+      token: admin.token,
+      data: { name: 'Password Tester', email, password: 'FirstPassword123!', verified: true },
+    });
+    const userId = created.body.data.id;
+    const login = await apiRequest(api, 'post', '/auth/login', {
+      data: { email, password: 'FirstPassword123!' },
+    });
+
+    const context = await browser.newContext();
+    await context.addInitScript(
+      ([t, u]) => {
+        window.localStorage.setItem('token', t as string);
+        window.localStorage.setItem('user', u as string);
+      },
+      [login.body.data.token, JSON.stringify(login.body.data.user)],
+    );
+    const page = await context.newPage();
+    await page.goto('/user/my-profile');
+    await page.getByLabel('Current password').fill('FirstPassword123!');
+    await page.getByLabel('New password', { exact: true }).fill('SecondPassword123!');
+    await page.getByLabel('Confirm new password').fill('SecondPassword123!');
+    await page.getByRole('button', { name: 'Update password' }).click();
+    await expect(page.getByText(/password updated/i)).toBeVisible();
+
+    await apiRequest(api, 'post', '/auth/login', {
+      data: { email, password: 'FirstPassword123!' },
+      expectStatus: [401],
+    });
+    await apiRequest(api, 'post', '/auth/login', {
+      data: { email, password: 'SecondPassword123!' },
+    });
+
+    await context.close();
+    await apiRequest(api, 'delete', `/users/${userId}`, { token: admin.token });
+    await api.dispose();
   });
 
   test('the reset password page validates the form and rejects a bad token', async ({ page }) => {

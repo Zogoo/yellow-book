@@ -13,7 +13,7 @@ interface RegistrationOptions {
   destinations: string[];
 }
 
-/** `/auth/register` — three-step business registration. */
+/** `/business/signup` — three-step business registration. */
 @Component({
   selector: 'app-register-page',
   imports: [RouterLink, FormsModule],
@@ -97,8 +97,8 @@ interface RegistrationOptions {
               <label class="text-sm font-medium">Annual Revenue</label>
               <select class="yb-input" name="revenue" [(ngModel)]="form.revenue">
                 <option value="">Select</option>
-                @for (r of revenueOptions; track r) {
-                  <option [value]="r">{{ r }}</option>
+                @for (r of revenueOptions; track r.value) {
+                  <option [value]="r.value">{{ r.label }}</option>
                 }
               </select>
             </div>
@@ -212,19 +212,8 @@ interface RegistrationOptions {
         <div class="mt-6 border-t border-gray-100 pt-4 text-sm text-gray-600">
           <p>
             Already registered?
-            <a routerLink="/auth/company/login" class="text-[#1877f2]">Company sign in</a>
+            <a routerLink="/auth/login" class="text-[#1877f2]">Sign in</a>
           </p>
-          <div class="mt-3 flex flex-wrap gap-2">
-            @for (p of ['google', 'facebook', 'apple']; track p) {
-              <button
-                type="button"
-                class="yb-btn border border-gray-200 bg-white text-xs capitalize"
-                (click)="social(p)"
-              >
-                Sign up with {{ p }}
-              </button>
-            }
-          </div>
         </div>
       </div>
     </div>
@@ -243,8 +232,13 @@ export class RegisterPage implements OnInit {
     services: [],
     destinations: [],
   });
-  readonly employeeOptions = ['1–10', '11–30', '31–50'];
-  readonly revenueOptions = ['< 10M MNT', '10M - 50M MNT', '> 50M MNT'];
+  readonly employeeOptions = ['1-10', '11-30', '31-50', '51-100', '100+'];
+  readonly revenueOptions = [
+    { value: '0-100k', label: '0 – 100K MNT' },
+    { value: '100k-500k', label: '100K – 500K MNT' },
+    { value: '500k-1m', label: '500K – 1M MNT' },
+    { value: '1m+', label: '1M+ MNT' },
+  ];
   readonly countries = [
     { code: '+976', flag: '🇲🇳', name: 'Mongolia' },
     { code: '+86', flag: '🇨🇳', name: 'China' },
@@ -332,14 +326,6 @@ export class RegisterPage implements OnInit {
       this.error.set(e instanceof Error ? e.message : 'Registration failed');
     } finally {
       this.busy.set(false);
-    }
-  }
-
-  async social(provider: string): Promise<void> {
-    try {
-      await this.auth.startOauthLogin(provider, { intent: 'register', next: '/company/dashboard' });
-    } catch {
-      this.toast.alert('Unable to continue with social signup');
     }
   }
 }

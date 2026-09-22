@@ -27,15 +27,15 @@ import { RouterLink } from '@angular/router';
           <ul class="space-y-2 text-sm text-[#616161]">
             <li><a routerLink="/about">About Us</a></li>
             <li><a routerLink="/contact">Contact Us</a></li>
-            <li><a routerLink="/auth/register">List Your Agency</a></li>
+            <li><a routerLink="/business/signup">List your business</a></li>
           </ul>
         </div>
         <div>
           <h4 class="mb-3 text-sm font-semibold text-[#212121]">Accounts</h4>
           <ul class="space-y-2 text-sm text-[#616161]">
-            <li><a routerLink="/auth/login">User sign in</a></li>
-            <li><a routerLink="/auth/company/login">Company sign in</a></li>
-            <li><a routerLink="/auth/staff/login">Staff sign in</a></li>
+            <li><a routerLink="/auth/login">Sign in</a></li>
+            <li><a routerLink="/auth/signup">Create an account</a></li>
+            <li><a routerLink="/business/signup">List your business</a></li>
           </ul>
         </div>
       </div>

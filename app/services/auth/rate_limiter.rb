@@ -9,7 +9,9 @@ module Auth
       email_code_request: Rule.new("auth_email_code_request", 8, 60),
       email_code_verify: Rule.new("auth_email_code_verify", 12, 60),
       oauth_authorize: Rule.new("auth_oauth_authorize", 20, 60),
-      oauth_callback: Rule.new("auth_oauth_callback", 20, 60)
+      oauth_callback: Rule.new("auth_oauth_callback", 20, 60),
+      password_reset: Rule.new("auth_password_reset", 6, 60),
+      support_message: Rule.new("support_message", 5, 300)
     }.freeze
 
     def self.check!(rule_key, ip)

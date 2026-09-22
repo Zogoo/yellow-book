@@ -10,7 +10,9 @@ module Reviews
     def call
       company = Company.includes(:owner).find_by(id: @review.company_id) or raise Api::NotFound, "Company not found"
       raise Api::Forbidden, "Only the company owner can reply to this review" unless company.owner_user_id == @account.id
-      raise Api::Forbidden, "A company reply has already been submitted for this review" if @review.company_response_present?
+      if @review.company_response_present? && @review.company_response_status != "rejected"
+        raise Api::Forbidden, "A company reply has already been submitted for this review"
+      end
 
       raw = @body["reply_text"].presence || @body["replyText"].presence || @body["text"].presence || @body["content"].presence ||
             (@body["companyResponse"].is_a?(Hash) ? @body["companyResponse"]["text"] : @body["companyResponse"])
@@ -29,6 +31,7 @@ module Reviews
         company_response: response.to_json, company_response_status: "pending",
         company_response_submitted_at: now, company_response_moderated_at: nil, company_response_moderator_admin_id: nil
       )
+      Notifications::Deliver.reply_submitted(@review)
       @review
     end
   end

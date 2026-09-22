@@ -48,14 +48,6 @@ import { StatusDropdown } from '../../shared/status-dropdown';
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
             <tr>
-              <th class="px-3 py-3">
-                <input
-                  type="checkbox"
-                  [checked]="allSelected()"
-                  (change)="toggleAll()"
-                  aria-label="Select all"
-                />
-              </th>
               <th class="px-3 py-3">No</th>
               <th class="px-3 py-3">Company Name</th>
               <th class="px-3 py-3">Category</th>
@@ -66,14 +58,6 @@ import { StatusDropdown } from '../../shared/status-dropdown';
           <tbody>
             @for (c of rows(); track c.id; let i = $index) {
               <tr class="border-t border-gray-100">
-                <td class="px-3 py-3">
-                  <input
-                    type="checkbox"
-                    [checked]="selected().has(c.id)"
-                    (change)="toggleOne(c.id)"
-                    [attr.aria-label]="'Select ' + c.name"
-                  />
-                </td>
                 <td class="px-3 py-3 text-gray-500">
                   {{ (meta().page - 1) * meta().limit + i + 1 }}
                 </td>
@@ -229,13 +213,10 @@ export class AssignCompaniesPage implements OnInit {
     try {
       const result = await this.api.list<AssignmentRecord>(
         'subadmin/companies',
-        { page, limit: 8, search: this.search.trim() },
+        { page, limit: 8, search: this.search.trim(), status: this.status },
         { toast: { showError: false } },
       );
-      const items = this.status
-        ? result.items.filter((c) => toApiStatus(c.status) === this.status)
-        : result.items;
-      this.rows.set(items);
+      this.rows.set(result.items);
       this.meta.set(result.meta);
     } catch {
       this.toast.alert('Failed to load assigned companies');

@@ -14,6 +14,9 @@ module Reviews
       if @body.key?("status")
         raise Api::Forbidden, "Only admins and agents can moderate reviews" unless @account.admin?
         attrs[:status] = Api::Params.parse_required_enum(@body["status"], Review::STATUSES, "status")
+        attrs[:status_reason] = Api::Params.optional_string(@body["statusReason"] || @body["reason"])
+        attrs[:moderated_at] = Time.current
+        attrs[:moderated_by_admin_id] = @account.id
       end
       if %w[review content text].any? { |k| @body.key?(k) }
         raise Api::Forbidden, "You can update only your own review content" unless @account.admin? || @review.user_id == @account.id
@@ -35,10 +38,15 @@ module Reviews
         attrs[:company_response_status] = Api::Params.parse_required_enum(@body["companyResponseStatus"].presence || @body["replyStatus"], Review::REPLY_STATUSES, "companyResponseStatus")
         attrs[:company_response_moderated_at] = Time.current
         attrs[:company_response_moderator_admin_id] = @account.id
+        attrs[:company_response_status_reason] = Api::Params.optional_string(@body["replyStatusReason"])
       end
 
+      status_changed = attrs.key?(:status) && attrs[:status] != @review.status
+      reply_published = attrs[:company_response_status] == "approved" && @review.company_response_status != "approved"
       @review.update!(attrs)
       ActivityEvent.log("Review updated: #{@review.id}", "Star", { reviewId: @review.id, status: @review.status })
+      Notifications::Deliver.review_moderated(@review) if status_changed
+      Notifications::Deliver.reply_published(@review) if reply_published
       @review
     end
 

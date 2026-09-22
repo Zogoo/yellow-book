@@ -54,7 +54,7 @@ export class FavouriteCompaniesPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const result = await this.api.list<FavoriteRecord>('user/favourite-companies', {
+      const result = await this.api.list<FavoriteRecord>('favorites', {
         limit: 100,
       });
       this.items.set(result.items);
@@ -70,7 +70,7 @@ export class FavouriteCompaniesPage implements OnInit {
   async remove(fav: FavoriteRecord): Promise<void> {
     if (!window.confirm(`Remove ${fav.name} from favourites?`)) return;
     try {
-      await this.api.deleteData(`user/favourite-companies/${fav.id}`);
+      await this.api.deleteData(`favorites/${fav.id}`);
       this.items.update((list) => list.filter((f) => f.id !== fav.id));
       this.toast.success('Removed from favourites');
     } catch {

@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 
 import { AuthService } from '../core/services/auth.service';
 import { PanelProfileMenu } from '../shared/panel-profile-menu';
+import { NotificationBell } from '../shared/notification-bell';
 
 export type PanelKind = 'admin' | 'agent' | 'company' | 'user';
 
@@ -24,22 +25,22 @@ const MENUS: Record<PanelKind, MenuItem[]> = {
   company: [
     { label: 'Dashboard', to: '/company/dashboard', icon: '▦' },
     { label: 'My Company', to: '/company/my-company', icon: '🏢' },
-    { label: 'Review', to: '/company/review', icon: '⭐' },
+    { label: 'Reviews', to: '/company/review', icon: '⭐' },
     { label: 'My Profile', to: '/company/my-profile', icon: '👤' },
-    { label: 'Notification', to: '/company/notification', icon: '🔔' },
+    { label: 'Notifications', to: '/company/notification', icon: '🔔' },
     { label: 'Settings', to: '/company/settings', icon: '⚙' },
   ],
   agent: [
-    { label: 'dashboard', to: '/agent/dashboard', icon: '▦' },
-    { label: 'my assign task', to: '/agent/assign-companies', icon: '📋' },
-    { label: 'review approval', to: '/agent/review-approval', icon: '⭐' },
-    { label: 'my profile', to: '/agent/my-profile', icon: '👤' },
+    { label: 'Dashboard', to: '/agent/dashboard', icon: '▦' },
+    { label: 'Assigned Companies', to: '/agent/assign-companies', icon: '📋' },
+    { label: 'Review Approval', to: '/agent/review-approval', icon: '⭐' },
+    { label: 'My Profile', to: '/agent/my-profile', icon: '👤' },
   ],
   user: [
-    { label: 'dashboard', to: '/user/dashboard', icon: '▦' },
-    { label: 'my reviews', to: '/user/my-reviews', icon: '⭐' },
-    { label: 'favourite companies', to: '/user/favourite-companies', icon: '❤' },
-    { label: 'my profile', to: '/user/my-profile', icon: '👤' },
+    { label: 'Dashboard', to: '/user/dashboard', icon: '▦' },
+    { label: 'My Reviews', to: '/user/my-reviews', icon: '⭐' },
+    { label: 'Saved Companies', to: '/user/favourite-companies', icon: '❤' },
+    { label: 'My Profile', to: '/user/my-profile', icon: '👤' },
   ],
 };
 
@@ -53,7 +54,7 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
 /** Header + 280 px sidebar shell shared by the four panels. */
 @Component({
   selector: 'app-panel-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, PanelProfileMenu],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, PanelProfileMenu, NotificationBell],
   template: `
     <div class="panel-shell">
       <header
@@ -74,13 +75,7 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
         </div>
         <div class="flex items-center gap-3">
           <span class="text-xs text-gray-500 sm:hidden">{{ caption() }}</span>
-          <button
-            type="button"
-            class="rounded-full p-2 text-gray-500 hover:bg-gray-100"
-            aria-label="Open notifications"
-          >
-            🔔
-          </button>
+          <app-notification-bell />
           <app-panel-profile-menu [roleLabel]="caption()" [dashboardTo]="menu()[0].to" />
         </div>
       </header>
@@ -101,7 +96,7 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
               <a
                 [routerLink]="item.to"
                 routerLinkActive="bg-[#f3f3f3] font-semibold"
-                class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-700 capitalize hover:bg-[#f7f7f7]"
+                class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-700 hover:bg-[#f7f7f7]"
                 (click)="sidebarOpen.set(false)"
               >
                 <span aria-hidden="true">{{ item.icon }}</span

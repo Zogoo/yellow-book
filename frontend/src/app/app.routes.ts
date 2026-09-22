@@ -26,9 +26,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/public/contact').then((m) => m.ContactPage),
           },
           {
-            path: 'auth/register',
+            path: 'business/signup',
             loadComponent: () => import('./features/auth/register').then((m) => m.RegisterPage),
           },
+          { path: 'auth/register', redirectTo: 'business/signup' },
           {
             path: 'auth/forgot-password',
             loadComponent: () =>
@@ -74,14 +75,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/login').then((m) => m.LoginPage),
       },
       {
-        path: 'auth/company/login',
-        loadComponent: () =>
-          import('./features/auth/company-login').then((m) => m.CompanyLoginPage),
+        path: 'auth/signup',
+        data: { mode: 'signup' },
+        loadComponent: () => import('./features/auth/login').then((m) => m.LoginPage),
       },
-      {
-        path: 'auth/staff/login',
-        loadComponent: () => import('./features/auth/staff-login').then((m) => m.StaffLoginPage),
-      },
+      // One credential, one door: the old role-specific pages lead there now.
+      { path: 'auth/company/login', redirectTo: 'auth/login' },
+      { path: 'auth/staff/login', redirectTo: 'auth/login' },
+      // The category page has always been reachable at a misspelled path; keep it working.
+      { path: 'category', redirectTo: 'catagory' },
       {
         path: 'user',
         loadComponent: () => import('./layouts/user-panel-layout').then((m) => m.UserPanelLayout),

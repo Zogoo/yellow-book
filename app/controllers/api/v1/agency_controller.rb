@@ -7,12 +7,15 @@ module Api
 
       def dashboard
         company = resolve_company
-        reviews = company.reviews.order(:created_at).to_a
-        approved = reviews.select { |r| r.status == "approved" }
-        average = approved.any? ? (approved.sum(&:rating).to_f / approved.size).round(2) : 0
-        trend = reviews.group_by { |r| r.created_at.utc.strftime("%Y-%m") }.sort.map { |month, rows| { month: month, count: rows.size } }
+        scope = company.reviews
+        total = scope.count
+        approved_scope = scope.approved
+        average = approved_scope.average(:rating).to_f.round(2)
+        trend = scope.group(Arel.sql("strftime('%Y-%m', created_at)")).count.sort.map { |month, count| { month: month, count: count } }
         complete = [ company.description, company.location, company.website, company.phone_number, company.contact_email, company.owner_name ].all?(&:present?)
-        render_data(totalReviews: reviews.size, averageRating: average, verificationStatus: company.status, profileComplete: complete, monthlyReviewTrend: trend)
+        render_data(totalReviews: total, pendingReviews: scope.where(status: "pending").count,
+                    averageRating: average, verificationStatus: company.status,
+                    profileComplete: complete, monthlyReviewTrend: trend)
       end
 
       def company

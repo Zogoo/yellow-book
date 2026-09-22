@@ -37,6 +37,7 @@ export class ToastService {
   private push(kind: ToastKind, message: string): void {
     const toast: Toast = { id: this.nextId++, kind, message };
     this.toasts.update((list) => [...list, toast].slice(-5));
-    setTimeout(() => this.dismiss(toast.id), 3000);
+    // Failures stay long enough to be read; confirmations get out of the way.
+    setTimeout(() => this.dismiss(toast.id), kind === 'alert' ? 8000 : 3500);
   }
 }

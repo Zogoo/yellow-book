@@ -43,7 +43,7 @@ export class UserDashboardPage implements OnInit {
         .list<ReviewRecord>('user/my-reviews', { limit: 1 }, { toast: { showError: false } })
         .catch(() => null),
       this.api
-        .list<FavoriteRecord>('user/favorites', { limit: 1 }, { toast: { showError: false } })
+        .list<FavoriteRecord>('favorites', { limit: 1 }, { toast: { showError: false } })
         .catch(() => null),
     ]);
     this.reviewCount.set(reviews?.meta.total ?? 0);

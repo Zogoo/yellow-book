@@ -44,10 +44,9 @@ module Api
       def subadmin_target(required:)
         id = if current_account.agent?
           current_account.id
-        elsif required
-          Api::Params.parse_id(query_params["adminId"], "adminId")
         else
-          Api::Params.parse_optional_id(query_params["adminId"], "adminId") || Admin.where(role: "agent").order(:id).pick(:id)
+          # An admin must name the agent; falling back to "some agent" leaked profiles.
+          Api::Params.parse_optional_id(query_params["adminId"], "adminId") || current_account.id
         end
         raise Api::NotFound, "Subadmin profile not found" unless id
 

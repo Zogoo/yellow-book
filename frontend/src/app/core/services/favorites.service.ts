@@ -1,9 +1,10 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 
 import { FavoriteRecord } from '../models';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
+import { LoginModalService } from './login-modal.service';
 
 /** Favourite listings for the signed-in user, shared by the public pages. */
 @Injectable({ providedIn: 'root' })
@@ -11,7 +12,28 @@ export class FavoritesService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly loginModal = inject(LoginModalService);
   readonly favorites = signal<FavoriteRecord[]>([]);
+  /** What the visitor tried to save before we asked them to sign in. */
+  private readonly pending = signal<{
+    id: number;
+    slug?: string;
+    name?: string;
+    category?: string;
+    rating?: number;
+  } | null>(null);
+
+  constructor() {
+    effect(() => {
+      const signedIn = this.auth.isAuthenticated() && this.auth.user() !== null;
+      const wanted = this.pending();
+      if (signedIn && wanted) {
+        this.pending.set(null);
+        void this.load().then(() => this.toggle(wanted));
+      }
+    });
+  }
+
   readonly busyKeys = signal<Set<string>>(new Set());
 
   async load(): Promise<void> {
@@ -50,7 +72,16 @@ export class FavoritesService {
     named = false,
   ): Promise<void> {
     if (!this.auth.isAuthenticated()) {
-      this.toast.alert('Please log in to save favourites.');
+      this.pending.set({
+        id: listing.id,
+        slug: listing.slug,
+        name: listing.name,
+        category: listing.category,
+        rating: listing.rating,
+      });
+      this.loginModal.openModal('favourite', {
+        reason: 'Sign in to save companies to your list.',
+      });
       return;
     }
     const key = listing.slug || String(listing.id);

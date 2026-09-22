@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { UserProfile } from '../../core/models';
+import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-policy';
 
 /** `/user/my-profile` — personal details + password change form. */
 @Component({
@@ -116,30 +117,31 @@ import { UserProfile } from '../../core/models';
     </form>
     <form class="yb-card space-y-4 p-6" (ngSubmit)="changePassword()" novalidate>
       <h2 class="text-lg font-semibold">Change password</h2>
+      <p class="text-xs text-gray-500">{{ passwordRule }}</p>
       <div class="grid gap-4 sm:grid-cols-3">
+        <label class="text-sm font-medium" for="user-pw-current">Current password</label>
         <input
           class="yb-input"
+          id="user-pw-current"
           type="password"
           name="current"
-          placeholder="Current password"
           [(ngModel)]="pw.current"
-          aria-label="Current password"
         />
+        <label class="text-sm font-medium" for="user-pw-next">New password</label>
         <input
           class="yb-input"
+          id="user-pw-next"
           type="password"
           name="next"
-          placeholder="New password"
           [(ngModel)]="pw.next"
-          aria-label="New password"
         />
+        <label class="text-sm font-medium" for="user-pw-confirm">Confirm new password</label>
         <input
           class="yb-input"
+          id="user-pw-confirm"
           type="password"
           name="confirm"
-          placeholder="Confirm new password"
           [(ngModel)]="pw.confirm"
-          aria-label="Confirm new password"
         />
       </div>
       @if (pwMessage()) {
@@ -174,6 +176,7 @@ export class UserProfilePage implements OnInit {
     bio: '',
   };
   pw = { current: '', next: '', confirm: '' };
+  readonly passwordRule = PASSWORD_RULE_TEXT;
 
   async ngOnInit(): Promise<void> {
     try {
@@ -219,24 +222,19 @@ export class UserProfilePage implements OnInit {
 
   async changePassword(): Promise<void> {
     this.pwOk.set(false);
-    if (!this.pw.current) return this.pwMessage.set('Please enter your current password');
-    if (!this.pw.next) return this.pwMessage.set('Please enter a new password');
-    if (this.pw.next.length < 6)
-      return this.pwMessage.set('Password must be at least 6 characters long');
-    if (this.pw.next !== this.pw.confirm) return this.pwMessage.set('New passwords do not match');
-    if (this.pw.next === this.pw.current)
-      return this.pwMessage.set('New password must be different from current password');
+    const problem = passwordProblem(this.pw.next);
+    if (!this.pw.current) return this.pwMessage.set('Enter your current password.');
+    if (problem) return this.pwMessage.set(problem);
+    if (this.pw.next !== this.pw.confirm) return this.pwMessage.set('New passwords do not match.');
+
     this.busy.set(true);
     try {
-      await this.api.putData('user/profile', {
-        security: { lastPasswordChange: new Date().toISOString() },
-        updatedAt: new Date().toISOString(),
-      });
+      await this.auth.changePassword(this.pw.current, this.pw.next);
       this.pwOk.set(true);
-      this.pwMessage.set('Password updated successfully!');
+      this.pwMessage.set('Password updated. Other devices have been signed out.');
       this.pw = { current: '', next: '', confirm: '' };
-    } catch {
-      this.pwMessage.set('Unable to update password.');
+    } catch (e) {
+      this.pwMessage.set(e instanceof Error ? e.message : 'Unable to update password.');
     } finally {
       this.busy.set(false);
     }

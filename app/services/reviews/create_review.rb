@@ -1,5 +1,5 @@
 module Reviews
-  COMPANY_CANNOT_REVIEW = "Companies cannot review other companies. Only regular users can submit reviews.".freeze
+  COMPANY_CANNOT_REVIEW = "You cannot review your own company.".freeze
   LIKE_DISLIKE_SHARE_FORBIDDEN = "Only regular users and companies can like, dislike, or share reviews. Admins and sub-admins cannot.".freeze
 
   class CreateReview < ApplicationService
@@ -11,9 +11,16 @@ module Reviews
 
     def call
       raise Api::Unauthorized, "Authentication is required to submit a review." unless @account&.user?
-      raise Api::Forbidden, COMPANY_CANNOT_REVIEW if @account.company? || @account.company_id
 
       company = Company.find_by(id: resolve_company_id) or raise Api::BadRequest, "companyId does not reference an existing company"
+      raise Api::Forbidden, COMPANY_CANNOT_REVIEW if company.owner_user_id == @account.id
+      existing = Review.find_by(company_id: company.id, user_id: @account.id)
+      if existing
+        raise Api::Conflict.new(
+          "You have already reviewed #{company.name}. Edit your existing review instead.",
+          details: { reviewId: existing.id, companyId: company.id }
+        )
+      end
       reviewer_name = Api::Params.string(@body["reviewerName"]).presence || @account.name.presence || "Anonymous Reviewer"
       reviewer_email = @body["reviewerEmail"].present? ? Api::Params.normalize_email(@body["reviewerEmail"]) : @account.email
       content = Reviews::PlainText.parse(@body["content"].presence || @body["review"].presence || @body["text"], "content")
@@ -26,6 +33,7 @@ module Reviews
         status: "pending", likes: 0, shares: 0, dislikes: 0, company_response: nil
       )
       ActivityEvent.log("Review created: #{review.id}", "Star", { reviewId: review.id, companyId: company.id })
+      Notifications::Deliver.review_received(review)
       review
     end
 

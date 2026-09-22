@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_17_000016) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -237,23 +237,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_17_000016) do
     t.datetime "company_response_moderated_at"
     t.integer "company_response_moderator_admin_id"
     t.string "company_response_status"
+    t.string "company_response_status_reason"
     t.datetime "company_response_submitted_at"
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.integer "dislikes", default: 0, null: false
     t.integer "likes", default: 0, null: false
+    t.datetime "moderated_at"
+    t.integer "moderated_by_admin_id"
     t.integer "moderator_admin_id"
     t.integer "rating", null: false
     t.string "reviewer_email"
     t.string "reviewer_name", null: false
     t.integer "shares", default: 0, null: false
     t.string "status", default: "pending", null: false
+    t.string "status_reason"
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["company_id", "status"], name: "index_reviews_on_company_id_and_status"
+    t.index ["company_id", "user_id"], name: "index_reviews_on_company_and_user_unique", unique: true, where: "user_id IS NOT NULL"
     t.index ["company_response_status"], name: "index_reviews_on_company_response_status"
     t.index ["created_at"], name: "index_reviews_on_created_at"
     t.index ["moderator_admin_id", "status"], name: "index_reviews_on_moderator_admin_id_and_status"
+    t.index ["rating"], name: "index_reviews_on_rating"
+    t.index ["status"], name: "index_reviews_on_status"
     t.index ["user_id"], name: "index_reviews_on_user_id"
   end
 
@@ -279,6 +286,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_17_000016) do
     t.index ["expires_at"], name: "index_sessions_on_expires_at"
     t.index ["refresh_token_hash"], name: "index_sessions_on_refresh_token_hash", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "support_messages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.datetime "handled_at"
+    t.string "handled_by"
+    t.text "message", null: false
+    t.string "name", null: false
+    t.string "status", default: "new", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["created_at"], name: "index_support_messages_on_created_at"
+    t.index ["status"], name: "index_support_messages_on_status"
   end
 
   create_table "users", force: :cascade do |t|

@@ -1,13 +1,14 @@
 module Api
   module V1
     class AuthController < ApplicationController
-      before_action :require_account!, only: %i[me logout]
+      before_action :require_account!, only: %i[me logout change_password]
       before_action -> { Auth::RateLimiter.check!(:register, request.remote_ip) }, only: :register
       before_action -> { Auth::RateLimiter.check!(:login, request.remote_ip) }, only: :login
       before_action -> { Auth::RateLimiter.check!(:email_code_request, request.remote_ip) }, only: :request_email_code
       before_action -> { Auth::RateLimiter.check!(:email_code_verify, request.remote_ip) }, only: :verify_email_code
       before_action -> { Auth::RateLimiter.check!(:oauth_authorize, request.remote_ip) }, only: :oauth_authorize
       before_action -> { Auth::RateLimiter.check!(:oauth_callback, request.remote_ip) }, only: %i[oauth_callback oauth_callback_get]
+      before_action -> { Auth::RateLimiter.check!(:password_reset, request.remote_ip) }, only: %i[forgot_password reset_password]
 
       def register
         render_data(Auth::RegisterAccount.call(payload: body_params, request: request), http_status: :created)
@@ -51,6 +52,10 @@ module Api
 
       def oauth_callback
         render_data(Auth::GoogleOauth.callback_with_id_token(params[:provider], body_params, request), http_status: :created)
+      end
+
+      def change_password
+        render_data(Auth::ChangePassword.call(account: current_account, payload: body_params))
       end
 
       def forgot_password

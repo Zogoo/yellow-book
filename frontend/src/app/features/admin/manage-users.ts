@@ -57,7 +57,7 @@ import { StatusDropdown } from '../../shared/status-dropdown';
             [(ngModel)]="filters.timeRange"
             (ngModelChange)="load(1)"
           >
-            <option value="">Today</option>
+            <option value="">Any time</option>
             <option value="yesterday">Yesterday</option>
             <option value="last7days">Last 7 days</option>
             <option value="last30days">Last 30 days</option>
@@ -98,14 +98,6 @@ import { StatusDropdown } from '../../shared/status-dropdown';
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
             <tr>
-              <th class="px-3 py-3">
-                <input
-                  type="checkbox"
-                  [checked]="allSelected()"
-                  (change)="toggleAll()"
-                  aria-label="Select all"
-                />
-              </th>
               <th class="px-3 py-3">No</th>
               <th class="px-3 py-3">Name</th>
               <th class="px-3 py-3">Email</th>
@@ -118,14 +110,6 @@ import { StatusDropdown } from '../../shared/status-dropdown';
           <tbody>
             @for (u of rows(); track u.id; let i = $index) {
               <tr class="border-t border-gray-100">
-                <td class="px-3 py-3">
-                  <input
-                    type="checkbox"
-                    [checked]="selected().has(u.id)"
-                    (change)="toggleOne(u.id)"
-                    [attr.aria-label]="'Select ' + u.name"
-                  />
-                </td>
                 <td class="px-3 py-3 text-gray-500">
                   {{ pad((meta().page - 1) * meta().limit + i + 1) }}
                 </td>

@@ -67,7 +67,7 @@ const STATUS_MESSAGES: Record<string, string> = {
             [(ngModel)]="filters.timeRange"
             (ngModelChange)="load(1)"
           >
-            <option value="">Today</option>
+            <option value="">Any time</option>
             <option value="yesterday">Yesterday</option>
             <option value="last7days">Last 7 days</option>
             <option value="last30days">Last 30 days</option>
@@ -131,7 +131,7 @@ const STATUS_MESSAGES: Record<string, string> = {
                   </div>
                 </td>
                 <td class="px-3 py-3 text-gray-500">{{ r.date }} {{ r.time }}</td>
-                <td class="px-3 py-3 italic">“{{ excerpt(r.content) }}”</td>
+                <td class="max-w-md px-3 py-3 text-gray-700 italic">“{{ excerpt(r.content) }}”</td>
                 <td class="px-3 py-3">
                   <app-status-dropdown
                     [value]="title(r.status)"
@@ -145,7 +145,7 @@ const STATUS_MESSAGES: Record<string, string> = {
                       type="button"
                       class="text-gray-600"
                       [attr.data-testid]="'admin-reply-review-' + r.id"
-                      aria-label="Reply"
+                      aria-label="Open on the public page"
                       (click)="reply(r)"
                     >
                       💬
@@ -293,7 +293,7 @@ export class ManageReviewPage implements OnInit {
   readonly meta = signal<ApiMeta>(emptyMeta({ limit: 10 }));
   readonly loading = signal(true);
   readonly detail = signal<ReviewRecord | null>(null);
-  readonly statuses = ['Pending', 'Approved', 'Rejected', 'On Hold', 'Banned', 'Suspended'];
+  readonly statuses = ['Pending', 'Approved', 'Rejected', 'On Hold', 'Banned'];
   filters = { search: '', dateFrom: '', dateTo: '', timeRange: '', rating: '', status: '' };
   private timer: ReturnType<typeof setTimeout> | null = null;
   readonly statCards = computed(() => {
@@ -305,11 +305,7 @@ export class ManageReviewPage implements OnInit {
       { label: 'Approved', value: count('approved'), filter: 'Approved' },
       { label: 'Rejected', value: count('rejected'), filter: 'Rejected' },
       { label: 'On Hold', value: count('on_hold') + count('hold'), filter: 'On Hold' },
-      {
-        label: 'Banned Users',
-        value: count('banned') || list.filter((r) => r.rating <= 2).length,
-        filter: 'Banned',
-      },
+      { label: 'Banned', value: count('banned'), filter: 'Banned' },
     ];
   });
 
@@ -385,12 +381,13 @@ export class ManageReviewPage implements OnInit {
   }
 
   excerpt(text: string): string {
-    const words = (text || '').split(/\s+/);
-    return words.length > 3 ? `${words.slice(0, 3).join(' ')}...` : text;
+    const clean = (text || '').trim();
+    return clean.length > 140 ? `${clean.slice(0, 140)}…` : clean;
   }
 
+  /** Admins moderate here; the company reply lives on the public page. */
   reply(r: ReviewRecord): void {
-    void this.router.navigate(['/company/review', r.id]);
+    void this.router.navigate(['/agency'], { queryParams: { id: r.companyId, reviewId: r.id } });
   }
 
   async setStatus(r: ReviewRecord, status: string, message?: string): Promise<void> {

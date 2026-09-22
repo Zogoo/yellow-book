@@ -1,9 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../core/services/auth.service';
 import { LoginModalService } from '../core/services/login-modal.service';
-import { ToastService } from '../core/services/toast.service';
 import { getDefaultRouteForUser } from '../core/utils/role-access';
 import { PanelProfileMenu } from '../shared/panel-profile-menu';
 
@@ -31,6 +30,11 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
           >
         </nav>
         <div class="hidden items-center gap-4 md:flex">
+          <a
+            routerLink="/business/signup"
+            class="text-sm font-medium text-[#616161] hover:text-[#212121]"
+            >For businesses</a
+          >
           @if (auth.isAuthenticated()) {
             <app-panel-profile-menu roleLabel="Account" [dashboardTo]="dashboardTo()" />
           } @else {
@@ -39,12 +43,10 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
               class="text-sm font-semibold"
               (click)="modal.openModal('info-nav')"
             >
-              Login
+              Log in
             </button>
+            <a routerLink="/auth/signup" class="yb-btn yb-btn-gold">Sign up</a>
           }
-          <button type="button" class="yb-btn yb-btn-outline" (click)="listAgency()">
-            List Your Agency
-          </button>
         </div>
         <button
           type="button"
@@ -66,10 +68,11 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
           <a routerLink="/catagory" (click)="open.set(false)">Category</a>
           <a routerLink="/popular-list" (click)="open.set(false)">Popular Listing</a>
           <a routerLink="/faq" (click)="open.set(false)">FAQ</a>
+          <a routerLink="/business/signup" (click)="open.set(false)">For businesses</a>
           @if (auth.isAuthenticated()) {
-            <a [routerLink]="dashboardTo()" (click)="open.set(false)">My Dashboard</a>
+            <a [routerLink]="dashboardTo()" (click)="open.set(false)">My dashboard</a>
             <button type="button" class="text-left text-red-600" (click)="auth.logout()">
-              Logout
+              Log out
             </button>
           } @else {
             <button
@@ -77,12 +80,12 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
               class="text-left"
               (click)="open.set(false); modal.openModal('info-nav')"
             >
-              Login
+              Log in
             </button>
+            <a routerLink="/auth/signup" (click)="open.set(false)" class="yb-btn yb-btn-gold"
+              >Sign up</a
+            >
           }
-          <button type="button" class="yb-btn yb-btn-gold" (click)="listAgency()">
-            List Your Agency
-          </button>
         </aside>
       }
     </header>
@@ -91,18 +94,6 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
 export class InfoPageNav {
   readonly auth = inject(AuthService);
   readonly modal = inject(LoginModalService);
-  private readonly toast = inject(ToastService);
-  private readonly router = inject(Router);
   readonly open = signal(false);
   readonly dashboardTo = computed(() => getDefaultRouteForUser(this.auth.user()));
-
-  listAgency(): void {
-    this.open.set(false);
-    if (!this.auth.isAuthenticated()) {
-      this.toast.info('Please login to list your agency');
-      this.modal.openModal('info-nav');
-      return;
-    }
-    void this.router.navigateByUrl('/popular-list');
-  }
 }

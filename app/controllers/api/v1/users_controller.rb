@@ -3,7 +3,7 @@ module Api
     class UsersController < ApplicationController
       before_action :require_account!, :require_verified_email!
       before_action -> { require_roles!("super_admin", "admin", "agent"); require_permissions!("users_read") }, only: %i[index show]
-      before_action -> { require_roles!("super_admin", "admin") }, only: %i[create update destroy]
+      before_action -> { require_roles!("super_admin", "admin"); require_permissions!("users_write") }, only: %i[create update destroy]
 
       def index
         users, meta = paginate(UsersQuery.new(User.all).call(query_params))
@@ -60,11 +60,18 @@ module Api
         end
         user.update!(attrs)
         user.sync_role!
+        # Losing access has to mean losing the session too.
+        Session.where(user_id: user.id).update_all(revoked_at: Time.current) unless user.active?
         render_data(UserSerializer.list_item(user.reload))
       end
 
       def destroy
         user = find_user
+        owned = user.companies.count
+        if owned.positive?
+          raise Api::Conflict, "This account owns #{owned} #{'company'.pluralize(owned)}. Reassign or delete the #{'company'.pluralize(owned)} first — deleting the owner would erase customers' reviews."
+        end
+
         user.destroy!
         render_data(id: user.id, deleted: true)
       end

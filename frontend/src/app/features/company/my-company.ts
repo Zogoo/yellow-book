@@ -80,7 +80,7 @@ import { CompanyRecord } from '../../core/models';
               <label class="text-sm font-medium">Employees</label>
               <select class="yb-input" name="employees" [(ngModel)]="form.employees">
                 <option value="">Select</option>
-                @for (e of ['1-10', '10-20', '21-50', '51+']; track e) {
+                @for (e of employeeOptions; track e) {
                   <option [value]="e">{{ e }}</option>
                 }
                 @if (
@@ -94,10 +94,10 @@ import { CompanyRecord } from '../../core/models';
               <label class="text-sm font-medium">Annual revenue</label>
               <select class="yb-input" name="revenue" [(ngModel)]="form.revenue">
                 <option value="">Select</option>
-                @for (r of ['<$1M', '$1M - $10M', '$10M+']; track r) {
-                  <option [value]="r">{{ r }}</option>
+                @for (r of revenueOptions; track r.value) {
+                  <option [value]="r.value">{{ r.label }}</option>
                 }
-                @if (form.revenue && !['<$1M', '$1M - $10M', '$10M+'].includes(form.revenue)) {
+                @if (form.revenue && !revenueValues.includes(form.revenue)) {
                   <option [value]="form.revenue">{{ form.revenue }}</option>
                 }
               </select>
@@ -234,6 +234,14 @@ export class MyCompanyPage implements OnInit {
     'E-commerce',
     'Real Estate',
   ];
+  readonly employeeOptions = ['1-10', '11-30', '31-50', '51-100', '100+'];
+  readonly revenueOptions = [
+    { value: '0-100k', label: '0 – 100K MNT' },
+    { value: '100k-500k', label: '100K – 500K MNT' },
+    { value: '500k-1m', label: '500K – 1M MNT' },
+    { value: '1m+', label: '1M+ MNT' },
+  ];
+  readonly revenueValues = this.revenueOptions.map((r) => r.value);
   readonly locationOptions = [
     'Ulaanbaatar',
     'Darkhan',

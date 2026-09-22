@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CompanyProfile } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
+import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-policy';
 
 /** `/company/settings` — password change + notification preference toggles. */
 @Component({
@@ -15,7 +17,8 @@ import { CompanyProfile } from '../../core/models';
     </header>
     <div class="grid gap-6 lg:grid-cols-2">
       <form class="yb-card space-y-4 p-6" (ngSubmit)="updatePassword()" novalidate>
-        <h2 class="text-lg font-semibold">Change Password</h2>
+        <h2 class="text-lg font-semibold">Change password</h2>
+        <p class="text-xs text-gray-500">{{ passwordRule }}</p>
         @for (field of fields; track field.key) {
           <div>
             <label class="text-sm font-medium">{{ field.label }}</label>
@@ -103,6 +106,8 @@ import { CompanyProfile } from '../../core/models';
 export class CompanySettingsPage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
+  readonly passwordRule = PASSWORD_RULE_TEXT;
   readonly fullName = signal('');
   readonly busy = signal(false);
   readonly message = signal<string | null>(null);
@@ -136,24 +141,19 @@ export class CompanySettingsPage implements OnInit {
 
   async updatePassword(): Promise<void> {
     this.ok.set(false);
-    if (!this.pw.current) return this.message.set('Please enter your current password');
-    if (!this.pw.next) return this.message.set('Please enter a new password');
-    if (this.pw.next.length < 6)
-      return this.message.set('Password must be at least 6 characters long');
-    if (this.pw.next !== this.pw.confirm) return this.message.set('New passwords do not match');
-    if (this.pw.next === this.pw.current)
-      return this.message.set('New password must be different from current password');
+    const problem = passwordProblem(this.pw.next);
+    if (!this.pw.current) return this.message.set('Enter your current password.');
+    if (problem) return this.message.set(problem);
+    if (this.pw.next !== this.pw.confirm) return this.message.set('New passwords do not match.');
+
     this.busy.set(true);
     try {
-      await this.api.putData('company/profile', {
-        security: { lastPasswordChange: new Date().toISOString() },
-        updatedAt: new Date().toISOString(),
-      });
+      await this.auth.changePassword(this.pw.current, this.pw.next);
       this.ok.set(true);
-      this.message.set('Password updated successfully!');
+      this.message.set('Password updated. Other devices have been signed out.');
       this.pw = { current: '', next: '', confirm: '' };
-    } catch {
-      this.message.set('Unable to update password.');
+    } catch (e) {
+      this.message.set(e instanceof Error ? e.message : 'Unable to update password.');
     } finally {
       this.busy.set(false);
     }

@@ -18,7 +18,7 @@ import { getDefaultRouteForUser } from '../core/utils/role-access';
 import { normalizeName, slugify } from '../core/utils/status-class';
 import { PanelProfileMenu } from '../shared/panel-profile-menu';
 
-/** Home hero: logo, links, login/profile, "List Your Agency", headline and listing search. */
+/** Home hero: logo, navigation, sign-in actions, headline and listing search. */
 @Component({
   selector: 'app-navbar',
   imports: [RouterLink, FormsModule, PanelProfileMenu],
@@ -54,20 +54,19 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
           >
         </nav>
         <div class="hidden items-center gap-4 md:flex">
+          <a
+            routerLink="/business/signup"
+            class="text-sm font-medium text-[#616161] hover:text-[#212121]"
+            >For businesses</a
+          >
           @if (auth.isAuthenticated()) {
             <app-panel-profile-menu roleLabel="Account" [dashboardTo]="dashboardTo()" />
           } @else {
-            <button
-              type="button"
-              class="text-sm font-semibold text-[#212121]"
-              (click)="modal.openModal('navbar')"
-            >
-              Login
+            <button type="button" class="text-sm font-semibold text-[#212121]" (click)="signIn()">
+              Log in
             </button>
+            <a routerLink="/auth/signup" class="yb-btn yb-btn-gold">Sign up</a>
           }
-          <button type="button" class="yb-btn yb-btn-outline" (click)="listAgency()">
-            List Your Agency
-          </button>
         </div>
         <button
           type="button"
@@ -107,32 +106,34 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
             >Popular Listing</a
           >
           <a routerLink="/faq" (click)="menuOpen.set(false)" class="text-base font-medium">FAQ</a>
+          <a
+            routerLink="/business/signup"
+            (click)="menuOpen.set(false)"
+            class="text-base font-medium"
+            >For businesses</a
+          >
           @if (auth.isAuthenticated()) {
             <a
               [routerLink]="dashboardTo()"
               (click)="menuOpen.set(false)"
               class="text-base font-medium"
-              >My Dashboard</a
+              >My dashboard</a
             >
             <button
               type="button"
               class="text-left text-base font-medium text-red-600"
               (click)="auth.logout()"
             >
-              Logout
+              Log out
             </button>
           } @else {
-            <button
-              type="button"
-              class="text-left text-base font-medium"
-              (click)="menuOpen.set(false); modal.openModal('navbar')"
-            >
-              Login
+            <button type="button" class="text-left text-base font-medium" (click)="signIn()">
+              Log in
             </button>
+            <a routerLink="/auth/signup" (click)="menuOpen.set(false)" class="yb-btn yb-btn-gold"
+              >Sign up</a
+            >
           }
-          <button type="button" class="yb-btn yb-btn-gold" (click)="listAgency()">
-            List Your Agency
-          </button>
         </aside>
       }
 
@@ -291,10 +292,8 @@ export class Navbar implements OnInit {
     }
   }
 
-  listAgency(): void {
+  signIn(): void {
     this.menuOpen.set(false);
-    void this.router.navigateByUrl(
-      this.auth.isAuthenticated() ? '/popular-list' : '/auth/register',
-    );
+    this.modal.openModal('navbar');
   }
 }

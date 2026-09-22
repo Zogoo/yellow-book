@@ -49,7 +49,7 @@ interface RegistrationOptions {
         <label class="text-xs text-gray-500"
           >Time Range
           <select class="yb-input" [(ngModel)]="filters.timeRange" (ngModelChange)="load(1)">
-            <option value="">Today</option>
+            <option value="">Any time</option>
             <option value="yesterday">Yesterday</option>
             <option value="last7days">Last 7 days</option>
             <option value="last30days">Last 30 days</option>
@@ -88,14 +88,6 @@ interface RegistrationOptions {
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
             <tr>
-              <th class="px-3 py-3">
-                <input
-                  type="checkbox"
-                  [checked]="allSelected()"
-                  (change)="toggleAll()"
-                  aria-label="Select all"
-                />
-              </th>
               <th class="px-3 py-3">No</th>
               <th class="px-3 py-3">Company</th>
               <th class="px-3 py-3">Website</th>
@@ -108,14 +100,6 @@ interface RegistrationOptions {
           <tbody>
             @for (c of rows(); track c.id; let i = $index) {
               <tr class="border-t border-gray-100">
-                <td class="px-3 py-3">
-                  <input
-                    type="checkbox"
-                    [checked]="selected().has(c.id)"
-                    (change)="toggleOne(c.id)"
-                    [attr.aria-label]="'Select ' + c.name"
-                  />
-                </td>
                 <td class="px-3 py-3 text-gray-500">
                   {{ pad((meta().page - 1) * meta().limit + i + 1) }}
                 </td>
@@ -273,7 +257,7 @@ interface RegistrationOptions {
               aria-label="Number of Employees"
             >
               <option value="">Number of Employees</option>
-              @for (e of ['1-10', '11-30', '31-50', '51-100', '100+']; track e) {
+              @for (e of employeeOptions; track e) {
                 <option [value]="e">{{ e }}</option>
               }
             </select>
@@ -284,10 +268,9 @@ interface RegistrationOptions {
               aria-label="Annual Revenue"
             >
               <option value="">Annual Revenue</option>
-              <option value="0-100k">0–100K MNT</option>
-              <option value="100k-500k">100K–500K MNT</option>
-              <option value="500k-1m">500K–1M MNT</option>
-              <option value="1m+">1M+ MNT</option>
+              @for (r of revenueOptions; track r.value) {
+                <option [value]="r.value">{{ r.label }}</option>
+              }
             </select>
             <textarea
               class="yb-input"
@@ -387,6 +370,13 @@ export class ManageCompaniesPage implements OnInit {
   readonly addStep = signal(1);
   readonly categories = signal<string[]>([]);
   readonly statuses = ['Approved', 'Pending', 'Rejected'];
+  readonly employeeOptions = ['1-10', '11-30', '31-50', '51-100', '100+'];
+  readonly revenueOptions = [
+    { value: '0-100k', label: '0 – 100K MNT' },
+    { value: '100k-500k', label: '100K – 500K MNT' },
+    { value: '500k-1m', label: '500K – 1M MNT' },
+    { value: '1m+', label: '1M+ MNT' },
+  ];
   filters = { search: '', dateFrom: '', dateTo: '', timeRange: '', status: '', category: '' };
   add = {
     name: '',

@@ -97,22 +97,42 @@ else
   seed_user.sync_role!
   company_owner.sync_role!
 
+  # Each review belongs to a different customer: one review per customer per company.
+  reviewers = [
+    [ "alice@yellowbook.local", "Alice Johnson" ],
+    [ "bob@yellowbook.local", "Bob Smith" ],
+    [ "carol@yellowbook.local", "Carol White" ],
+    [ "david@yellowbook.local", "David Brown" ],
+    [ "eve@yellowbook.local", "Eve Davis" ]
+  ].to_h do |email, name|
+    person = User.find_or_initialize_by(email: email)
+    person.assign_attributes(password: "Reviewer#{name.split.first}123!", display_name: name,
+                             first_name: name.split.first, last_name: name.split.last,
+                             status: "active", role: "user", signup_method: "Email", email_verified_at: Time.current)
+    person.save!
+    [ email, person ]
+  end
+
   if Review.none?
     [
-      [ "petcare-plus", "Alice Johnson", "alice@example.com", 5, "Excellent pet care! My dog loved it." ],
-      [ "petcare-plus", "Bob Smith", "bob@example.com", 4, "Good service, friendly staff." ],
-      [ "beauty-haven", "Carol White", "carol@example.com", 5, "Best salon in town!" ],
-      [ "beauty-haven", "David Brown", nil, 4, "Great haircut and styling." ],
-      [ "gobi-adventures", "Eve Davis", "eve@example.com", 5, "Amazing tour experience." ],
-      [ "tech-solutions", "Frank Wilson", "frank@example.com", 5, "Professional web development." ]
-    ].each do |slug, name, email, rating, content|
+      [ "petcare-plus", "alice@yellowbook.local", 5, "Excellent pet care. They fitted my dog in the same day and explained every step of the treatment." ],
+      [ "petcare-plus", "bob@yellowbook.local", 4, "Good service and friendly staff. Parking near the clinic is tight, everything else was easy." ],
+      [ "beauty-haven", "carol@yellowbook.local", 5, "Best salon in town. The stylist listened, and the colour is exactly what I asked for." ],
+      [ "beauty-haven", "david@yellowbook.local", 4, "Great haircut and styling, and they ran on time. I will book here again." ],
+      [ "gobi-adventures", "eve@yellowbook.local", 5, "Amazing tour. The guide knew every route and the camp food was far better than expected." ],
+      [ "tech-solutions", "user@yellowbook.local", 5, "Professional web development. Clear estimates, weekly demos, and they shipped on the agreed date." ]
+    ].each do |slug, email, rating, content|
       company = Company.find_by!(slug: slug)
-      Review.create!(company: company, user: regular_user, reviewer_name: name, reviewer_email: email, content: content,
-                     rating: rating, status: "approved", company_name: company.name)
+      author = reviewers[email] || regular_user
+      Review.create!(company: company, user: author, reviewer_name: author.display_name, reviewer_email: author.email,
+                     content: content, rating: rating, status: "approved", company_name: company.name,
+                     moderated_at: Time.current)
     end
   end
 
   Review.order(:id).limit(3).each do |review|
+    next if review.user_id == regular_user.id
+
     ReviewLikeShare.find_or_create_by!(user: regular_user, review: review, action: "like")
   end
   if (first_review = Review.order(:id).first)

@@ -48,17 +48,16 @@ const ADMIN_PERMISSION_HINTS = [
 
 export const GUEST_ONLY_PATHS = new Set([
   '/auth/login',
+  '/auth/signup',
   '/auth/staff/login',
   '/auth/company/login',
   '/auth/register',
+  '/business/signup',
   '/auth/forgot-password',
 ]);
 
-export const AUTH_LOGIN_PATHS = {
-  user: '/auth/login',
-  staff: '/auth/staff/login',
-  company: '/auth/company/login',
-};
+/** There is one sign-in page for every role. */
+export const LOGIN_PATH = '/auth/login';
 
 type Loose = Record<string, unknown> | null | undefined;
 
@@ -296,13 +295,6 @@ export function resolvePostLoginRedirect(
 }
 
 export function buildLoginRedirectPath(targetPath: string): string {
-  const scope = getRouteScope(targetPath);
-  const login =
-    scope === 'admin' || scope === 'agent'
-      ? AUTH_LOGIN_PATHS.staff
-      : scope === 'company'
-        ? AUTH_LOGIN_PATHS.company
-        : AUTH_LOGIN_PATHS.user;
   const next = sanitizeInternalPath(targetPath) || '/';
-  return `${login}?next=${encodeURIComponent(next)}`;
+  return `${LOGIN_PATH}?next=${encodeURIComponent(next)}`;
 }

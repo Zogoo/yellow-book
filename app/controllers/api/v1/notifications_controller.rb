@@ -4,7 +4,9 @@ module Api
       before_action :require_account!, :require_verified_email!
 
       def index
-        items, meta = paginate(Notification.where(owner_filter).recent_first)
+        scope = owner_scope(Notification.all).recent_first
+        scope = scope.where(unread: Api::Params.parse_boolean(query_params["unread"], "unread")) if query_params["unread"].present?
+        items, meta = paginate(scope)
         render_data(items.map { |n| NotificationSerializer.item(n) }, meta)
       end
 
@@ -46,6 +48,14 @@ module Api
       end
 
       private
+
+      # A company owner is also a person: they see both streams.
+      def owner_scope(relation)
+        return relation.where(admin_id: current_account.id) unless current_account.user?
+        return relation.where(user_id: current_account.id) unless current_account.company_id
+
+        relation.where("user_id = ? OR company_id = ?", current_account.id, current_account.company_id)
+      end
 
       def owner_filter
         if current_account.user?

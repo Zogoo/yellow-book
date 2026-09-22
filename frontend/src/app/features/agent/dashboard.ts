@@ -148,8 +148,8 @@ import { StatusDropdown } from '../../shared/status-dropdown';
               <dd>{{ c.category }}</dd>
             </div>
             <div class="flex gap-3">
-              <dt class="w-32 text-gray-500">Industry</dt>
-              <dd>{{ c.category }}</dd>
+              <dt class="w-32 text-gray-500">Assigned</dt>
+              <dd>{{ c.assignedDate | slice: 0 : 10 }}</dd>
             </div>
             <div class="flex gap-3">
               <dt class="w-32 text-gray-500">Contact Email</dt>

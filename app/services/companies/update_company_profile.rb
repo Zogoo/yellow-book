@@ -33,7 +33,8 @@ module Companies
         description: profile["about"].presence&.to_s || @company.description,
         image: profile["avatar"].presence&.to_s || @company.image
       )
-      CompanySerializer.profile(@company, profile, preferences, security, merged: true)
+      @company.reload
+      CompanySerializer.profile(@company, profile, preferences, security)
     end
   end
 end

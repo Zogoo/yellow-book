@@ -5,26 +5,29 @@ module Api
 
       before_action :require_verified_email!, except: %i[recent agency_index]
       before_action -> { require_roles!(*ANY_ROLE) }, only: %i[show update destroy_recent]
-      before_action -> { require_roles!("user") }, only: %i[create my_reviews update_my_review destroy_my_review]
+      before_action -> { require_roles!("user", "company") }, only: %i[create my_reviews update_my_review destroy_my_review]
       before_action :require_account!, only: %i[like dislike share]
       before_action -> { require_roles!("company") }, only: :reply
       before_action -> { require_roles!("super_admin", "admin", "agent") }, only: :destroy
 
-      # GET /reviews/recent — approved by default; authenticated callers may pick a status.
+      # GET /reviews/recent — the public feed: approved reviews across the platform.
+      # Moderators may widen it by status; nobody else can.
       def recent
-        scope = Reviews::ScopeForAccount.call(account: current_account, anonymous_approved_only: false).approved
-        allow_status = current_account.present?
-        scope = scope.unscope(where: :status) if allow_status && query_params["status"].present?
-        reviews, meta = paginate(ReviewsQuery.new(scope).call(query_params, allow_status: allow_status))
+        scope = moderator? ? Review.all : Review.approved
+        reviews, meta = paginate(ReviewsQuery.new(scope).call(query_params, allow_status: moderator?))
         render_list(reviews, meta)
       end
 
-      # GET /agency/reviews
+      # GET /agency/reviews — a company's page when `companyId` is given (published
+      # reviews, plus your own whatever its state), and the caller's own queue otherwise.
       def agency_index
-        scope = Reviews::ScopeForAccount.call(account: current_account)
-        scope = scope.where(company_id: Api::Params.parse_id(query_params["companyId"], "companyId")) if query_params["companyId"].present?
-        scope = scope.unscope(where: :status) if current_account.nil? && query_params["status"].present?
-        reviews, meta = paginate(ReviewsQuery.new(scope).call(query_params))
+        scope =
+          if query_params["companyId"].present?
+            company_reviews(Api::Params.parse_id(query_params["companyId"], "companyId"))
+          else
+            Reviews::ScopeForAccount.call(account: current_account)
+          end
+        reviews, meta = paginate(ReviewsQuery.new(scope).call(query_params, allow_status: moderator?))
         render_list(reviews, meta)
       end
 
@@ -34,6 +37,7 @@ module Api
 
         render_data(serialize(review, include_unapproved_reply: true))
       end
+
 
       def create
         review = Reviews::CreateReview.call(payload: body_params, query: query_params, account: current_account)
@@ -94,8 +98,17 @@ module Api
 
       private
 
+      # Reactions only make sense on a published review.
+      def require_published_review!(review)
+        return if review.status == "approved"
+
+        raise Api::NotFound, "Review not found"
+      end
+
       def react(action)
-        review = Reviews::ReactToReview.call(review: find_review, account: current_account, action: action)
+        target = find_review
+        require_published_review!(target)
+        review = Reviews::ReactToReview.call(review: target, account: current_account, action: action)
         render_data(serialize(review), http_status: :created)
       end
 
@@ -113,13 +126,42 @@ module Api
         Review.includes(:company, :user).find_by(id: route_id) or raise Api::NotFound, "Review not found"
       end
 
+      # Everyone sees a company's published reviews. Moderators and the company
+      # itself see all of them; you always see your own.
+      def company_reviews(company_id)
+        scope = Review.where(company_id: company_id)
+        return scope if moderator?
+        return scope if current_account&.company_id == company_id
+
+        mine = current_account&.user? ? current_account.id : nil
+        mine ? scope.where("status = ? OR user_id = ?", "approved", mine) : scope.approved
+      end
+
+      def moderator?
+        current_account&.admin? || false
+      end
+
+      # Reviewer contact details are for moderators and the company being reviewed.
+      def expose_contact?
+        current_account.present? && (current_account.admin? || current_account.company?)
+      end
+
       def render_list(reviews, meta)
         counts = Reviews::LikeShareCounts.call(review_ids: reviews.map(&:id))
-        render_data(reviews.map { |r| ReviewSerializer.recent(r, counts[r.id], include_unapproved_reply: current_account.present?) }, meta)
+        render_data(
+          reviews.map do |r|
+            ReviewSerializer.recent(r, counts[r.id],
+                                    include_unapproved_reply: current_account.present?,
+                                    include_contact: expose_contact?)
+          end,
+          meta
+        )
       end
 
       def serialize(review, include_unapproved_reply: current_account.present?)
-        ReviewSerializer.recent(review, Reviews::LikeShareCounts.call(review_ids: [ review.id ])[review.id], include_unapproved_reply: include_unapproved_reply)
+        ReviewSerializer.recent(review, Reviews::LikeShareCounts.call(review_ids: [ review.id ])[review.id],
+                                include_unapproved_reply: include_unapproved_reply,
+                                include_contact: expose_contact? || review.user_id == current_account&.id)
       end
     end
   end

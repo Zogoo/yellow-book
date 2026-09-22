@@ -133,6 +133,7 @@ export class AuthService {
 
   async requestEmailCode(
     email: string,
+    purpose: 'login' | 'signup' | 'reset_password' = 'login',
   ): Promise<{ message: string; expiresAt?: number; debug?: { code: string } }> {
     const normalized = (email || '').trim().toLowerCase();
     if (!normalized) throw new AuthFlowError('Email is required', 'EMAIL_REQUIRED');
@@ -140,25 +141,53 @@ export class AuthService {
       message: string;
       expiresAt?: number;
       debug?: { code: string };
-    }>('auth/email-code/request', { email: normalized });
+    }>('auth/email-code/request', { email: normalized, purpose }, { toast: { showError: false } });
     this.pendingChallenge.set({
       email: normalized,
       sentAt: Date.now(),
       expiresAt: data?.expiresAt ?? null,
     });
-    this.toast.success('Verification code sent');
     return data;
   }
 
-  async verifyEmailCode(email: string, code: string): Promise<AuthResponse> {
+  async verifyEmailCode(
+    email: string,
+    code: string,
+    purpose: 'login' | 'signup' = 'login',
+    name = '',
+  ): Promise<AuthResponse> {
     const normalized = (email || '').trim().toLowerCase();
-    const data = await this.api.postData<AuthResponse>('auth/email-code/verify', {
-      email: normalized,
-      otp: code,
-      code,
-    });
+    const data = await this.api.postData<AuthResponse>(
+      'auth/email-code/verify',
+      { email: normalized, otp: code, code, purpose, name },
+      { toast: { showError: false } },
+    );
     this.pendingChallenge.set(null);
-    return this.adoptSession(data, 'Logged in successfully');
+    return this.adoptSession(data, purpose === 'signup' ? 'Welcome to Yellow Book' : 'Signed in');
+  }
+
+  /** Customer sign-up: the same endpoint as a business, without a company. */
+  async signUp(payload: { email: string; name: string; password: string }): Promise<AuthResponse> {
+    this.clearSession();
+    const data = await this.api.postData<AuthResponse>(
+      'auth/register',
+      {
+        email: payload.email.trim().toLowerCase(),
+        name: payload.name.trim(),
+        password: payload.password,
+      },
+      { toast: { showError: false } },
+    );
+    return this.adoptSession(data, 'Welcome to Yellow Book');
+  }
+
+  /** Change the password of the signed-in account; other sessions end server-side. */
+  async changePassword(currentPassword: string, password: string): Promise<void> {
+    await this.api.putData(
+      'auth/password',
+      { currentPassword, password },
+      { toast: { showError: false } },
+    );
   }
 
   clearEmailChallenge(): void {

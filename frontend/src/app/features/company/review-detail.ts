@@ -41,7 +41,7 @@ import { RatingStars } from '../../shared/rating-stars';
         <div class="mt-3"><app-rating-stars [rating]="review()!.rating" size="sm" /></div>
         <p class="mt-3 text-gray-700">{{ review()!.content }}</p>
         <p class="mt-3 text-xs text-gray-500">
-          👍 {{ review()!.likes }} · 👎 {{ review()!.dislikes }} · ↗ {{ review()!.shares }}
+          👍 {{ review()!.likes }} · 👎 {{ review()!.dislikes }}
         </p>
       </article>
       <section class="yb-card p-6">
@@ -111,7 +111,12 @@ export class CompanyReviewDetailPage implements OnInit {
   readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly submitted = signal(false);
-  readonly isOwner = computed(() => this.auth.role() === 'company');
+  // Only the company the review is about may reply to it.
+  readonly isOwner = computed(() => {
+    const review = this.review();
+    const companyId = this.auth.user()?.companyId;
+    return Boolean(review && companyId != null && companyId === review.companyId);
+  });
   replyText = '';
 
   async ngOnInit(): Promise<void> {

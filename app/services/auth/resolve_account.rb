@@ -28,7 +28,7 @@ module Auth
       return nil unless session.user_id == payload[:sub]
 
       user = User.find_by(id: payload[:sub])
-      return nil unless user
+      return nil unless user&.active?
 
       company = user.companies.order(created_at: :desc).first
       company_account = user.role == "company" || company.present?
@@ -47,7 +47,7 @@ module Auth
       return nil unless session.admin_id == payload[:sub]
 
       admin = Admin.find_by(id: payload[:sub])
-      return nil unless admin
+      return nil unless admin&.active?
 
       Api::Account.new(
         id: admin.id, source: "admin", role: admin.platform_role,

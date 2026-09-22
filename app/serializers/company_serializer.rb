@@ -92,8 +92,8 @@ module CompanySerializer
     }
   end
 
-  def profile(company, profile, preferences, security, updated_at: company.updated_at, merged: false)
-    fetch = ->(key, fallback) { merged ? profile[key].to_s : (profile[key] || fallback).to_s }
+  def profile(company, profile, preferences, security, updated_at: company.updated_at)
+    fetch = ->(key, fallback) { (profile[key].presence || fallback).to_s }
     {
       fullName: fetch.call("fullName", company.owner_name),
       phoneNumber: fetch.call("phoneNumber", company.phone_number),

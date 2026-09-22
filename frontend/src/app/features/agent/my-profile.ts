@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SubadminProfile } from '../../core/models';
+import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-policy';
 
 /** `/agent/my-profile` — profile info and password tabs. */
 @Component({
@@ -80,11 +81,12 @@ import { SubadminProfile } from '../../core/models';
         }
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label class="text-sm font-medium">Full Name</label
+            <label class="text-sm font-medium" for="agent-full-name">Full Name</label
             ><input
               class="yb-input"
               name="fullName"
-              placeholder="Wade Warren"
+              id="agent-full-name"
+              placeholder="Your full name"
               [(ngModel)]="form.fullName"
             />
             @if (errors.fullName) {
@@ -92,12 +94,13 @@ import { SubadminProfile } from '../../core/models';
             }
           </div>
           <div>
-            <label class="text-sm font-medium">Email</label
+            <label class="text-sm font-medium" for="agent-email">Email</label
             ><input
               class="yb-input"
               type="email"
               name="email"
-              placeholder="curtis.weaver@example.com"
+              id="agent-email"
+              placeholder="you@yellowbook.local"
               [(ngModel)]="form.email"
             />
             @if (errors.email) {
@@ -105,11 +108,12 @@ import { SubadminProfile } from '../../core/models';
             }
           </div>
           <div>
-            <label class="text-sm font-medium">Mobile</label
+            <label class="text-sm font-medium" for="agent-mobile">Mobile</label
             ><input
               class="yb-input"
               name="mobile"
-              placeholder="+52 4164532"
+              id="agent-mobile"
+              placeholder="+976 8811 2233"
               [(ngModel)]="form.mobile"
             />
             @if (errors.mobile) {
@@ -117,8 +121,8 @@ import { SubadminProfile } from '../../core/models';
             }
           </div>
           <div>
-            <label class="text-sm font-medium">Role / Title</label
-            ><select class="yb-input" name="role" [(ngModel)]="form.role">
+            <label class="text-sm font-medium" for="agent-role">Role / Title</label
+            ><select class="yb-input" name="role" id="agent-role" [(ngModel)]="form.role">
               <option value="">Select role</option>
               @for (r of roleOptions; track r) {
                 <option [value]="r">{{ r }}</option>
@@ -132,8 +136,13 @@ import { SubadminProfile } from '../../core/models';
             }
           </div>
           <div>
-            <label class="text-sm font-medium">Location</label
-            ><select class="yb-input" name="location" [(ngModel)]="form.location">
+            <label class="text-sm font-medium" for="agent-location">Location</label
+            ><select
+              class="yb-input"
+              name="location"
+              id="agent-location"
+              [(ngModel)]="form.location"
+            >
               <option value="">Select location</option>
               @for (l of locationOptions; track l) {
                 <option [value]="l">{{ l }}</option>
@@ -144,8 +153,13 @@ import { SubadminProfile } from '../../core/models';
             </select>
           </div>
           <div>
-            <label class="text-sm font-medium">Timezone</label
-            ><select class="yb-input" name="timezone" [(ngModel)]="form.timezone">
+            <label class="text-sm font-medium" for="agent-timezone">Timezone</label
+            ><select
+              class="yb-input"
+              name="timezone"
+              id="agent-timezone"
+              [(ngModel)]="form.timezone"
+            >
               <option value="">Select timezone</option>
               @for (t of timezoneOptions; track t) {
                 <option [value]="t">{{ t }}</option>
@@ -157,12 +171,13 @@ import { SubadminProfile } from '../../core/models';
           </div>
         </div>
         <div>
-          <label class="text-sm font-medium">About you</label
+          <label class="text-sm font-medium" for="agent-bio">About you</label
           ><textarea
             class="yb-input"
             rows="3"
             maxlength="240"
             name="bio"
+            id="agent-bio"
             placeholder="Write about yourself in 24 words"
             [(ngModel)]="form.bio"
           ></textarea>
@@ -188,34 +203,32 @@ import { SubadminProfile } from '../../core/models';
             Secure your account by updating your password regularly
           </p>
         </div>
+        <label class="text-sm font-medium" for="agent-pw-current">Current password</label>
         <input
           class="yb-input"
+          id="agent-pw-current"
           type="password"
           name="current"
-          placeholder="Current password"
           [(ngModel)]="pw.current"
-          aria-label="Current password"
         />
+        <label class="text-sm font-medium" for="agent-pw-next">New password</label>
         <input
           class="yb-input"
+          id="agent-pw-next"
           type="password"
           name="next"
-          placeholder="New password"
           [(ngModel)]="pw.next"
-          aria-label="New password"
         />
+        <label class="text-sm font-medium" for="agent-pw-confirm">Confirm new password</label>
         <input
           class="yb-input"
+          id="agent-pw-confirm"
           type="password"
           name="confirm"
-          placeholder="Confirm new password"
           [(ngModel)]="pw.confirm"
-          aria-label="Confirm new password"
         />
         <ul class="list-disc pl-5 text-xs text-gray-500">
-          <li>Use at least 8 characters</li>
-          <li>Combine upper &amp; lower case letters</li>
-          <li>Add a number or special character</li>
+          <li>{{ passwordRule }}</li>
         </ul>
         @if (pwError()) {
           <p class="text-sm text-red-600" role="alert">{{ pwError() }}</p>
@@ -245,19 +258,13 @@ export class AgentProfilePage implements OnInit {
     'Support Lead',
     'Account Manager',
   ];
-  readonly locationOptions = [
-    'San Francisco, CA',
-    'New York, NY',
-    'Austin, TX',
-    'Chicago, IL',
-    'Remote / Hybrid',
-  ];
+  readonly locationOptions = ['Ulaanbaatar', 'Darkhan', 'Erdenet', 'Choibalsan', 'Remote / Hybrid'];
   readonly timezoneOptions = [
-    'UTC-8 (PST)',
-    'UTC-5 (EST)',
+    'UTC+8 (Ulaanbaatar)',
+    'UTC+7 (Hovd)',
     'UTC+1 (CET)',
-    'UTC+5:30 (IST)',
-    'UTC+8 (CST)',
+    'UTC-5 (EST)',
+    'UTC-8 (PST)',
   ];
   form = {
     fullName: '',
@@ -272,6 +279,7 @@ export class AgentProfilePage implements OnInit {
   };
   errors: { fullName?: string; email?: string; mobile?: string; role?: string } = {};
   pw = { current: '', next: '', confirm: '' };
+  readonly passwordRule = PASSWORD_RULE_TEXT;
 
   async ngOnInit(): Promise<void> {
     try {
@@ -345,26 +353,19 @@ export class AgentProfilePage implements OnInit {
 
   async savePassword(): Promise<void> {
     this.pwError.set(null);
-    if (!this.pw.current) return this.pwError.set('Current password is required.');
-    if (!this.pw.next) return this.pwError.set('Enter a new password.');
-    if (this.pw.next.length < 8) return this.pwError.set('Password must be at least 8 characters.');
-    if (this.pw.next === this.pw.current)
-      return this.pwError.set('New password must be different.');
-    if (!this.pw.confirm) return this.pwError.set('Confirm your new password.');
-    if (this.pw.next !== this.pw.confirm) return this.pwError.set('Passwords do not match.');
+    const problem = passwordProblem(this.pw.next);
+    if (!this.pw.current) return this.pwError.set('Enter your current password.');
+    if (problem) return this.pwError.set(problem);
+    if (this.pw.next !== this.pw.confirm) return this.pwError.set('New passwords do not match.');
+
     this.busy.set(true);
     try {
-      const now = new Date().toISOString();
-      await this.api.putData(
-        'subadmin/profile',
-        { security: { lastPasswordChange: now }, updatedAt: now },
-        { toast: { showError: false } },
-      );
-      this.passwordUpdated.set(this.fmt(now));
+      await this.auth.changePassword(this.pw.current, this.pw.next);
+      this.passwordUpdated.set(this.fmt(new Date().toISOString()));
       this.pw = { current: '', next: '', confirm: '' };
-      this.show(true, 'Password updated successfully.');
-    } catch {
-      this.show(false, 'Unable to update password.');
+      this.show(true, 'Password updated. Other devices have been signed out.');
+    } catch (e) {
+      this.pwError.set(e instanceof Error ? e.message : 'Unable to update password.');
     } finally {
       this.busy.set(false);
     }

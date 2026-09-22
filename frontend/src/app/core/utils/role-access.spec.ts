@@ -37,15 +37,16 @@ describe('role-access', () => {
     expect(canAccessPath(scoped, '/admin/settings')).toBe(false);
   });
 
-  it('routes unauthenticated visitors to the scoped login page', () => {
+  it('sends every unauthenticated visitor to the one sign-in page', () => {
+    // One credential, one door: the destination only differs in `next`.
     expect(buildLoginRedirectPath('/admin/dashboard')).toBe(
-      '/auth/staff/login?next=%2Fadmin%2Fdashboard',
+      '/auth/login?next=%2Fadmin%2Fdashboard',
     );
     expect(buildLoginRedirectPath('/agent/dashboard')).toBe(
-      '/auth/staff/login?next=%2Fagent%2Fdashboard',
+      '/auth/login?next=%2Fagent%2Fdashboard',
     );
     expect(buildLoginRedirectPath('/company/dashboard')).toBe(
-      '/auth/company/login?next=%2Fcompany%2Fdashboard',
+      '/auth/login?next=%2Fcompany%2Fdashboard',
     );
     expect(buildLoginRedirectPath('/user/dashboard')).toBe('/auth/login?next=%2Fuser%2Fdashboard');
   });

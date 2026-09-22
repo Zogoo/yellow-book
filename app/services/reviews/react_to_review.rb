@@ -23,7 +23,8 @@ module Reviews
         existing = reactions.find_by(action: "dislike")
         existing ? existing.destroy : ReviewLikeShare.create!(user_id: user_id, review: @review, action: "dislike")
       when "share"
-        ReviewLikeShare.create!(user_id: user_id, review: @review, action: "share")
+        # One share per person: a counter anyone can inflate is not a signal.
+        ReviewLikeShare.find_or_create_by!(user_id: user_id, review: @review, action: "share")
       end
       @review.reload
     end

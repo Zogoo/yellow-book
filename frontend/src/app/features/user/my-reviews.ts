@@ -89,7 +89,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
               <div class="mt-2"><app-rating-stars [rating]="review.rating" size="sm" /></div>
               <p class="mt-2 text-gray-700">{{ review.content }}</p>
               <p class="mt-2 text-xs text-gray-500">
-                👍 {{ review.likes }} · 👎 {{ review.dislikes }} · ↗ {{ review.shares }}
+                👍 {{ review.likes }} · 👎 {{ review.dislikes }}
               </p>
               @if (review.companyResponse) {
                 <div class="mt-3 rounded-lg bg-[#fff9e6] p-3 text-sm">
@@ -183,11 +183,19 @@ export class MyReviewsPage implements OnInit {
   }
 
   async saveEdit(review: ReviewRecord): Promise<void> {
+    if (this.editRating < 1) {
+      this.toast.alert('Choose a rating from 1 to 5 stars.');
+      return;
+    }
+    if (this.editContent.trim().length < 10) {
+      this.toast.alert('Tell other people a little more about what happened.');
+      return;
+    }
     this.busy.set(true);
     try {
       const updated = await this.api.putData<ReviewRecord>(`user/my-reviews/${review.id}`, {
         rating: this.editRating,
-        review: this.editContent,
+        content: this.editContent,
       });
       this.reviews.update((list) =>
         list.map((r) => (r.id === review.id ? { ...r, ...updated } : r)),

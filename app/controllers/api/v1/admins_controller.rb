@@ -62,6 +62,10 @@ module Api
           attrs[:permissions] = body["permissions"]
         end
         if body.key?("password") && Api::Params.string(body["password"]).present?
+          # A super admin may reset a colleague's password, never their own here:
+          # changing your own goes through PUT /auth/password with the current one.
+          raise Api::Forbidden, "Use the change-password endpoint for your own account" if admin.id == current_account.id
+
           attrs[:password] = Api::Params.parse_password(body["password"])
         end
         if body.key?("lastLogin") || body.key?("lastLoginAt")
@@ -69,6 +73,7 @@ module Api
           attrs[:last_login_at] = source.present? ? Time.zone.parse(source.to_s) : nil
         end
         admin.update!(attrs)
+        Session.where(admin_id: admin.id).update_all(revoked_at: Time.current) unless admin.active?
         render_data(AdminSerializer.item(admin))
       end
 

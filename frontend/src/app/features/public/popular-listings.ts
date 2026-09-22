@@ -24,6 +24,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
             tabindex="0"
             (click)="open(item)"
             (keydown.enter)="open(item)"
+            (keydown.space)="open(item); $event.preventDefault()"
           >
             <img
               [src]="item.image"

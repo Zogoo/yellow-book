@@ -1,14 +1,16 @@
 module ReviewSerializer
   module_function
 
-  def recent(review, counts = nil, include_unapproved_reply: false)
-    counts ||= { likes: review.likes, dislikes: review.dislikes, shares: review.shares }
+  # `include_contact` gates the reviewer's email: moderators, the company being
+  # reviewed and the author see it, the public never does.
+  def recent(review, counts = nil, include_unapproved_reply: false, include_contact: false)
+    counts ||= { likes: 0, dislikes: 0, shares: 0 }
     response_status = review.company_response_status
     can_show = include_unapproved_reply || response_status == "approved"
     {
       id: review.id,
       reviewerName: review.reviewer_name,
-      reviewerEmail: review.reviewer_email,
+      reviewerEmail: include_contact ? review.reviewer_email : nil,
       content: review.content,
       rating: review.rating,
       date: Api::Params.date_only(review.created_at),
@@ -17,6 +19,8 @@ module ReviewSerializer
       shares: counts[:shares],
       dislikes: counts[:dislikes],
       status: review.status,
+      statusReason: review.status_reason,
+      userId: review.user_id,
       companyName: review.company&.name,
       companyId: review.company_id,
       companyResponse: can_show ? review.parsed_company_response : nil,
@@ -27,7 +31,7 @@ module ReviewSerializer
   end
 
   def mine(review, counts = nil)
-    base = recent(review, counts)
+    base = recent(review, counts, include_unapproved_reply: true, include_contact: true)
     base.merge(
       company: base[:companyName],
       review: base[:content],
@@ -41,6 +45,8 @@ module ReviewSerializer
     {
       id: review.id,
       status: review.status,
+      statusReason: review.status_reason,
+      userId: review.user_id,
       companyName: review.company&.name,
       reviewerName: review.reviewer_name,
       rating: review.rating,

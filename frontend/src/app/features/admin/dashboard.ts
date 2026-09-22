@@ -78,7 +78,7 @@ interface RecentCompany {
                 <td class="px-3 py-2 font-medium">{{ r.reviewerName || 'Anonymous' }}</td>
                 <td class="px-3 py-2"><app-rating-stars [rating]="r.rating" size="xs" /></td>
                 <td class="px-3 py-2 text-gray-500">{{ r.date }}</td>
-                <td class="px-3 py-2">{{ firstWord(r.content) }}</td>
+                <td class="max-w-sm px-3 py-2 text-gray-700">{{ excerpt(r.content) }}</td>
                 <td class="px-3 py-2" (click)="$event.stopPropagation()">
                   <app-status-dropdown
                     [value]="title(r.status)"
@@ -238,8 +238,9 @@ export class AdminDashboardPage implements OnInit {
     });
   }
 
-  firstWord(text: string): string {
-    return (text || '').split(/\s+/)[0] ?? '';
+  excerpt(text: string): string {
+    const clean = (text || '').trim();
+    return clean.length > 90 ? `${clean.slice(0, 90)}…` : clean;
   }
 
   title(value: unknown): string {
@@ -251,7 +252,9 @@ export class AdminDashboardPage implements OnInit {
   }
 
   openReview(r: ReviewRecord): void {
-    void this.router.navigate(['/company/review', r.id]);
+    void this.router.navigate(['/admin/manage-review'], {
+      queryParams: { search: r.reviewerName },
+    });
   }
 
   openCompany(c: RecentCompany): void {

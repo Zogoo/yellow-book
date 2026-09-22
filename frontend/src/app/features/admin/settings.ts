@@ -1,14 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../core/services/api.service';
+import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-policy';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
 /** `/admin/settings` — password change and (for the current admin) permission preview. */
 @Component({
   selector: 'app-admin-settings-page',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <header><h1 class="text-2xl font-bold text-[#212121]">Settings</h1></header>
     <div class="grid gap-6 lg:grid-cols-[220px_1fr]">
@@ -68,35 +70,37 @@ import { ToastService } from '../../core/services/toast.service';
         </form>
       } @else {
         <section class="yb-card space-y-3 p-6">
-          <h2 class="text-lg font-semibold">Role &amp; Permission</h2>
+          <h2 class="text-lg font-semibold">Role &amp; permissions</h2>
           <p class="text-sm text-gray-500">
-            Signed in as <strong>{{ auth.user()?.name }}</strong> ({{
-              auth.user()?.adminRole || auth.user()?.role
-            }}).
+            Signed in as <strong>{{ auth.user()?.name }}</strong> ({{ roleLabel() }}).
           </p>
-          @for (item of roleItems; track item.key) {
-            <label class="flex items-center gap-2 text-sm"
-              ><input
-                type="checkbox"
-                [checked]="item.checked"
-                (change)="item.checked = !item.checked"
-              />
-              {{ item.label }}</label
-            >
+          @if (permissions().length === 0) {
+            <p class="text-sm text-gray-600">
+              {{
+                isSuperAdmin()
+                  ? 'As a super admin you have every permission on the platform.'
+                  : 'No granular permissions are assigned to your account.'
+              }}
+            </p>
+          } @else {
+            <ul class="grid gap-2 sm:grid-cols-2">
+              @for (permission of permissions(); track permission) {
+                <li class="rounded-lg border border-gray-100 px-3 py-2 text-sm">
+                  <span class="mr-2 text-green-600" aria-hidden="true">✓</span>{{ permission }}
+                </li>
+              }
+            </ul>
           }
-          <button
-            type="button"
-            class="yb-btn yb-btn-gold"
-            (click)="toast.success('Permissions saved for this session')"
-          >
-            Update Permissions
-          </button>
+          <p class="text-xs text-gray-500">
+            Permissions are granted by a super admin from
+            <a routerLink="/admin/admin-management" class="text-[#1877f2]">Admin Management</a>.
+          </p>
         </section>
       }
     </div>
   `,
 })
-export class AdminSettingsPage implements OnInit {
+export class AdminSettingsPage {
   readonly auth = inject(AuthService);
   readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
@@ -105,39 +109,33 @@ export class AdminSettingsPage implements OnInit {
   readonly message = signal<string | null>(null);
   readonly ok = signal(false);
   pw = { current: '', next: '', confirm: '' };
-  roleItems = [
-    { key: 'users', label: 'Manage Users', checked: true },
-    { key: 'reviews', label: 'Review Management', checked: false },
-    { key: 'companies', label: 'Company Verification', checked: false },
-  ];
-
-  ngOnInit(): void {
-    const perms = new Set((this.auth.user()?.permissions ?? []).map(String));
-    this.roleItems = this.roleItems.map((i) => ({
-      ...i,
-      checked: i.checked || [...perms].some((p) => p.startsWith(i.key)),
-    }));
-  }
+  readonly permissions = computed(() =>
+    (this.auth.user()?.permissions ?? []).map((p) => String(p).replace(/_/g, ' ')),
+  );
+  readonly isSuperAdmin = computed(
+    () => String(this.auth.user()?.['adminRole'] ?? '') === 'SUPER_ADMIN',
+  );
+  readonly roleLabel = computed(() =>
+    String(this.auth.user()?.['adminRole'] ?? this.auth.user()?.role ?? '')
+      .replace(/_/g, ' ')
+      .toLowerCase(),
+  );
 
   async updatePassword(): Promise<void> {
     this.ok.set(false);
-    if (!this.pw.current) return this.message.set('Please enter your current password');
-    if (!this.pw.next) return this.message.set('Please enter a new password');
-    if (this.pw.next !== this.pw.confirm) return this.message.set('New passwords do not match');
-    const id = this.auth.user()?.id;
-    if (!id) return this.message.set('Unable to resolve your admin account');
+    const problem = passwordProblem(this.pw.next);
+    if (!this.pw.current) return this.message.set('Enter your current password.');
+    if (problem) return this.message.set(problem);
+    if (this.pw.next !== this.pw.confirm) return this.message.set('New passwords do not match.');
+
     this.busy.set(true);
     try {
-      await this.api.putData(
-        `admins/${id}`,
-        { password: this.pw.next },
-        { toast: { showError: false } },
-      );
+      await this.auth.changePassword(this.pw.current, this.pw.next);
       this.ok.set(true);
-      this.message.set('Password updated successfully!');
+      this.message.set('Password updated. Other devices have been signed out.');
       this.pw = { current: '', next: '', confirm: '' };
     } catch (e) {
-      this.message.set(e instanceof Error ? e.message : 'Unable to update password');
+      this.message.set(e instanceof Error ? e.message : 'Unable to update password.');
     } finally {
       this.busy.set(false);
     }
