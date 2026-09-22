@@ -2,56 +2,59 @@ import { Component, OnInit, computed, effect, inject, signal } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { ApiMeta, Listing } from '../../core/models';
 import { DirectoryListing, enrichListing } from '../../core/services/directory.service';
 import { StarRatingBox } from '../../shared/star-rating-box';
+import { Avatar } from '../../shared/avatar';
 
 const PAGE_SIZE = 6;
 
 /** Curated "Popular List" with search, favourites and pagination. */
 @Component({
   selector: 'app-popular-list-page',
-  imports: [FormsModule, StarRatingBox],
+  imports: [FormsModule, StarRatingBox, Avatar, TranslatePipe],
   template: `
     <div class="mx-auto max-w-7xl px-4 py-8">
-      <img src="/logo/Cat.jpeg" alt="" class="mb-8 h-48 w-full rounded-3xl object-cover" />
       <header class="mb-8">
         <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">
-          Curated picks
+          {{ 'popular.badge' | translate }}
         </p>
-        <h1 class="mt-2 text-3xl font-bold text-[#212121]">Popular List</h1>
-        <p class="mt-2 max-w-2xl text-gray-600">
-          Browse standout agencies and studios trusted by teams across Mongolia. Compare ratings,
-          see what they specialise in, and reach out when you're ready.
-        </p>
+        <h1 class="mt-2 text-3xl font-bold text-[#212121]">{{ 'popular.title' | translate }}</h1>
+        <p class="mt-2 max-w-2xl text-gray-600">{{ 'popular.lead' | translate }}</p>
       </header>
       <form class="mb-6 flex gap-2" (ngSubmit)="submit()" role="search">
         <input
           id="popular-search"
           class="yb-input"
           type="search"
-          placeholder="Search by company, service, or city"
+          [attr.placeholder]="'popular.searchPlaceholder' | translate"
           [(ngModel)]="query"
           name="q"
         />
-        <button type="submit" class="yb-btn yb-btn-gold">Search</button>
+        <button type="submit" class="yb-btn yb-btn-gold">
+          {{ 'common.search' | translate }}
+        </button>
       </form>
       <div class="mb-6 flex items-center justify-between text-sm text-gray-600" aria-live="polite">
         <span>
           @if (loading()) {
-            Loading curated listings…
+            {{ 'popular.loading' | translate }}
           } @else if (items().length === 0) {
-            No listings match your search yet. Try changing the keyword.
+            {{ 'popular.noMatch' | translate }}
           } @else {
-            Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ meta().total }} companies
+            {{
+              'popular.showing'
+                | translate: { from: rangeStart(), to: rangeEnd(), total: meta().total }
+            }}
           }
         </span>
-        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
-          >Updated daily</span
-        >
+        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{{
+          'popular.updatedDaily' | translate
+        }}</span>
       </div>
       @if (loading()) {
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -61,23 +64,31 @@ const PAGE_SIZE = 6;
         </div>
       } @else if (items().length === 0) {
         <div class="yb-card p-12 text-center">
-          <h2 class="text-xl font-semibold text-[#212121]">We couldn't find anything</h2>
-          <p class="mt-2 text-gray-500">
-            Try adjusting your search keywords or explore another service category to discover more
-            agencies.
-          </p>
+          <h2 class="text-xl font-semibold text-[#212121]">
+            {{ 'popular.emptyTitle' | translate }}
+          </h2>
+          <p class="mt-2 text-gray-500">{{ 'popular.emptyLead' | translate }}</p>
         </div>
       } @else {
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           @for (item of items(); track item.id) {
             <article class="yb-card overflow-hidden">
               <div class="relative">
-                <img
-                  [src]="item.image"
-                  [alt]="item.title"
-                  class="h-48 w-full cursor-pointer object-cover"
-                  (click)="open(item)"
-                />
+                @if (item.image) {
+                  <img
+                    [src]="item.image"
+                    [alt]="item.title"
+                    class="h-48 w-full cursor-pointer object-cover"
+                    (click)="open(item)"
+                  />
+                } @else {
+                  <div
+                    class="flex h-48 w-full cursor-pointer items-center justify-center bg-gradient-to-br from-[#fff3c4] to-[#feecb2]"
+                    (click)="open(item)"
+                  >
+                    <app-avatar [name]="item.title" [size]="72" />
+                  </div>
+                }
                 <span
                   class="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold"
                   >{{ item.category }}</span
@@ -87,7 +98,8 @@ const PAGE_SIZE = 6;
                   class="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg"
                   [attr.aria-pressed]="favorites.isFavorite(item)"
                   [attr.aria-label]="
-                    favorites.isFavorite(item) ? 'Remove from favourites' : 'Save to favourites'
+                    (favorites.isFavorite(item) ? 'common.removeFavourite' : 'common.saveFavourite')
+                      | translate
                   "
                   (click)="favorites.toggle(item)"
                 >
@@ -116,9 +128,9 @@ const PAGE_SIZE = 6;
                     <span class="rounded-full bg-gray-100 px-2 py-1">{{ item.revenue }}</span>
                   }
                   @if (item.price) {
-                    <span class="rounded-full bg-gray-100 px-2 py-1"
-                      >{{ formatPrice(item.price) }} avg</span
-                    >
+                    <span class="rounded-full bg-gray-100 px-2 py-1">{{
+                      'common.averagePrice' | translate: { price: formatPrice(item.price) }
+                    }}</span>
                   }
                 </div>
                 <div class="flex items-center gap-2">
@@ -133,9 +145,12 @@ const PAGE_SIZE = 6;
                   />
                 </div>
                 <p class="text-sm text-gray-600">
-                  {{ item.rating.toFixed(1) }} ({{ item.ratingCount }} reviews)
+                  {{ item.rating.toFixed(1) }} ·
+                  {{ 'common.reviewsCount' | translate: { count: item.ratingCount } }}
                 </p>
-                <p class="text-xs text-gray-500">📍 {{ item.location || 'Anywhere' }}</p>
+                <p class="text-xs text-gray-500">
+                  📍 {{ item.location || ('common.anywhere' | translate) }}
+                </p>
               </div>
             </article>
           }
@@ -143,7 +158,7 @@ const PAGE_SIZE = 6;
         @if (meta().totalPages > 1) {
           <nav
             class="mt-8 flex flex-wrap items-center justify-center gap-2"
-            aria-label="Pagination"
+            [attr.aria-label]="'common.pagination' | translate"
           >
             <button
               type="button"
@@ -151,7 +166,7 @@ const PAGE_SIZE = 6;
               [disabled]="page() <= 1"
               (click)="goPage(page() - 1)"
             >
-              Previous
+              {{ 'common.previous' | translate }}
             </button>
             @for (p of pageNumbers(); track p) {
               <button
@@ -170,11 +185,15 @@ const PAGE_SIZE = 6;
               [disabled]="page() >= meta().totalPages"
               (click)="goPage(page() + 1)"
             >
-              Next
+              {{ 'common.next' | translate }}
             </button>
             <span class="ml-4 text-xs text-gray-500"
-              >Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ meta().total }} companies (Page
-              {{ page() }} of {{ meta().totalPages }})</span
+              >{{
+                'popular.showing'
+                  | translate: { from: rangeStart(), to: rangeEnd(), total: meta().total }
+              }}
+              ·
+              {{ 'popular.pageOf' | translate: { page: page(), pages: meta().totalPages } }}</span
             >
           </nav>
         }
@@ -184,6 +203,7 @@ const PAGE_SIZE = 6;
 })
 export class PopularListPage implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly favorites = inject(FavoritesService);
@@ -212,7 +232,7 @@ export class PopularListPage implements OnInit {
   });
 
   constructor() {
-    inject(Title).setTitle('Popular List • Yellow Book');
+    inject(Title).setTitle(`${this.translate.instant('popular.title')} • Yellow Book`);
     effect(() => {
       const p = this.page();
       const current = this.route.snapshot.queryParamMap.get('page');

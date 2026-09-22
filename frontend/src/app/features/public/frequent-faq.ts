@@ -1,7 +1,9 @@
 import { Component, input, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-frequent-faq',
+  imports: [TranslatePipe],
   template: `
     <section class="space-y-3">
       @if (heading()) {
@@ -15,7 +17,7 @@ import { Component, input, signal } from '@angular/core';
             [attr.aria-expanded]="open() === i"
             (click)="toggle(i)"
           >
-            {{ item.q }}
+            {{ item.q | translate }}
             <span
               class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm transition"
               [class.rotate-180]="open() === i"
@@ -23,7 +25,7 @@ import { Component, input, signal } from '@angular/core';
             >
           </button>
           @if (open() === i) {
-            <p class="px-5 pb-5 text-sm text-[#424242]">{{ item.a }}</p>
+            <p class="px-5 pb-5 text-sm text-[#424242]">{{ item.a | translate }}</p>
           }
         </div>
       }
@@ -33,23 +35,12 @@ import { Component, input, signal } from '@angular/core';
 export class FrequentFaq {
   readonly heading = input('Frequently Asked Questions');
   readonly open = signal<number | null>(0);
+  // Four questions, in whichever language the reader picked.
   readonly items = [
-    {
-      q: 'What is Yellow Book?',
-      a: 'Yellow Book is a platform where users can discover, review, and connect with companies from different categories such as travel agencies, restaurants, and more.',
-    },
-    {
-      q: 'How can I register my company?',
-      a: 'You can register your company by navigating to the "Register" section, filling out the company profile form, and submitting it for verification by our team.',
-    },
-    {
-      q: 'Are all companies verified?',
-      a: 'We have a multi-step verification process that includes checking legal documents and contact information before a company is listed as verified.',
-    },
-    {
-      q: 'How do reviews work?',
-      a: 'Users can submit reviews for companies they have interacted with. Reviews are moderated for fairness and relevance before being published. Companies can respond to reviews directly.',
-    },
+    { q: 'faq.q1', a: 'faq.a1' },
+    { q: 'faq.q2', a: 'faq.a2' },
+    { q: 'faq.q3', a: 'faq.a3' },
+    { q: 'faq.q4', a: 'faq.a4' },
   ];
 
   toggle(index: number): void {

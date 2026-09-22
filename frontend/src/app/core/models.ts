@@ -51,6 +51,9 @@ export interface CategoryFilterGroup {
 export interface CategoryDefinition {
   id?: number;
   name: string;
+  /** Mongolian name; the interface shows this unless the user picked English. */
+  nameMn?: string;
+  companyCount?: number;
   slug?: string;
   icon: string;
   color: string;
@@ -64,6 +67,9 @@ export interface CategoryDefinition {
 export interface Listing {
   id: number;
   name: string;
+  district?: string | null;
+  phone?: string | null;
+  facebookUrl?: string | null;
   title?: string;
   slug: string;
   category: string;
@@ -97,6 +103,9 @@ export interface CompanyRecord {
   status: string;
   verified: boolean;
   location?: string | null;
+  district?: string | null;
+  registrationNumber?: string | null;
+  facebookUrl?: string | null;
   revenue?: string | null;
   employees?: string | null;
   industry?: string | null;

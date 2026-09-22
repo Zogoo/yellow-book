@@ -16,13 +16,16 @@ module Companies
         name = Api::Params.string(raw_name)
         raise Api::BadRequest, "category must not be empty" if name.empty?
 
-        slug = Api::Params.normalize_slug(name)
-        category = Category.find_by(slug: slug) || Category.find_by(name: name)
+        # A category can be named in either language; match both before creating one.
+        folded = Api::Text.fold(name)
+        category = Category.find_by(slug: Api::Text.slugify(name)) ||
+                   Category.find_by(name: name) ||
+                   Category.find_by(name_mn: name) ||
+                   Category.all.find { |c| [ Api::Text.fold(c.name), Api::Text.fold(c.name_mn) ].include?(folded) }
         if category
-          category.update!(name: name) if category.name != name && !Category.where.not(id: category.id).exists?(name: name)
           return category
         end
-        return Category.create!(name: name, slug: slug)
+        return Category.create!(name: name, slug: Api::Text.slugify(name))
       end
 
       Category.order(:created_at).first || Category.create!(name: "General", slug: "general")

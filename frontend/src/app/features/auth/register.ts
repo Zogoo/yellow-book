@@ -1,11 +1,19 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { resolvePostLoginRedirect } from '../../core/utils/role-access';
+import { PASSWORD_RULE_TEXT } from '../../core/utils/password-policy';
+import {
+  EMPLOYEE_OPTIONS,
+  LOCATION_OPTIONS,
+  REVENUE_OPTIONS,
+  UB_DISTRICTS,
+} from '../../core/utils/mongolia';
 
 interface RegistrationOptions {
   categories: string[];
@@ -16,137 +24,207 @@ interface RegistrationOptions {
 /** `/business/signup` — three-step business registration. */
 @Component({
   selector: 'app-register-page',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, TranslatePipe],
   template: `
     <div class="mx-auto max-w-2xl py-10">
       <div class="yb-card p-8">
         <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">
-          Business registration
+          {{ 'business.registration' | translate }}
         </p>
-        <h1 class="mt-2 text-2xl font-bold text-[#212121]">List your agency on Yellow Book</h1>
-        <p class="mt-1 text-sm text-gray-600">
-          Create a company account in three quick steps. You can complete the profile later.
-        </p>
+        <h1 class="mt-2 text-2xl font-bold text-[#212121]">{{ 'business.title' | translate }}</h1>
+        <p class="mt-1 text-sm text-gray-600">{{ 'business.lead' | translate }}</p>
         <div class="mt-6 h-2 rounded-full bg-gray-100">
           <div
             class="h-2 rounded-full bg-[#fcc207] transition-all"
             [style.width.%]="(step() / 3) * 100"
           ></div>
         </div>
-        <p class="mt-1 text-xs text-gray-500">Step {{ step() }} of 3</p>
+        <p class="mt-1 text-xs text-gray-500">
+          {{ 'business.step' | translate: { current: step(), total: 3 } }}
+        </p>
 
         <form class="mt-6 space-y-4" (ngSubmit)="next()" novalidate>
           @if (step() === 1) {
             <div>
-              <label class="text-sm font-medium">Company Name *</label
-              ><input
+              <label class="text-sm font-medium" for="biz-name"
+                >{{ 'business.companyName' | translate }} *</label
+              >
+              <input
                 class="yb-input"
+                id="biz-name"
                 name="companyName"
-                placeholder="e.g., Yellow.Book Travel Agency"
                 [(ngModel)]="form.companyName"
                 required
               />
             </div>
             <div>
-              <label class="text-sm font-medium">Website</label
-              ><input
+              <label class="text-sm font-medium" for="biz-category">{{
+                'business.category' | translate
+              }}</label>
+              <select
                 class="yb-input"
-                name="website"
-                placeholder="https://www.yourcompany.com"
-                [(ngModel)]="form.website"
-              />
-            </div>
-            <div>
-              <label class="text-sm font-medium">Category</label>
-              <select class="yb-input" name="category" [(ngModel)]="form.category">
-                <option value="">Select Category</option>
+                id="biz-category"
+                name="category"
+                [(ngModel)]="form.category"
+              >
+                <option value="">{{ 'business.category' | translate }}</option>
                 @for (c of options().categories; track c) {
                   <option [value]="c">{{ c }}</option>
                 }
               </select>
             </div>
-            <div>
-              <label class="text-sm font-medium">Service</label>
-              <select class="yb-input" name="service" [(ngModel)]="form.service">
-                <option value="">Select Service</option>
-                @for (s of options().services; track s) {
-                  <option [value]="s">{{ s }}</option>
-                }
-              </select>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="text-sm font-medium" for="biz-location">{{
+                  'common.location' | translate
+                }}</label>
+                <select
+                  class="yb-input"
+                  id="biz-location"
+                  name="location"
+                  [(ngModel)]="form.location"
+                >
+                  @for (l of locationOptions; track l) {
+                    <option [value]="l">{{ l }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="text-sm font-medium" for="biz-district">{{
+                  'business.district' | translate
+                }}</label>
+                <select
+                  class="yb-input"
+                  id="biz-district"
+                  name="district"
+                  [(ngModel)]="form.district"
+                >
+                  <option value="">—</option>
+                  @for (d of districtOptions; track d) {
+                    <option [value]="d">{{ d }}</option>
+                  }
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="text-sm font-medium">Destination</label>
-              <select class="yb-input" name="destination" [(ngModel)]="form.destination">
-                <option value="">Select Destination</option>
-                @for (d of options().destinations; track d) {
-                  <option [value]="d">{{ d }}</option>
-                }
-              </select>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="text-sm font-medium" for="biz-facebook">{{
+                  'business.facebookPage' | translate
+                }}</label>
+                <input
+                  class="yb-input"
+                  id="biz-facebook"
+                  name="facebookUrl"
+                  placeholder="https://facebook.com/..."
+                  [(ngModel)]="form.facebookUrl"
+                />
+              </div>
+              <div>
+                <label class="text-sm font-medium" for="biz-website">{{
+                  'business.website' | translate
+                }}</label>
+                <input
+                  class="yb-input"
+                  id="biz-website"
+                  name="website"
+                  placeholder="https://"
+                  [(ngModel)]="form.website"
+                />
+              </div>
             </div>
           } @else if (step() === 2) {
             <div>
-              <label class="text-sm font-medium">Number of Employees</label>
-              <select class="yb-input" name="employees" [(ngModel)]="form.employees">
-                <option value="">Select</option>
-                @for (e of employeeOptions; track e) {
-                  <option [value]="e">{{ e }}</option>
-                }
-              </select>
-            </div>
-            <div>
-              <label class="text-sm font-medium">Annual Revenue</label>
-              <select class="yb-input" name="revenue" [(ngModel)]="form.revenue">
-                <option value="">Select</option>
-                @for (r of revenueOptions; track r.value) {
-                  <option [value]="r.value">{{ r.label }}</option>
-                }
-              </select>
-            </div>
-            <div>
-              <label class="text-sm font-medium">Company Description</label
-              ><textarea
+              <label class="text-sm font-medium" for="biz-registration">
+                {{ 'business.registrationNumber' | translate }}
+              </label>
+              <input
                 class="yb-input"
+                id="biz-registration"
+                name="registrationNumber"
+                inputmode="numeric"
+                placeholder="6012345"
+                [(ngModel)]="form.registrationNumber"
+              />
+              <p class="mt-1 text-xs text-gray-500">
+                {{ 'business.registrationHint' | translate }}
+              </p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="text-sm font-medium" for="biz-employees">{{
+                  'business.employees' | translate
+                }}</label>
+                <select
+                  class="yb-input"
+                  id="biz-employees"
+                  name="employees"
+                  [(ngModel)]="form.employees"
+                >
+                  <option value="">—</option>
+                  @for (e of employeeOptions; track e) {
+                    <option [value]="e">{{ e }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="text-sm font-medium" for="biz-revenue">{{
+                  'business.revenue' | translate
+                }}</label>
+                <select class="yb-input" id="biz-revenue" name="revenue" [(ngModel)]="form.revenue">
+                  <option value="">—</option>
+                  @for (r of revenueOptions; track r.value) {
+                    <option [value]="r.value">{{ r.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-medium" for="biz-description">{{
+                'business.description' | translate
+              }}</label>
+              <textarea
+                class="yb-input"
+                id="biz-description"
                 rows="4"
                 name="description"
-                placeholder="Brief description of the company..."
                 [(ngModel)]="form.description"
               ></textarea>
             </div>
           } @else {
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
-                <label class="text-sm font-medium">First Name *</label
+                <label class="text-sm font-medium">{{ 'business.firstName' | translate }} *</label
                 ><input
                   class="yb-input"
                   name="firstName"
-                  placeholder="John"
+                  [attr.placeholder]="'business.firstName' | translate"
                   [(ngModel)]="form.firstName"
                   required
                 />
               </div>
               <div>
-                <label class="text-sm font-medium">Last Name *</label
+                <label class="text-sm font-medium">{{ 'business.lastName' | translate }} *</label
                 ><input
                   class="yb-input"
                   name="lastName"
-                  placeholder="Doe"
+                  [attr.placeholder]="'business.lastName' | translate"
                   [(ngModel)]="form.lastName"
                   required
                 />
               </div>
             </div>
             <div>
-              <label class="text-sm font-medium">Job Title</label
+              <label class="text-sm font-medium">{{ 'business.jobTitle' | translate }}</label
               ><input
                 class="yb-input"
                 name="jobTitle"
-                placeholder="e.g., CEO, Travel Agent"
+                [attr.placeholder]="'business.jobTitle' | translate"
                 [(ngModel)]="form.jobTitle"
               />
             </div>
             <div class="grid gap-4 sm:grid-cols-[160px_1fr]">
               <div>
-                <label class="text-sm font-medium">Country</label>
+                <label class="text-sm font-medium">{{ 'business.country' | translate }}</label>
                 <select class="yb-input" name="country" [(ngModel)]="form.countryCode">
                   @for (c of countries; track c.code) {
                     <option [value]="c.code">{{ c.flag }} {{ c.code }}</option>
@@ -154,7 +232,7 @@ interface RegistrationOptions {
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium">Phone Number</label
+                <label class="text-sm font-medium">{{ 'business.phoneNumber' | translate }}</label
                 ><input
                   class="yb-input"
                   name="phone"
@@ -164,30 +242,29 @@ interface RegistrationOptions {
               </div>
             </div>
             <div>
-              <label class="text-sm font-medium">Work Email *</label
+              <label class="text-sm font-medium">{{ 'business.workEmail' | translate }} *</label
               ><input
                 class="yb-input"
                 type="email"
                 name="email"
-                placeholder="you@company.com"
+                placeholder="you@company.mn"
                 [(ngModel)]="form.email"
                 required
               />
             </div>
             <div>
-              <label class="text-sm font-medium">Password *</label
+              <label class="text-sm font-medium">{{ 'business.password' | translate }} *</label
               ><input
                 class="yb-input"
                 type="password"
                 name="password"
-                placeholder="At least 12 characters with a symbol"
+                [attr.placeholder]="ruleText"
                 [(ngModel)]="form.password"
                 required
               />
             </div>
             <p class="text-xs text-gray-500">
-              Use at least 12 characters, including upper and lower case letters, a number and a
-              symbol.
+              {{ ruleText }}
             </p>
           }
           @if (error()) {
@@ -202,10 +279,16 @@ interface RegistrationOptions {
               [disabled]="step() === 1 || busy()"
               (click)="prev()"
             >
-              Previous
+              {{ 'common.previous' | translate }}
             </button>
             <button type="submit" class="yb-btn yb-btn-gold" [disabled]="busy()">
-              {{ step() === 3 ? (busy() ? 'Submitting...' : 'Submit') : 'Next' }}
+              {{
+                step() === 3
+                  ? busy()
+                    ? ('common.pleaseWait' | translate)
+                    : ('common.submit' | translate)
+                  : ('common.next' | translate)
+              }}
             </button>
           </div>
         </form>
@@ -232,18 +315,16 @@ export class RegisterPage implements OnInit {
     services: [],
     destinations: [],
   });
-  readonly employeeOptions = ['1-10', '11-30', '31-50', '51-100', '100+'];
-  readonly revenueOptions = [
-    { value: '0-100k', label: '0 – 100K MNT' },
-    { value: '100k-500k', label: '100K – 500K MNT' },
-    { value: '500k-1m', label: '500K – 1M MNT' },
-    { value: '1m+', label: '1M+ MNT' },
-  ];
+  readonly employeeOptions = EMPLOYEE_OPTIONS;
+  readonly districtOptions = UB_DISTRICTS;
+  readonly locationOptions = LOCATION_OPTIONS;
+  readonly revenueOptions = REVENUE_OPTIONS;
   readonly countries = [
-    { code: '+976', flag: '🇲🇳', name: 'Mongolia' },
-    { code: '+86', flag: '🇨🇳', name: 'China' },
-    { code: '+7', flag: '🇷🇺', name: 'Russia' },
+    { code: '+976', flag: '🇲🇳', name: 'Монгол' },
+    { code: '+86', flag: '🇨🇳', name: 'Хятад' },
+    { code: '+7', flag: '🇷🇺', name: 'Орос' },
   ];
+  readonly ruleText = PASSWORD_RULE_TEXT;
   form = {
     companyName: '',
     website: '',
@@ -260,6 +341,10 @@ export class RegisterPage implements OnInit {
     phone: '',
     email: '',
     password: '',
+    district: '',
+    location: 'Улаанбаатар',
+    facebookUrl: '',
+    registrationNumber: '',
   };
   readonly progress = computed(() => (this.step() / 3) * 100);
 
@@ -304,6 +389,10 @@ export class RegisterPage implements OnInit {
         companyName: this.form.companyName.trim(),
         ownerName: `${this.form.firstName} ${this.form.lastName}`.trim(),
         phone: this.form.phone ? `${this.form.countryCode}${this.form.phone}` : '',
+        district: this.form.district,
+        location: this.form.location,
+        facebookUrl: this.form.facebookUrl,
+        registrationNumber: this.form.registrationNumber,
         website: this.form.website,
         category: this.form.category,
         description: this.form.description,

@@ -1,0 +1,6 @@
+mn:
+  auth:
+    missing_token: "Нэвтрэх шаардлагатай"
+    invalid_or_expired_token: "Токен буруу эсвэл хугацаа нь дууссан"
+  record:
+    not_found: "Олдсонгүй"

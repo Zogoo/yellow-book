@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -7,10 +8,11 @@ import { NotificationRecord } from '../../core/models';
 /** `/company/notification` — list, mark all read, clear all. */
 @Component({
   selector: 'app-company-notification-page',
+  imports: [TranslatePipe],
   template: `
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-[#212121]">Recent Notifications</h1>
+        <h1 class="text-2xl font-bold text-[#212121]">{{ 'company.notifications' | translate }}</h1>
         <p class="text-sm text-gray-500">{{ unreadCount() }} unread · {{ items().length }} total</p>
       </div>
       <div class="flex gap-2">
@@ -21,7 +23,7 @@ import { NotificationRecord } from '../../core/models';
           [disabled]="unreadCount() === 0 || busy()"
           (click)="markAllRead()"
         >
-          Mark all as read
+          {{ 'company.markAllRead' | translate }}
         </button>
         <button
           type="button"
@@ -30,15 +32,15 @@ import { NotificationRecord } from '../../core/models';
           [disabled]="items().length === 0 || busy()"
           (click)="clearAll()"
         >
-          Clear all
+          {{ 'company.clearAll' | translate }}
         </button>
       </div>
     </header>
     @if (loading()) {
-      <p class="text-gray-500">Loading notifications...</p>
+      <p class="text-gray-500">{{ 'common.loading' | translate }}</p>
     } @else if (items().length === 0) {
       <div class="yb-card p-10 text-center">
-        <h2 class="text-lg font-semibold">No notifications</h2>
+        <h2 class="text-lg font-semibold">{{ 'company.noNotifications' | translate }}</h2>
         <p class="text-sm text-gray-500">You're all caught up! Check back later for new updates.</p>
       </div>
     } @else {

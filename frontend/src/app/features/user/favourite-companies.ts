@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -8,17 +9,16 @@ import { RatingStars } from '../../shared/rating-stars';
 
 @Component({
   selector: 'app-favourite-companies-page',
-  imports: [RatingStars],
+  imports: [RatingStars, TranslatePipe],
   template: `
     <header>
-      <h1 class="text-2xl font-bold text-[#212121]">Favourite Companies</h1>
-      <p class="text-sm text-gray-500">Companies you've saved for later.</p>
+      <h1 class="text-2xl font-bold text-[#212121]">{{ 'user.savedCompanies' | translate }}</h1>
     </header>
     @if (loading()) {
-      <p class="text-gray-500">Loading favourites...</p>
+      <p class="text-gray-500">{{ 'common.loading' | translate }}</p>
     } @else if (items().length === 0) {
       <div class="yb-card p-10 text-center text-gray-500">
-        No favourites yet. Tap the heart on any listing to save it.
+        {{ 'user.noFavourites' | translate }}
       </div>
     } @else {
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -36,7 +36,7 @@ import { RatingStars } from '../../shared/rating-stars';
             <div class="mt-3 flex gap-2">
               <button type="button" class="yb-btn yb-btn-outline" (click)="open(fav)">View</button>
               <button type="button" class="yb-btn bg-red-50 text-red-700" (click)="remove(fav)">
-                Remove
+                {{ 'user.remove' | translate }}
               </button>
             </div>
           </article>

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../core/services/api.service';
 import { AuthService } from '../core/services/auth.service';
@@ -17,11 +18,12 @@ import { Listing } from '../core/models';
 import { getDefaultRouteForUser } from '../core/utils/role-access';
 import { normalizeName, slugify } from '../core/utils/status-class';
 import { PanelProfileMenu } from '../shared/panel-profile-menu';
+import { LanguageSwitcher } from '../shared/language-switcher';
 
 /** Home hero: logo, navigation, sign-in actions, headline and listing search. */
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, FormsModule, PanelProfileMenu],
+  imports: [RouterLink, FormsModule, PanelProfileMenu, TranslatePipe, LanguageSwitcher],
   template: `
     <header
       class="bg-[#fff9e6] font-jakarta"
@@ -37,41 +39,44 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
             class="text-sm font-medium"
             [class.text-[#212121]]="isActive('/catagory')"
             [class.text-[#616161]]="!isActive('/catagory')"
-            >Category</a
+            >{{ 'nav.category' | translate }}</a
           >
           <a
             href="/#home-popular-listings"
             class="text-sm font-medium text-[#616161]"
             (click)="scrollPopular($event)"
-            >Popular Listing</a
+            >{{ 'nav.popular' | translate }}</a
           >
           <a
             routerLink="/faq"
             class="text-sm font-medium"
             [class.text-[#212121]]="isActive('/faq')"
             [class.text-[#616161]]="!isActive('/faq')"
-            >FAQ</a
+            >{{ 'nav.faq' | translate }}</a
           >
         </nav>
         <div class="hidden items-center gap-4 md:flex">
+          <app-language-switcher />
           <a
             routerLink="/business/signup"
             class="text-sm font-medium text-[#616161] hover:text-[#212121]"
-            >For businesses</a
+            >{{ 'nav.forBusinesses' | translate }}</a
           >
           @if (auth.isAuthenticated()) {
             <app-panel-profile-menu roleLabel="Account" [dashboardTo]="dashboardTo()" />
           } @else {
             <button type="button" class="text-sm font-semibold text-[#212121]" (click)="signIn()">
-              Log in
+              {{ 'nav.logIn' | translate }}
             </button>
-            <a routerLink="/auth/signup" class="yb-btn yb-btn-gold">Sign up</a>
+            <a routerLink="/auth/signup" class="yb-btn yb-btn-gold">{{
+              'nav.signUp' | translate
+            }}</a>
           }
         </div>
         <button
           type="button"
           class="rounded-lg border border-[#fcc207] p-2 md:hidden"
-          aria-label="Toggle menu"
+          [attr.aria-label]="'nav.toggleMenu' | translate"
           [attr.aria-expanded]="menuOpen()"
           (click)="menuOpen.set(!menuOpen())"
         >
@@ -96,39 +101,40 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
           >
             ✕
           </button>
-          <a routerLink="/catagory" (click)="menuOpen.set(false)" class="text-base font-medium"
-            >Category</a
-          >
+          <a routerLink="/catagory" (click)="menuOpen.set(false)" class="text-base font-medium">{{
+            'nav.category' | translate
+          }}</a>
           <a
             href="/#home-popular-listings"
             (click)="scrollPopular($event)"
             class="text-base font-medium"
-            >Popular Listing</a
+            >{{ 'nav.popular' | translate }}</a
           >
           <a routerLink="/faq" (click)="menuOpen.set(false)" class="text-base font-medium">FAQ</a>
           <a
             routerLink="/business/signup"
             (click)="menuOpen.set(false)"
             class="text-base font-medium"
-            >For businesses</a
+            >{{ 'nav.forBusinesses' | translate }}</a
           >
+          <app-language-switcher />
           @if (auth.isAuthenticated()) {
             <a
               [routerLink]="dashboardTo()"
               (click)="menuOpen.set(false)"
               class="text-base font-medium"
-              >My dashboard</a
+              >{{ 'nav.myDashboard' | translate }}</a
             >
             <button
               type="button"
               class="text-left text-base font-medium text-red-600"
               (click)="auth.logout()"
             >
-              Log out
+              {{ 'nav.logOut' | translate }}
             </button>
           } @else {
             <button type="button" class="text-left text-base font-medium" (click)="signIn()">
-              Log in
+              {{ 'nav.logIn' | translate }}
             </button>
             <a routerLink="/auth/signup" (click)="menuOpen.set(false)" class="yb-btn yb-btn-gold"
               >Sign up</a
@@ -139,11 +145,10 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
 
       <div class="mx-auto max-w-4xl px-4 pt-10 pb-16 text-center">
         <h1 class="text-3xl font-bold leading-tight text-[#212121] md:text-5xl">
-          Trusted Help, Right When<br />You Need It
+          {{ 'home.headline' | translate }}
         </h1>
         <p class="mt-4 text-sm text-[#616161] md:text-base">
-          Reliable support from real people, solving everyday problems with care, speed, and
-          integrity.
+          {{ 'home.subhead' | translate }}
         </p>
         <form
           class="relative mx-auto mt-8 flex max-w-2xl items-center gap-2 rounded-full bg-[#feecb2] p-2"
@@ -154,23 +159,27 @@ import { PanelProfileMenu } from '../shared/panel-profile-menu';
             class="flex-1 rounded-full bg-[#fff9e6] px-5 py-3 text-sm outline-none"
             type="search"
             name="q"
-            [placeholder]="placeholder()"
+            [attr.placeholder]="'nav.searchPlaceholder' | translate"
             [(ngModel)]="query"
             (ngModelChange)="onQueryChange()"
             (focus)="dropdownOpen.set(true)"
-            aria-label="Search agencies"
+            [attr.aria-label]="'nav.searchPlaceholder' | translate"
             autocomplete="off"
           />
-          <button type="submit" class="yb-btn yb-btn-gold rounded-full px-6">🔍 Search</button>
+          <button type="submit" class="yb-btn yb-btn-gold rounded-full px-6">
+            🔍 {{ 'common.search' | translate }}
+          </button>
           @if (dropdownOpen()) {
             <ul
               class="absolute top-full right-2 left-2 z-30 mt-2 max-h-[300px] overflow-y-auto rounded-2xl border border-gray-100 bg-white text-left shadow-xl"
               role="listbox"
             >
               @if (searching()) {
-                <li class="px-4 py-3 text-sm text-gray-500">Loading search options...</li>
+                <li class="px-4 py-3 text-sm text-gray-500">{{ 'common.loading' | translate }}</li>
               } @else if (results().length === 0) {
-                <li class="px-4 py-3 text-sm text-gray-500">No matches found</li>
+                <li class="px-4 py-3 text-sm text-gray-500">
+                  {{ 'category.noResults' | translate }}
+                </li>
               } @else {
                 @for (item of results(); track item.id) {
                   <li>
@@ -216,7 +225,6 @@ export class Navbar implements OnInit {
   readonly dropdownOpen = signal(false);
   readonly searching = signal(false);
   readonly results = signal<Listing[]>([]);
-  readonly placeholder = signal('Search agencies');
   readonly dashboardTo = computed(() => getDefaultRouteForUser(this.auth.user()));
   query = '';
   private timer: ReturnType<typeof setTimeout> | null = null;

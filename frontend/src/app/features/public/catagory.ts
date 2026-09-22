@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { ApiService } from '../../core/services/api.service';
@@ -11,10 +12,12 @@ import {
   enrichListing,
 } from '../../core/services/directory.service';
 import { FavoritesService } from '../../core/services/favorites.service';
+import { LocaleService } from '../../core/services/locale.service';
 import { Listing } from '../../core/models';
 import { getFilterChipClass } from '../../core/utils/status-class';
 import { Pagination } from '../../shared/pagination';
 import { StarRatingBox } from '../../shared/star-rating-box';
+import { Avatar } from '../../shared/avatar';
 import { CategoryGrid } from './category-grid';
 
 interface Chip {
@@ -28,35 +31,37 @@ const PAGE_SIZE = 5;
 /** `/catagory`: category grid, or the filtered listing view when `?name=` is set. */
 @Component({
   selector: 'app-catagory-page',
-  imports: [FormsModule, CategoryGrid, Pagination, StarRatingBox],
+  imports: [FormsModule, CategoryGrid, Pagination, StarRatingBox, TranslatePipe, Avatar],
   template: `
     @if (!categoryName() && !queryTerm()) {
       <section class="mx-auto max-w-7xl px-4 py-12">
-        <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">All listings</p>
-        <h1 class="mt-2 text-3xl font-bold text-[#212121]">Discover categories</h1>
-        <p class="mt-2 mb-8 text-gray-600">
-          Jump into any niche—from creative studios to legal experts—and find trusted partners ready
-          to help.
+        <p class="text-xs font-semibold tracking-[0.35em] text-[#a67c00] uppercase">
+          {{ 'category.allListings' | translate }}
         </p>
-        <app-category-grid />
+        <h1 class="mt-2 text-3xl font-bold text-[#212121]">
+          {{ 'category.discover' | translate }}
+        </h1>
+        <p class="mt-2 mb-8 text-gray-600">{{ 'category.discoverLead' | translate }}</p>
+        <app-category-grid heading="" />
       </section>
     } @else {
       <div class="mx-auto max-w-7xl px-4 py-6">
         <div class="mb-4 flex items-center gap-4 text-sm">
-          <button type="button" class="yb-btn yb-btn-outline" (click)="back()">← Back</button>
+          <button type="button" class="yb-btn yb-btn-outline" (click)="back()">
+            ← {{ 'common.back' | translate }}
+          </button>
           <nav aria-label="Breadcrumb" class="text-gray-500">
             Category <span class="mx-1">›</span>
-            <span class="text-sky-500">{{ categoryName() }}</span>
+            <span class="text-sky-500">{{ categoryLabel() }}</span>
           </nav>
         </div>
-        <img src="/logo/Cat.jpeg" alt="" class="mb-6 h-48 w-full rounded-3xl object-cover" />
         <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p class="text-xs text-gray-500">
-              {{ categoryName() ? 'Category' : 'Search results' }}
+              {{ (categoryName() ? 'common.category' : 'category.searchResults') | translate }}
             </p>
             <h1 class="text-3xl font-bold text-[#28aed8]">
-              {{ categoryName() || '“' + queryTerm() + '”' }}
+              {{ categoryLabel() || '“' + queryTerm() + '”' }}
             </h1>
             @if (!loading()) {
               <p class="text-sm text-gray-500">
@@ -69,12 +74,14 @@ const PAGE_SIZE = 5;
             <input
               class="yb-input md:w-72"
               type="search"
-              placeholder="Search"
+              [attr.placeholder]="'nav.searchPlaceholder' | translate"
               [(ngModel)]="searchInput"
               name="q"
-              aria-label="Search listings"
+              [attr.aria-label]="'nav.searchPlaceholder' | translate"
             />
-            <button type="submit" class="yb-btn yb-btn-gold">Search</button>
+            <button type="submit" class="yb-btn yb-btn-gold">
+              {{ 'common.search' | translate }}
+            </button>
           </form>
         </div>
 
@@ -88,9 +95,25 @@ const PAGE_SIZE = 5;
               Filters
             </button>
             <div class="space-y-6" [class.hidden]="!filtersOpen()" [class.lg:block]="true">
+              <div class="yb-card p-4">
+                <h3 class="mb-3 text-sm font-semibold">{{ 'common.district' | translate }}</h3>
+                <select
+                  class="yb-input"
+                  [value]="district()"
+                  (change)="setDistrict($event)"
+                  [attr.aria-label]="'common.district' | translate"
+                >
+                  <option value="">{{ 'common.all' | translate }}</option>
+                  @for (option of districtOptions(); track option) {
+                    <option [value]="option">{{ option }}</option>
+                  }
+                </select>
+              </div>
               @if (hasPrices()) {
                 <div class="yb-card p-4">
-                  <h3 class="mb-3 text-sm font-semibold">Price range (consultation)</h3>
+                  <h3 class="mb-3 text-sm font-semibold">
+                    {{ 'category.priceRange' | translate }}
+                  </h3>
                   <div class="flex justify-between text-xs text-gray-500">
                     <span>min\${{ priceBounds().min }}</span
                     ><span>max\${{ priceBounds().max }}</span>
@@ -111,7 +134,7 @@ const PAGE_SIZE = 5;
               }
               @if (category().filters.emergencyService) {
                 <div class="yb-card p-4">
-                  <h3 class="mb-3 text-sm font-semibold">Emergency Service Available</h3>
+                  <h3 class="mb-3 text-sm font-semibold">{{ 'category.emergency' | translate }}</h3>
                   <div class="flex gap-4 text-sm">
                     <label class="flex items-center gap-2"
                       ><input
@@ -136,7 +159,9 @@ const PAGE_SIZE = 5;
               }
               <div class="yb-card p-4">
                 <h3 class="mb-3 text-sm font-semibold">
-                  {{ category().filters.serviceTypes?.label || 'Service Types' }}
+                  {{
+                    category().filters.serviceTypes?.label || ('category.serviceTypes' | translate)
+                  }}
                 </h3>
                 <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
                   @for (option of serviceOptions(); track option) {
@@ -153,7 +178,10 @@ const PAGE_SIZE = 5;
               </div>
               <div class="yb-card p-4">
                 <h3 class="mb-3 text-sm font-semibold">
-                  {{ category().filters.specializations?.label || 'Specializations' }}
+                  {{
+                    category().filters.specializations?.label ||
+                      ('category.specializations' | translate)
+                  }}
                 </h3>
                 <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
                   @for (option of specializationOptions(); track option) {
@@ -174,10 +202,10 @@ const PAGE_SIZE = 5;
                   class="yb-btn flex-1 bg-blue-600 text-white"
                   (click)="filtersOpen.set(false)"
                 >
-                  Apply Filters
+                  {{ 'category.applyFilters' | translate }}
                 </button>
                 <button type="button" class="yb-btn flex-1 bg-gray-200" (click)="clearAll()">
-                  Clear All
+                  {{ 'category.clearAll' | translate }}
                 </button>
               </div>
             </div>
@@ -193,7 +221,7 @@ const PAGE_SIZE = 5;
                   aria-haspopup="true"
                   [attr.aria-expanded]="sortOpen()"
                 >
-                  Rating ☰
+                  {{ 'category.rating' | translate }} ☰
                 </button>
                 @if (sortOpen()) {
                   <div
@@ -233,16 +261,16 @@ const PAGE_SIZE = 5;
                   class="rounded-full bg-red-100 px-3 py-1 text-xs text-red-700"
                   (click)="clearAll()"
                 >
-                  Clear All
+                  {{ 'category.clearAll' | translate }}
                 </button>
               }
             </div>
 
             @if (loading()) {
-              <p class="py-10 text-center text-gray-500">Loading category data...</p>
+              <p class="py-10 text-center text-gray-500">{{ 'common.loading' | translate }}</p>
             } @else if (paged().length === 0) {
               <div class="yb-card p-10 text-center">
-                <p class="text-gray-600">No listings found matching your filters</p>
+                <p class="text-gray-600">{{ 'category.noResults' | translate }}</p>
                 <button
                   type="button"
                   class="yb-btn mt-4 bg-red-500 text-white"
@@ -262,11 +290,19 @@ const PAGE_SIZE = 5;
                     (keydown.enter)="open(item)"
                     (keydown.space)="open(item); $event.preventDefault()"
                   >
-                    <img
-                      [src]="item.image"
-                      [alt]="item.title"
-                      class="h-40 w-full rounded-xl object-cover md:w-52"
-                    />
+                    @if (item.image) {
+                      <img
+                        [src]="item.image"
+                        [alt]="item.title"
+                        class="h-40 w-full rounded-xl object-cover md:w-52"
+                      />
+                    } @else {
+                      <div
+                        class="flex h-40 w-full items-center justify-center rounded-xl bg-gradient-to-br from-[#fff3c4] to-[#feecb2] md:w-52"
+                      >
+                        <app-avatar [name]="item.title" [size]="64" />
+                      </div>
+                    }
                     <div class="flex-1 space-y-2">
                       <div class="flex items-start justify-between gap-2">
                         <h3 class="text-lg font-semibold text-[#212121]">{{ item.title }}</h3>
@@ -292,23 +328,37 @@ const PAGE_SIZE = 5;
                         filledColor="#FFC107"
                         emptyColor="#E0E0E0"
                       />
-                      <p class="text-sm text-gray-600">🌐 {{ item.website || 'No website' }}</p>
-                      <p class="text-sm text-gray-600">📍 {{ item.location || 'Anywhere' }}</p>
+                      @if (item.website) {
+                        <p class="text-sm text-gray-600">🌐 {{ item.website }}</p>
+                      }
                       <p class="text-sm text-gray-600">
-                        💲 {{ item.revenue || '—' }}
-                        <span class="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs"
-                          >Annual Revenue</span
-                        >
+                        📍 {{ item.district || item.location || ('common.location' | translate) }}
                       </p>
+                      @if (item.phone) {
+                        <a
+                          [href]="'tel:' + item.phone"
+                          class="inline-flex text-sm font-semibold text-[#1877f2]"
+                          (click)="$event.stopPropagation()"
+                          >📞 {{ 'common.call' | translate }} {{ item.phone }}</a
+                        >
+                      }
+                      @if (item.revenue) {
+                        <p class="text-sm text-gray-600">
+                          💲 {{ item.revenue }}
+                          <span class="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs">
+                            {{ 'agency.revenue' | translate }}
+                          </span>
+                        </p>
+                      }
                       <div
                         class="grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 text-center text-xs"
                       >
                         <div>
-                          <p class="text-gray-500">Rating</p>
+                          <p class="text-gray-500">{{ 'category.rating' | translate }}</p>
                           <p class="font-semibold">{{ item.ratingCount }}</p>
                         </div>
                         <div>
-                          <p class="text-gray-500">Comment</p>
+                          <p class="text-gray-500">{{ 'category.reviewsLabel' | translate }}</p>
                           <p class="font-semibold">{{ item.comments ?? item.ratingCount }}</p>
                         </div>
                         <button
@@ -316,7 +366,7 @@ const PAGE_SIZE = 5;
                           class="text-[#28aed8]"
                           (click)="open(item); $event.stopPropagation()"
                         >
-                          ...More
+                          {{ 'category.more' | translate }}
                         </button>
                       </div>
                     </div>
@@ -344,6 +394,7 @@ export class CatagoryPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly directory = inject(DirectoryService);
+  private readonly locale = inject(LocaleService);
   readonly favorites = inject(FavoritesService);
   readonly categoryName = toSignal(
     this.route.queryParamMap.pipe(map((q) => (q.get('name') ?? '').trim())),
@@ -354,6 +405,14 @@ export class CatagoryPage implements OnInit {
     { initialValue: '' },
   );
   readonly category = computed(() => this.directory.getCategoryByName(this.categoryName()));
+  /** The canonical name is English; the heading follows the chosen language. */
+  readonly categoryLabel = computed(() => {
+    const category = this.category();
+    if (!this.categoryName()) return '';
+    return this.locale.locale() === 'en'
+      ? (category.name ?? this.categoryName())
+      : (category.nameMn ?? category.name ?? this.categoryName());
+  });
   readonly listings = signal<DirectoryListing[]>([]);
   readonly loading = signal(false);
   readonly filtersOpen = signal(false);
@@ -362,11 +421,22 @@ export class CatagoryPage implements OnInit {
   readonly specializations = signal(new Set<string>());
   readonly ratings = signal(new Set<number>());
   readonly emergency = signal<boolean | null>(null);
+  readonly district = signal('');
   readonly maxPrice = signal<number>(Number.POSITIVE_INFINITY);
   readonly page = signal(1);
   searchInput = '';
   private lastKey = '';
 
+  /** Only the districts that actually have listings here. */
+  readonly districtOptions = computed(() =>
+    [
+      ...new Set(
+        this.listings()
+          .map((l) => l.district)
+          .filter((d): d is string => !!d),
+      ),
+    ].sort(),
+  );
   readonly hasPrices = computed(() => this.listings().some((l) => Number(l.price ?? 0) > 0));
   readonly priceBounds = computed(() => {
     const prices = this.listings()
@@ -413,6 +483,7 @@ export class CatagoryPage implements OnInit {
         return false;
       if (Number(l.price ?? 0) > this.maxPrice()) return false;
       if (this.ratings().size && !this.ratings().has(Math.floor(l.rating))) return false;
+      if (this.district() && l.district !== this.district()) return false;
       if (q && !`${l.name} ${l.location ?? ''} ${l.website ?? ''}`.toLowerCase().includes(q))
         return false;
       return true;
@@ -431,6 +502,8 @@ export class CatagoryPage implements OnInit {
     this.ratings().forEach((v) =>
       chips.push({ type: 'rating', value: String(v), label: `${v} star` }),
     );
+    if (this.district())
+      chips.push({ type: 'district', value: this.district(), label: this.district() });
     if (this.emergency() !== null)
       chips.push({
         type: 'emergency',
@@ -508,6 +581,11 @@ export class CatagoryPage implements OnInit {
     this.setPage(1);
   }
 
+  setDistrict(event: Event): void {
+    this.district.set((event.target as HTMLSelectElement).value);
+    this.setPage(1);
+  }
+
   setEmergency(value: boolean): void {
     this.emergency.set(this.emergency() === value ? null : value);
     this.setPage(1);
@@ -523,6 +601,7 @@ export class CatagoryPage implements OnInit {
     if (chip.type === 'service') this.toggleSet('services', chip.value);
     else if (chip.type === 'specialization') this.toggleSet('specializations', chip.value);
     else if (chip.type === 'rating') this.toggleRating(Number(chip.value));
+    else if (chip.type === 'district') this.district.set('');
     else if (chip.type === 'emergency') this.emergency.set(null);
     else if (chip.type === 'price') this.maxPrice.set(Number.POSITIVE_INFINITY);
     else if (chip.type === 'query')
@@ -537,6 +616,7 @@ export class CatagoryPage implements OnInit {
     this.specializations.set(new Set());
     this.ratings.set(new Set());
     this.emergency.set(null);
+    this.district.set('');
     this.maxPrice.set(Number.POSITIVE_INFINITY);
     this.filtersOpen.set(false);
     void this.router.navigate([], {

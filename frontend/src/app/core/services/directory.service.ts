@@ -121,7 +121,8 @@ export function enrichListing(entry: Listing): DirectoryListing {
     slug: entry.slug || slugify(title),
     normalizedTitle: normalizeName(title),
     normalizedCategory: normalizeName(entry.category),
-    image: entry.image || getDefaultListingImage(entry.category),
+    // No stock photo stands in for a company that has not uploaded one.
+    image: entry.image ?? '',
     // No invented marketing copy: if the company wrote nothing, we show nothing.
     description: entry.description ?? '',
     rating: Number(entry.rating ?? 0),

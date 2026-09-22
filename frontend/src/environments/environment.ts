@@ -4,6 +4,6 @@ export const environment = {
   apiUrl: 'http://localhost:3001/api/v1',
   // Only show the Google button when the backend has credentials for it.
   googleAuthEnabled: false,
-  defaultLocale: 'en',
-  availableLocales: ['en'],
+  defaultLocale: 'mn',
+  availableLocales: ['mn', 'en'],
 };

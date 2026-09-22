@@ -1,6 +1,11 @@
 module CompanySerializer
   module_function
 
+  # The category in the language the caller asked for; `categorySlug` is the key.
+  def category_label(company)
+    company.category&.display_name(I18n.locale) || company.category_label
+  end
+
   STATUS_LABELS = { "approved" => "Approved", "pending" => "Pending", "rejected" => "Rejected" }.freeze
 
   def item(company, rating = nil)
@@ -9,7 +14,8 @@ module CompanySerializer
       id: company.id,
       ownerUserId: company.owner_user_id,
       categoryId: company.category_id,
-      category: company.category_name,
+      category: category_label(company),
+      categorySlug: company.category&.slug,
       name: company.name,
       slug: company.slug,
       website: company.website,
@@ -21,6 +27,9 @@ module CompanySerializer
       status: STATUS_LABELS.fetch(company.status, company.status),
       verified: company.verified,
       location: company.location,
+      district: company.district,
+      registrationNumber: company.registration_number,
+      facebookUrl: company.facebook_url,
       revenue: company.revenue,
       employees: company.employees,
       industry: company.industry,
@@ -47,20 +56,24 @@ module CompanySerializer
   def listing(company, rating)
     {
       id: company.id,
-      category: company.category_name || "General",
+      category: category_label(company),
+      categorySlug: company.category&.slug,
       name: company.name,
       slug: company.slug,
       rating: rating[:average],
       ratingCount: rating[:count],
       website: company.website,
+      facebookUrl: company.facebook_url,
+      phone: company.phone_number || company.mobile || company.phone,
       location: company.location,
+      district: company.district,
       revenue: company.revenue,
       comments: rating[:count],
       serviceType: company.service_type,
       specialization: company.specialization,
       emergencyService: company.emergency_service || false,
       price: company.price&.to_f,
-      image: company.image.presence || "/logo/logo.png",
+      image: company.image.presence,
       description: company.description.to_s
     }
   end
@@ -72,7 +85,7 @@ module CompanySerializer
       date: Api::Params.date_only(company.updated_at),
       phone: company.phone_number,
       website: company.website,
-      category: company.category_name,
+      category: category_label(company),
       status: company.status,
       slug: company.slug
     }
@@ -83,7 +96,7 @@ module CompanySerializer
       id: company.id,
       name: company.name,
       slug: company.slug,
-      category: company.category_name,
+      category: category_label(company),
       location: company.location,
       website: company.website,
       status: company.status,

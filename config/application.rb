@@ -46,8 +46,9 @@ module YellowBook
       "cache-control" => "public, max-age=#{1.hour.to_i}"
     }
 
-    config.i18n.default_locale = :en
-    config.i18n.available_locales = %i[en]
+    # Mongolian is the product's first language; English is the fallback.
+    config.i18n.default_locale = :mn
+    config.i18n.available_locales = %i[mn en]
     config.i18n.load_path += Dir[Rails.root.join("config", "locales", "**", "*.yml")]
 
     # Keep `rails generate` lean: API-only, RSpec + FactoryBot, nothing else.

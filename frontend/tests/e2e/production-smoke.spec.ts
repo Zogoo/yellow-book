@@ -4,9 +4,18 @@ import {
   API_BASE,
   apiLogin,
   apiRequest,
+  contextForSession,
   createContextForRole,
+  createCustomer,
+  deleteCustomer,
   expectAccessibleButton,
+  pinLocale,
+  SEED,
 } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await pinLocale(page);
+});
 
 test.describe('Yellow Book production smoke', () => {
   test('homepage renders and every protected route leads to the one sign-in page', async ({
@@ -14,7 +23,7 @@ test.describe('Yellow Book production smoke', () => {
   }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /trusted help/i })).toBeVisible();
-    await expect(page.getByText('Beauty Haven').first()).toBeVisible();
+    await expect(page.getByText(SEED.salon).first()).toBeVisible();
 
     for (const target of ['/admin/dashboard', '/company/dashboard', '/user/dashboard']) {
       await page.goto(target);
@@ -87,15 +96,15 @@ test.describe('Yellow Book production smoke', () => {
 
   test('company reply composer submits once and then locks', async ({ browser }) => {
     const context = await request.newContext();
-    const user = await apiLogin('user');
+    const customer = await createCustomer(context, 'reply');
     const agent = await apiLogin('agent');
 
     const listings = await apiRequest(context, 'get', '/listings?limit=10');
-    const beauty = listings.body.data.listings.find((l: any) => l.name === 'Beauty Haven');
+    const beauty = listings.body.data.listings.find((l: any) => l.name === SEED.salon);
     expect(beauty).toBeTruthy();
 
     const created = await apiRequest(context, 'post', '/agency/reviews', {
-      token: user.token,
+      token: customer.token,
       data: { companyId: beauty.id, rating: 5, content: `Reply flow check ${Date.now()}` },
     });
     const reviewId = created.body.data.id;
@@ -120,6 +129,7 @@ test.describe('Yellow Book production smoke', () => {
     await companyContext.close();
     const admin = await apiLogin('admin');
     await apiRequest(context, 'delete', `/agency/reviews/${reviewId}`, { token: admin.token });
+    await deleteCustomer(context, customer.id);
     await context.dispose();
   });
 
@@ -151,12 +161,12 @@ test.describe('Yellow Book production smoke', () => {
     browser,
   }) => {
     const context = await request.newContext();
-    const user = await apiLogin('user');
+    const customer = await createCustomer(context, 'queue');
     const listings = await apiRequest(context, 'get', '/listings?limit=10');
-    const beauty = listings.body.data.listings.find((l: any) => l.name === 'Beauty Haven');
+    const beauty = listings.body.data.listings.find((l: any) => l.name === SEED.salon);
     const marker = `SubAdminQueue${Date.now()}`;
     const created = await apiRequest(context, 'post', '/agency/reviews', {
-      token: user.token,
+      token: customer.token,
       data: { companyId: beauty.id, rating: 3, content: `${marker} pending moderation` },
     });
     const reviewId = created.body.data.id;
@@ -178,6 +188,7 @@ test.describe('Yellow Book production smoke', () => {
     await agentContext.close();
     const admin = await apiLogin('admin');
     await apiRequest(context, 'delete', `/agency/reviews/${reviewId}`, { token: admin.token });
+    await deleteCustomer(context, customer.id);
     await context.dispose();
   });
 
@@ -190,7 +201,7 @@ test.describe('Yellow Book production smoke', () => {
       "Describe your company's mission, products, and services...",
     );
     await expect(about).toBeVisible();
-    const text = `Beauty Haven e2e ${Date.now()}`;
+    const text = `${SEED.salon} e2e ${Date.now()}`;
     await about.fill(text);
     await page.getByTestId('company-profile-save').click();
     await expect(page.getByText(/company profile saved|profile updated/i).first()).toBeVisible();
@@ -200,7 +211,7 @@ test.describe('Yellow Book production smoke', () => {
     ).toHaveValue(text);
 
     await page.goto('/company/notification');
-    await expect(page.getByRole('heading', { name: /recent notifications/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible();
     await context.close();
   });
 
@@ -321,8 +332,9 @@ test.describe('Yellow Book production smoke', () => {
     const apiContext = await request.newContext();
     const listings = await apiRequest(apiContext, 'get', '/listings?limit=10');
     const listing = listings.body.data.listings[0];
+    const customer = await createCustomer(apiContext, 'public-review');
 
-    const context = await createContextForRole(browser, 'user');
+    const context = await contextForSession(browser, customer.token, customer.user);
     const page = await context.newPage();
     await page.goto(`/agency?id=${listing.id}&slug=${listing.slug}`);
     await page.getByRole('button', { name: 'Write a review' }).click();
@@ -331,9 +343,9 @@ test.describe('Yellow Book production smoke', () => {
     await expect(dialog).toBeVisible();
     await dialog.getByRole('radio', { name: '4 star' }).click();
     const content = `Public review flow ${Date.now()}`;
-    await dialog.getByPlaceholder('Write your review...').fill(content);
-    await dialog.getByRole('button', { name: /submit review/i }).click();
-    await expect(page.getByText(/review submitted/i)).toBeVisible();
+    await dialog.getByPlaceholder(/what happened/i).fill(content);
+    await dialog.getByRole('button', { name: /publish review/i }).click();
+    await expect(page.getByText(/sent for moderation/i)).toBeVisible();
 
     const admin = await apiLogin('admin');
     const all = await apiRequest(
@@ -347,6 +359,7 @@ test.describe('Yellow Book production smoke', () => {
     await apiRequest(apiContext, 'delete', `/agency/reviews/${created.id}`, { token: admin.token });
 
     await context.close();
+    await deleteCustomer(apiContext, customer.id);
     await apiContext.dispose();
   });
 });

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -81,9 +81,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
     t.string "icon"
     t.boolean "is_public", default: true, null: false
     t.string "name", null: false
+    t.string "name_mn"
+    t.integer "position", default: 0, null: false
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_categories_on_name", unique: true
+    t.index ["position"], name: "index_categories_on_position"
     t.index ["slug"], name: "index_categories_on_slug", unique: true
   end
 
@@ -95,9 +98,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
     t.string "country_code"
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "district"
     t.string "email"
     t.boolean "emergency_service"
     t.string "employees"
+    t.string "facebook_url"
     t.string "first_name"
     t.text "image"
     t.string "industry"
@@ -113,7 +118,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
     t.json "preferences"
     t.decimal "price", precision: 10, scale: 2
     t.json "profile"
+    t.string "registration_number"
     t.string "revenue"
+    t.text "search_text"
     t.json "security"
     t.string "service_type"
     t.text "services"
@@ -126,6 +133,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
     t.boolean "verified", default: false, null: false
     t.string "website"
     t.index ["category_id"], name: "index_companies_on_category_id"
+    t.index ["district"], name: "index_companies_on_district"
     t.index ["name"], name: "index_companies_on_name"
     t.index ["owner_user_id"], name: "index_companies_on_owner_user_id"
     t.index ["slug"], name: "index_companies_on_slug", unique: true

@@ -1,12 +1,16 @@
 import { expect, request, test } from '@playwright/test';
 
-import { apiLogin, apiRequest, createContextForRole } from './helpers';
+import { apiLogin, apiRequest, createContextForRole, pinLocale, SEED } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await pinLocale(page);
+});
 
 test.describe('Yellow Book feature walkthrough', () => {
   test('a guest is offered sign-in, with the reason, instead of a dead end', async ({ page }) => {
     const api = await request.newContext();
     const listings = await apiRequest(api, 'get', '/listings?limit=10');
-    const beauty = listings.body.data.listings.find((l: any) => l.name === 'Beauty Haven');
+    const beauty = listings.body.data.listings.find((l: any) => l.name === SEED.salon);
 
     // The public feed never carries a reviewer's email address.
     const feed = await apiRequest(api, 'get', `/agency/reviews?companyId=${beauty.id}&limit=1`);
@@ -14,7 +18,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     await api.dispose();
 
     await page.goto(`/agency?id=${beauty.id}&slug=${beauty.slug}`);
-    await expect(page.getByRole('heading', { name: 'Beauty Haven', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SEED.salon, exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Write a review' }).click();
     const dialog = page.getByRole('dialog', { name: /sign in or create an account/i });
@@ -27,16 +31,16 @@ test.describe('Yellow Book feature walkthrough', () => {
   });
 
   test('category filters narrow the listing set and clear again', async ({ page }) => {
-    await page.goto('/catagory?name=Beauty%20%26%20Wellbeing');
-    await expect(page.getByRole('heading', { name: 'Beauty & Wellbeing' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Beauty Haven' })).toBeVisible();
+    await page.goto('/catagory?name=Beauty%20%26%20wellbeing');
+    await expect(page.getByRole('heading', { name: SEED.beautyCategory.en })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SEED.salon })).toBeVisible();
 
     // "Spa" excludes the only listing in this category, which is a salon.
     await page.getByLabel('Spa', { exact: true }).check();
     await expect(page.getByText(/no listings found matching your filters/i)).toBeVisible();
 
     await page.getByRole('button', { name: 'Clear Filters' }).click();
-    await expect(page.getByRole('heading', { name: 'Beauty Haven' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SEED.salon })).toBeVisible();
   });
 
   test('popular list search filters the results', async ({ page }) => {
@@ -45,7 +49,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     await page.getByPlaceholder('Search by company, service, or city').fill('tech');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText(/showing 1–1 of 1 companies/i)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tech Solutions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SEED.tech })).toBeVisible();
   });
 
   test('a business can register through the three-step wizard and lands in its panel', async ({
@@ -159,7 +163,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     const page = await context.newPage();
     await page.goto('/agent/assign-companies');
 
-    const row = page.getByRole('row', { name: /Beauty Haven/ });
+    const row = page.getByRole('row', { name: new RegExp(SEED.salon) });
     const select = row.getByRole('combobox');
     await expect(select).toHaveValue('Verified');
 
@@ -170,9 +174,9 @@ test.describe('Yellow Book feature walkthrough', () => {
     // The dropdown must snap back: nothing was saved.
     await expect(select).toHaveValue('Verified');
     await page.reload();
-    await expect(page.getByRole('row', { name: /Beauty Haven/ }).getByRole('combobox')).toHaveValue(
-      'Verified',
-    );
+    await expect(
+      page.getByRole('row', { name: new RegExp(SEED.salon) }).getByRole('combobox'),
+    ).toHaveValue('Verified');
     await context.close();
   });
 
@@ -304,7 +308,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     const page = await context.newPage();
     await page.goto('/popular-list');
 
-    const card = page.locator('article').filter({ hasText: 'Tech Solutions' }).first();
+    const card = page.locator('article').filter({ hasText: SEED.tech }).first();
     // The listing may already be saved from an earlier run; start from "not saved".
     const remove = card.getByRole('button', { name: 'Remove from favourites' });
     if (await remove.isVisible()) {
@@ -315,12 +319,12 @@ test.describe('Yellow Book feature walkthrough', () => {
     await expect(page.getByText('Saved to favourites')).toBeVisible();
 
     await page.goto('/user/favourite-companies');
-    await expect(page.getByRole('heading', { name: 'Tech Solutions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: SEED.tech })).toBeVisible();
 
     page.on('dialog', (d) => d.accept());
     await page
       .locator('article')
-      .filter({ hasText: 'Tech Solutions' })
+      .filter({ hasText: SEED.tech })
       .getByRole('button', { name: 'Remove' })
       .click();
     await expect(page.getByText('Removed from favourites')).toBeVisible();
@@ -391,7 +395,7 @@ test.describe('Yellow Book feature walkthrough', () => {
   test('signing in resumes the review the visitor came to write', async ({ page }) => {
     const api = await request.newContext();
     const listings = await apiRequest(api, 'get', '/listings?limit=10');
-    const target = listings.body.data.listings.find((l: any) => l.name === 'Gobi Adventures');
+    const target = listings.body.data.listings.find((l: any) => l.name === SEED.travel);
     const email = `e2e-resume-${Date.now()}@example.com`;
 
     await page.goto(`/agency?id=${target.id}&slug=${target.slug}`);
@@ -426,7 +430,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     const api = await request.newContext();
     const user = await apiLogin('user');
     const listings = await apiRequest(api, 'get', '/listings?limit=10');
-    const target = listings.body.data.listings.find((l: any) => l.name === 'Tech Solutions');
+    const target = listings.body.data.listings.find((l: any) => l.name === SEED.tech);
 
     const context = await createContextForRole(browser, 'user');
     const page = await context.newPage();

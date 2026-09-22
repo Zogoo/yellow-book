@@ -46,6 +46,9 @@ module Auth
 
       {
         "name" => company_name, "categoryId" => @body["categoryId"], "category" => @body["category"],
+        "district" => @body["district"], "registrationNumber" => @body["registrationNumber"],
+        "facebookUrl" => @body["facebookUrl"], "location" => @body["location"],
+        "employees" => @body["employees"], "revenue" => @body["revenue"], "service" => @body["service"],
         "ownerName" => @body["ownerName"] || name, "phoneNumber" => @body["phone"] || @body["phoneNumber"],
         "phone" => @body["phone"], "contactEmail" => @body["email"] || email,
         "website" => @body["website"], "description" => @body["description"]
@@ -74,6 +77,10 @@ module Auth
         country_code: Api::Params.optional_string(payload["countryCode"]),
         phone_number: Api::Params.optional_string(payload["phoneNumber"]),
         contact_email: contact_email,
+        district: Api::Params.optional_string(payload["district"]),
+        registration_number: Api::Params.optional_string(payload["registrationNumber"]),
+        facebook_url: Api::Params.optional_string(payload["facebookUrl"]),
+        location: Api::Params.optional_string(payload["location"]),
         owner_name: name,
         first_name: Api::Params.optional_string(payload["firstName"]) || names[:first_name].presence,
         last_name: Api::Params.optional_string(payload["lastName"]) || names[:last_name].presence,

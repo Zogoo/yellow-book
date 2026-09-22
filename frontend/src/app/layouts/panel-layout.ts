@@ -1,9 +1,11 @@
 import { Component, HostListener, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { PanelProfileMenu } from '../shared/panel-profile-menu';
 import { NotificationBell } from '../shared/notification-bell';
+import { LanguageSwitcher } from '../shared/language-switcher';
 
 export type PanelKind = 'admin' | 'agent' | 'company' | 'user';
 
@@ -23,12 +25,12 @@ const MENUS: Record<PanelKind, MenuItem[]> = {
     { label: 'Settings', to: '/admin/settings', icon: '⚙' },
   ],
   company: [
-    { label: 'Dashboard', to: '/company/dashboard', icon: '▦' },
-    { label: 'My Company', to: '/company/my-company', icon: '🏢' },
-    { label: 'Reviews', to: '/company/review', icon: '⭐' },
-    { label: 'My Profile', to: '/company/my-profile', icon: '👤' },
-    { label: 'Notifications', to: '/company/notification', icon: '🔔' },
-    { label: 'Settings', to: '/company/settings', icon: '⚙' },
+    { label: 'company.dashboard', to: '/company/dashboard', icon: '▦' },
+    { label: 'company.myCompany', to: '/company/my-company', icon: '🏢' },
+    { label: 'company.reviews', to: '/company/review', icon: '⭐' },
+    { label: 'company.myProfile', to: '/company/my-profile', icon: '👤' },
+    { label: 'company.notifications', to: '/company/notification', icon: '🔔' },
+    { label: 'company.settings', to: '/company/settings', icon: '⚙' },
   ],
   agent: [
     { label: 'Dashboard', to: '/agent/dashboard', icon: '▦' },
@@ -37,10 +39,10 @@ const MENUS: Record<PanelKind, MenuItem[]> = {
     { label: 'My Profile', to: '/agent/my-profile', icon: '👤' },
   ],
   user: [
-    { label: 'Dashboard', to: '/user/dashboard', icon: '▦' },
-    { label: 'My Reviews', to: '/user/my-reviews', icon: '⭐' },
-    { label: 'Saved Companies', to: '/user/favourite-companies', icon: '❤' },
-    { label: 'My Profile', to: '/user/my-profile', icon: '👤' },
+    { label: 'user.dashboard', to: '/user/dashboard', icon: '▦' },
+    { label: 'user.myReviews', to: '/user/my-reviews', icon: '⭐' },
+    { label: 'user.savedCompanies', to: '/user/favourite-companies', icon: '❤' },
+    { label: 'user.myProfile', to: '/user/my-profile', icon: '👤' },
   ],
 };
 
@@ -54,7 +56,15 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
 /** Header + 280 px sidebar shell shared by the four panels. */
 @Component({
   selector: 'app-panel-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, PanelProfileMenu, NotificationBell],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    PanelProfileMenu,
+    NotificationBell,
+    LanguageSwitcher,
+    TranslatePipe,
+  ],
   template: `
     <div class="panel-shell">
       <header
@@ -75,6 +85,7 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
         </div>
         <div class="flex items-center gap-3">
           <span class="text-xs text-gray-500 sm:hidden">{{ caption() }}</span>
+          <app-language-switcher />
           <app-notification-bell />
           <app-panel-profile-menu [roleLabel]="caption()" [dashboardTo]="menu()[0].to" />
         </div>
@@ -100,7 +111,7 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
                 (click)="sidebarOpen.set(false)"
               >
                 <span aria-hidden="true">{{ item.icon }}</span
-                >{{ item.label }}
+                >{{ item.label | translate }}
               </a>
             }
           </nav>

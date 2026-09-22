@@ -4,7 +4,8 @@ module Companies
       "website" => :website, "specialization" => :specialization, "employees" => :employees, "revenue" => :revenue,
       "country" => :country, "countryCode" => :country_code, "ownerName" => :owner_name, "firstName" => :first_name,
       "lastName" => :last_name, "jobTitle" => :job_title, "location" => :location, "description" => :description,
-      "industry" => :industry, "tagline" => :tagline, "services" => :services, "image" => :image
+      "industry" => :industry, "tagline" => :tagline, "services" => :services, "image" => :image,
+      "district" => :district, "registrationNumber" => :registration_number, "facebookUrl" => :facebook_url
     }.freeze
 
     def initialize(company:, payload:, account:)

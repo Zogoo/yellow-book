@@ -1,6 +1,9 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+
+import { TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { ApiClientError } from '../core/services/api.service';
@@ -17,7 +20,7 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
  */
 @Component({
   selector: 'app-sign-in-flow',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   template: `
     <form class="space-y-4" (ngSubmit)="submit()" novalidate>
       @if (intro()) {
@@ -25,9 +28,9 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
       }
 
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-in-email"
-          >Email address</label
-        >
+        <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-in-email">{{
+          'auth.emailAddress' | translate
+        }}</label>
         <div class="flex gap-2">
           <input
             id="sign-in-email"
@@ -47,7 +50,7 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
               class="yb-btn yb-btn-outline whitespace-nowrap"
               (click)="restart()"
             >
-              Change
+              {{ 'auth.change' | translate }}
             </button>
           }
         </div>
@@ -56,9 +59,9 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
       @switch (step()) {
         @case ('code') {
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-in-code"
-              >6-digit code</label
-            >
+            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-in-code">{{
+              'auth.code' | translate
+            }}</label>
             <input
               id="sign-in-code"
               class="yb-input tracking-[0.4em]"
@@ -72,21 +75,20 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
               required
             />
             <p class="mt-1 text-xs text-gray-500">
-              We emailed a code to <strong>{{ email }}</strong
-              >.
+              {{ 'auth.codeSentTo' | translate: { email: email } }}
               @if (devCode()) {
-                <span class="ml-1 rounded bg-amber-100 px-1 text-amber-800"
-                  >Dev code: {{ devCode() }}</span
-                >
+                <span class="ml-1 rounded bg-amber-100 px-1 text-amber-800">{{
+                  'auth.devCode' | translate: { code: devCode() }
+                }}</span>
               }
             </p>
           </div>
         }
         @case ('password') {
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-in-password"
-              >Password</label
-            >
+            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-in-password">{{
+              'auth.password' | translate
+            }}</label>
             <input
               id="sign-in-password"
               class="yb-input"
@@ -100,23 +102,23 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
         }
         @case ('create') {
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-name"
-              >Your name</label
-            >
+            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-name">{{
+              'auth.yourName' | translate
+            }}</label>
             <input
               id="sign-up-name"
               class="yb-input"
               name="name"
               autocomplete="name"
-              placeholder="How you want to appear on your reviews"
+              [attr.placeholder]="'auth.namePlaceholder' | translate"
               [(ngModel)]="name"
               required
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-password"
-              >Choose a password</label
-            >
+            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-password">{{
+              'auth.choosePassword' | translate
+            }}</label>
             <input
               id="sign-up-password"
               class="yb-input"
@@ -131,9 +133,9 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
         }
         @case ('create-code') {
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-name-code"
-              >Your name</label
-            >
+            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-name-code">{{
+              'auth.yourName' | translate
+            }}</label>
             <input
               id="sign-up-name-code"
               class="yb-input"
@@ -144,9 +146,9 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-code"
-              >6-digit code</label
-            >
+            <label class="mb-1 block text-sm font-medium text-gray-700" for="sign-up-code">{{
+              'auth.code' | translate
+            }}</label>
             <input
               id="sign-up-code"
               class="yb-input tracking-[0.4em]"
@@ -159,12 +161,11 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
               required
             />
             <p class="mt-1 text-xs text-gray-500">
-              We emailed a code to <strong>{{ email }}</strong
-              >.
+              {{ 'auth.codeSentTo' | translate: { email: email } }}
               @if (devCode()) {
-                <span class="ml-1 rounded bg-amber-100 px-1 text-amber-800"
-                  >Dev code: {{ devCode() }}</span
-                >
+                <span class="ml-1 rounded bg-amber-100 px-1 text-amber-800">{{
+                  'auth.devCode' | translate: { code: devCode() }
+                }}</span>
               }
             </p>
           </div>
@@ -178,37 +179,43 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
       }
 
       <button type="submit" class="yb-btn yb-btn-gold w-full" [disabled]="busy()">
-        {{ busy() ? 'Please wait…' : primaryLabel() }}
+        {{ busy() ? ('common.pleaseWait' | translate) : (primaryLabel() | translate) }}
       </button>
 
       <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
         @switch (step()) {
           @case ('code') {
             <button type="button" class="underline" (click)="usePassword()">
-              Use my password instead
+              {{ 'auth.usePassword' | translate }}
             </button>
-            <button type="button" class="underline" (click)="resend()">Resend code</button>
+            <button type="button" class="underline" (click)="resend()">
+              {{ 'auth.resendCode' | translate }}
+            </button>
           }
           @case ('password') {
             <button type="button" class="underline" (click)="useCode()">
-              Email me a code instead
+              {{ 'auth.useCode' | translate }}
             </button>
-            <a routerLink="/auth/forgot-password" class="underline">Forgot password?</a>
+            <a routerLink="/auth/forgot-password" class="underline">
+              {{ 'auth.forgotPassword' | translate }}
+            </a>
           }
           @case ('create') {
             <button type="button" class="underline" (click)="createWithCode()">
-              Sign up with a code instead
+              {{ 'auth.signUpWithCode' | translate }}
             </button>
-            <span>New here? We'll create your account.</span>
+            <span>{{ 'auth.newHere' | translate }}</span>
           }
           @case ('create-code') {
             <button type="button" class="underline" (click)="step.set('create')">
-              Use a password instead
+              {{ 'auth.usePassword' | translate }}
             </button>
-            <button type="button" class="underline" (click)="createWithCode()">Resend code</button>
+            <button type="button" class="underline" (click)="createWithCode()">
+              {{ 'auth.resendCode' | translate }}
+            </button>
           }
           @default {
-            <span>New or returning — this is the only sign-in you need.</span>
+            <span>{{ 'auth.onlyOneSignIn' | translate }}</span>
           }
         }
       </div>
@@ -225,7 +232,7 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
           [disabled]="busy()"
           (click)="google()"
         >
-          Continue with Google
+          {{ 'auth.continueGoogle' | translate }}
         </button>
       }
     </form>
@@ -233,6 +240,7 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
 })
 export class SignInFlow {
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
   readonly intro = input<string>('');
   readonly startInSignUp = input(false);
   readonly nextPath = input<string>('');
@@ -252,14 +260,14 @@ export class SignInFlow {
   readonly primaryLabel = computed(() => {
     switch (this.step()) {
       case 'email':
-        return 'Continue';
+        return 'auth.continue';
       case 'code':
       case 'create-code':
-        return 'Verify and continue';
+        return 'auth.verifyContinue';
       case 'password':
-        return 'Sign in';
+        return 'nav.logIn';
       default:
-        return 'Create account';
+        return 'auth.createAccount';
     }
   });
 
@@ -291,7 +299,7 @@ export class SignInFlow {
   private async continueWithEmail(): Promise<void> {
     const email = this.email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      this.error.set('Enter a valid email address.');
+      this.error.set(this.translate.instant('auth.invalidEmail'));
       return;
     }
     if (this.startInSignUp()) {
@@ -316,7 +324,7 @@ export class SignInFlow {
 
   private async verifyCode(purpose: 'login' | 'signup'): Promise<void> {
     if (!/^\d{6}$/.test(this.code.trim())) {
-      this.error.set('Enter the 6-digit code from your email.');
+      this.error.set(this.translate.instant('auth.enterCode'));
       return;
     }
     this.busy.set(true);
@@ -337,7 +345,7 @@ export class SignInFlow {
 
   private async signInWithPassword(): Promise<void> {
     if (!this.password) {
-      this.error.set('Enter your password.');
+      this.error.set(this.translate.instant('auth.enterPassword'));
       return;
     }
     this.busy.set(true);
@@ -353,7 +361,7 @@ export class SignInFlow {
 
   private async createAccount(): Promise<void> {
     if (!this.name.trim()) {
-      this.error.set('Tell us what to call you.');
+      this.error.set(this.translate.instant('auth.enterName'));
       return;
     }
     const problem = passwordProblem(this.password);

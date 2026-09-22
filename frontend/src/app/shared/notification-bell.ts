@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../core/services/api.service';
 import { NotificationRecord } from '../core/models';
@@ -15,12 +16,13 @@ import { NotificationRecord } from '../core/models';
 /** The header bell: a real inbox, with a real unread count. */
 @Component({
   selector: 'app-notification-bell',
+  imports: [TranslatePipe],
   template: `
     <div class="relative">
       <button
         type="button"
         class="relative rounded-full p-2 text-gray-500 hover:bg-gray-100"
-        aria-label="Notifications"
+        [attr.aria-label]="'notifications.title' | translate"
         aria-haspopup="menu"
         [attr.aria-expanded]="open()"
         (click)="toggle()"
@@ -31,7 +33,7 @@ import { NotificationRecord } from '../core/models';
             class="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white"
             >{{ unread() > 9 ? '9+' : unread() }}</span
           >
-          <span class="sr-only">{{ unread() }} unread</span>
+          <span class="sr-only">{{ 'notifications.unread' | translate: { count: unread() } }}</span>
         }
       </button>
 
@@ -41,19 +43,19 @@ import { NotificationRecord } from '../core/models';
           role="menu"
         >
           <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h2 class="text-sm font-semibold text-gray-900">Notifications</h2>
+            <h2 class="text-sm font-semibold text-gray-900">
+              {{ 'notifications.title' | translate }}
+            </h2>
             @if (unread() > 0) {
               <button type="button" class="text-xs text-[#1877f2]" (click)="markAllRead()">
-                Mark all as read
+                {{ 'notifications.markAllRead' | translate }}
               </button>
             }
           </div>
           @if (loading()) {
-            <p class="px-4 py-6 text-sm text-gray-500">Loading…</p>
+            <p class="px-4 py-6 text-sm text-gray-500">{{ 'common.loading' | translate }}</p>
           } @else if (items().length === 0) {
-            <p class="px-4 py-6 text-sm text-gray-500">
-              Nothing yet. We will tell you when something happens.
-            </p>
+            <p class="px-4 py-6 text-sm text-gray-500">{{ 'notifications.empty' | translate }}</p>
           } @else {
             <ul class="max-h-80 divide-y divide-gray-100 overflow-y-auto">
               @for (item of items(); track item.id) {

@@ -28,76 +28,125 @@ else
                           status: "active", verified: true, auth_role: "SUB_ADMIN", admin_role: "AGENT", is_agent: true)
   agent.save!
 
+  # The category set Mongolians actually shop for. Mongolian name first, English second.
   [
-    { name: "Animals & Pets", slug: "animals-pets", icon: "PawPrint", color: "text-green-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Veterinary", "Grooming", "Boarding" ] },
-                 specializations: { label: "Specializations", options: [ "Pet Care", "Exotic Pets" ] }, emergencyService: true } },
-    { name: "Beauty & Wellbeing", slug: "beauty-wellbeing", icon: "Sparkles", color: "text-pink-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Salon", "Spa", "Barber" ] },
-                 specializations: { label: "Specializations", options: [ "Beauty", "Wellness" ] }, emergencyService: false } },
-    { name: "Tourism & Hospitality", slug: "tourism-hospitality", icon: "Plane", color: "text-amber-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Travel", "Tours", "Hotels" ] },
-                 specializations: { label: "Specializations", options: [ "Tourism", "Adventure" ] }, emergencyService: true } },
-    { name: "IT & Software", slug: "it-software", icon: "Laptop", color: "text-blue-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Web Dev", "Consulting", "Cloud" ] },
-                 specializations: { label: "Specializations", options: [ "Software", "Security" ] }, emergencyService: true } },
-    { name: "Food & Beverage", slug: "food-beverage", icon: "Utensils", color: "text-orange-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Restaurant", "Catering" ] },
-                 specializations: { label: "Specializations", options: [ "Local Cuisine" ] }, emergencyService: false } },
-    { name: "Home Services", slug: "home-services", icon: "Home", color: "text-teal-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Cleaning", "Repair" ] },
-                 specializations: { label: "Specializations", options: [ "Plumbing", "Electrical" ] }, emergencyService: true } },
-    { name: "Education", slug: "education", icon: "GraduationCap", color: "text-indigo-500",
-      filters: { serviceTypes: { label: "Service Types", options: [ "Tutoring", "Courses" ] },
-                 specializations: { label: "Specializations", options: [ "Languages", "STEM" ] }, emergencyService: false } },
-    { name: "More", slug: "more", icon: "MoreHorizontal", color: "text-gray-500", filters: {} }
-  ].each do |attrs|
+    { name: "Food & drink", name_mn: "Хоол, ундаа", slug: "food-drink", icon: "Utensils", color: "text-orange-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Ресторан", "Кафе", "Хүргэлт", "Кейтеринг" ] },
+                 specializations: { label: "Чиглэл", options: [ "Монгол хоол", "Азийн хоол", "Европ хоол", "Бууз, банш" ] }, emergencyService: false } },
+    { name: "Beauty & wellbeing", name_mn: "Гоо сайхан", slug: "beauty-wellbeing", icon: "Sparkles", color: "text-pink-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Үсчин", "Гоо сайхны салон", "Массаж", "Маникюр" ] },
+                 specializations: { label: "Чиглэл", options: [ "Үс засалт", "Арьс арчилгаа", "Хумс" ] }, emergencyService: false } },
+    { name: "Health & clinics", name_mn: "Эмнэлэг, эрүүл мэнд", slug: "health-clinics", icon: "Stethoscope", color: "text-red-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Эмнэлэг", "Шүдний эмнэлэг", "Лаборатори", "Оптик" ] },
+                 specializations: { label: "Чиглэл", options: [ "Хүүхдийн", "Эмэгтэйчүүдийн", "Шүд", "Нүд" ] }, emergencyService: true } },
+    { name: "Car services", name_mn: "Авто үйлчилгээ", slug: "car-services", icon: "Car", color: "text-slate-600",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Засвар", "Угаалга", "Оношилгоо", "Сэлбэг" ] },
+                 specializations: { label: "Чиглэл", options: [ "Хөдөлгүүр", "Явах эд анги", "Цахилгаан", "Дугуй" ] }, emergencyService: true } },
+    { name: "Construction & repair", name_mn: "Барилга, засвар", slug: "construction-repair", icon: "Hammer", color: "text-amber-600",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Барилга", "Засвар үйлчилгээ", "Дизайн", "Материал" ] },
+                 specializations: { label: "Чиглэл", options: [ "Сантехник", "Цахилгаан", "Заслын ажил", "Цонх, хаалга" ] }, emergencyService: true } },
+    { name: "Home services", name_mn: "Гэр ахуйн үйлчилгээ", slug: "home-services", icon: "Home", color: "text-teal-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Цэвэрлэгээ", "Нүүлгэлт", "Угаалга", "Засвар" ] },
+                 specializations: { label: "Чиглэл", options: [ "Оффис цэвэрлэгээ", "Гэрийн цэвэрлэгээ", "Хивс угаалга" ] }, emergencyService: true } },
+    { name: "Education & training", name_mn: "Боловсрол, сургалт", slug: "education-training", icon: "GraduationCap", color: "text-indigo-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Сургалтын төв", "Хувийн багш", "Цэцэрлэг", "Онлайн сургалт" ] },
+                 specializations: { label: "Чиглэл", options: [ "Гадаад хэл", "Математик", "Хөгжим", "Програмчлал" ] }, emergencyService: false } },
+    { name: "Tourism & hospitality", name_mn: "Аялал жуулчлал", slug: "tourism-hospitality", icon: "Plane", color: "text-sky-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Аялалын компани", "Зочид буудал", "Жуулчны бааз", "Тийз" ] },
+                 specializations: { label: "Чиглэл", options: [ "Говь", "Хөвсгөл", "Адал явдалт", "Гадаад аялал" ] }, emergencyService: false } },
+    { name: "IT & software", name_mn: "Мэдээллийн технологи", slug: "it-software", icon: "Laptop", color: "text-blue-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Вэб хөгжүүлэлт", "Программ хангамж", "Сүлжээ", "Компьютер засвар" ] },
+                 specializations: { label: "Чиглэл", options: [ "Вэб сайт", "Мобайл апп", "Систем интеграц", "Мэдээллийн аюулгүй байдал" ] }, emergencyService: true } },
+    { name: "Finance & insurance", name_mn: "Санхүү, даатгал", slug: "finance-insurance", icon: "DollarSign", color: "text-emerald-600",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Нягтлан бодох", "Аудит", "Даатгал", "Зээл" ] },
+                 specializations: { label: "Чиглэл", options: [ "Татвар", "Санхүүгийн тайлан", "Авто даатгал", "Эрүүл мэндийн даатгал" ] }, emergencyService: false } },
+    { name: "Legal services", name_mn: "Хууль, өмгөөлөл", slug: "legal-services", icon: "Scale", color: "text-stone-600",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Өмгөөллийн газар", "Нотариат", "Зөвлөх үйлчилгээ" ] },
+                 specializations: { label: "Чиглэл", options: [ "Иргэний хэрэг", "Компанийн эрх зүй", "Гэр бүлийн хэрэг" ] }, emergencyService: false } },
+    { name: "Delivery & logistics", name_mn: "Тээвэр, хүргэлт", slug: "delivery-logistics", icon: "Truck", color: "text-yellow-600",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Хот доторх хүргэлт", "Орон нутаг", "Олон улс", "Нүүлгэлт" ] },
+                 specializations: { label: "Чиглэл", options: [ "Хүнс", "Ачаа тээвэр", "Шуудан" ] }, emergencyService: true } },
+    { name: "Events & weddings", name_mn: "Хурим, арга хэмжээ", slug: "events-weddings", icon: "PartyPopper", color: "text-fuchsia-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Хурим зохион байгуулалт", "Гэрэл зураг", "Чимэглэл", "Хөгжим" ] },
+                 specializations: { label: "Чиглэл", options: [ "Хурим", "Төрсөн өдөр", "Корпорат арга хэмжээ" ] }, emergencyService: false } },
+    { name: "Real estate", name_mn: "Үл хөдлөх хөрөнгө", slug: "real-estate", icon: "Building2", color: "text-cyan-600",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Худалдаа", "Түрээс", "Үнэлгээ", "Менежмент" ] },
+                 specializations: { label: "Чиглэл", options: [ "Орон сууц", "Оффис", "Газар" ] }, emergencyService: false } },
+    { name: "Animals & pets", name_mn: "Амьтан, тэжээвэр", slug: "animals-pets", icon: "PawPrint", color: "text-green-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Мал эмнэлэг", "Арчилгаа", "Дэлгүүр", "Зочид буудал" ] },
+                 specializations: { label: "Чиглэл", options: [ "Нохой", "Муур", "Бусад амьтад" ] }, emergencyService: true } },
+    { name: "Shops & retail", name_mn: "Дэлгүүр, худалдаа", slug: "shops-retail", icon: "ShoppingBag", color: "text-violet-500",
+      filters: { serviceTypes: { label: "Төрөл", options: [ "Хүнсний дэлгүүр", "Хувцас", "Цахилгаан бараа", "Барилгын материал" ] },
+                 specializations: { label: "Чиглэл", options: [ "Онлайн худалдаа", "Их дэлгүүр", "Мэргэжлийн дэлгүүр" ] }, emergencyService: false } }
+  ].each_with_index do |attrs, index|
     category = Category.find_or_initialize_by(slug: attrs[:slug])
-    category.assign_attributes(attrs)
+    category.assign_attributes(attrs.merge(position: index))
     category.save!
   end
+  # "More" was never a category: it was a row that linked back to the same page.
+  Category.where(slug: "more").destroy_all
 
   [
-    [ "Veterinary", "Animals & Pets" ], [ "Grooming", "Animals & Pets" ], [ "Hair Salon", "Beauty & Wellbeing" ], [ "Spa", "Beauty & Wellbeing" ],
-    [ "Tour Guide", "Tourism & Hospitality" ], [ "Travel Agency", "Tourism & Hospitality" ], [ "Web Development", "IT & Software" ], [ "Software Consulting", "IT & Software" ]
+    [ "Мал эмнэлэг", "Амьтан, тэжээвэр" ], [ "Амьтны арчилгаа", "Амьтан, тэжээвэр" ],
+    [ "Үс засалт", "Гоо сайхан" ], [ "Арьс арчилгаа", "Гоо сайхан" ],
+    [ "Аялал зохион байгуулалт", "Аялал жуулчлал" ], [ "Тийз захиалга", "Аялал жуулчлал" ],
+    [ "Вэб хөгжүүлэлт", "Мэдээллийн технологи" ], [ "Мобайл апп", "Мэдээллийн технологи" ],
+    [ "Сантехник", "Барилга, засвар" ], [ "Цахилгаан", "Барилга, засвар" ],
+    [ "Хот доторх хүргэлт", "Тээвэр, хүргэлт" ]
   ].each { |name, category| ServiceSpecialization.find_or_create_by!(name: name, category: category) }
 
   companies = [
-    { name: "PetCare Plus", website: "https://petcare.example.com", category_label: "Animals & Pets", service_type: "Veterinary", specialization: "Pet Care",
-      location: "Ulaanbaatar", revenue: "$100K", mobile: "+1234567890", email: "hello@petcare.example.com", description: "Pet care services.",
-      image: "/logo/p1.png", price: 45, emergency_service: true, employees: "10-20", industry: "Pet Care" },
-    { name: "Beauty Haven", website: "https://beauty.example.com", category_label: "Beauty & Wellbeing", service_type: "Salon", specialization: "Beauty",
-      location: "Ulaanbaatar", revenue: "$200K", mobile: "+1234567891", email: "hello@beauty.example.com", description: "Beauty and wellness services.",
-      image: "/logo/p2.png", price: 60, emergency_service: false, employees: "1-10", industry: "Beauty" },
-    { name: "Gobi Adventures", website: "https://gobi.example.com", category_label: "Tourism & Hospitality", service_type: "Travel", specialization: "Tourism",
-      location: "Gobi Desert", revenue: "$300K", mobile: "+1234567892", email: "hello@gobi.example.com", description: "Tourism and travel services.",
-      image: "/logo/image6.png", price: 120, emergency_service: true, employees: "21-50", industry: "Tourism" },
-    { name: "Tech Solutions", website: "https://tech.example.com", category_label: "IT & Software", service_type: "Web Dev", specialization: "Software",
-      location: "Ulaanbaatar", revenue: "$400K", mobile: "+1234567893", email: "hello@tech.example.com", description: "IT solutions and software development.",
-      image: "/logo/image7.png", price: 95, emergency_service: true, employees: "51+", industry: "Software" }
+    { name: "Найрамдал Мал Эмнэлэг", website: "https://nairamdal-vet.mn", facebook_url: "https://facebook.com/nairamdalvet",
+      category_label: "Амьтан, тэжээвэр", service_type: "Мал эмнэлэг", specialization: "Мал эмнэлэг",
+      location: "Улаанбаатар", district: "Баянзүрх", revenue: "100-500 сая ₮", mobile: "+97699112233",
+      email: "sain@nairamdal-vet.mn", registration_number: "6012345",
+      description: "Нохой, муурны эмчилгээ, вакцин, 24 цагийн яаралтай тусламж.",
+      image: nil, price: 45, emergency_service: true, employees: "11-30", industry: "Мал эмнэлэг" },
+    { name: "Гоо Урлан Салон", website: "https://goourlan.mn", facebook_url: "https://facebook.com/goourlan",
+      category_label: "Гоо сайхан", service_type: "Гоо сайхны салон", specialization: "Үс засалт",
+      location: "Улаанбаатар", district: "Сүхбаатар", revenue: "100-500 сая ₮", mobile: "+97688220044",
+      email: "tavtai@goourlan.mn", registration_number: "6023456",
+      description: "Үс засалт, будалт, арьс арчилгаа. Урьдчилсан захиалгаар ажиллана.",
+      image: nil, price: 60, emergency_service: false, employees: "1-10", industry: "Гоо сайхан" },
+    { name: "Говь Аялал Трэвэл", website: "https://gobi-travel.mn", facebook_url: "https://facebook.com/gobitravel",
+      category_label: "Аялал жуулчлал", service_type: "Аялалын компани", specialization: "Аялал зохион байгуулалт",
+      location: "Улаанбаатар", district: "Чингэлтэй", revenue: "500 сая - 1 тэрбум ₮", mobile: "+97694445566",
+      email: "info@gobi-travel.mn", registration_number: "6034567",
+      description: "Говь, Хөвсгөл чиглэлийн аялал, гадаад жуулчдын хөтөлбөр.",
+      image: nil, price: 120, emergency_service: true, employees: "11-30", industry: "Аялал жуулчлал" },
+    { name: "Тэхномон Солюшнс", website: "https://tehnomon.mn", facebook_url: "https://facebook.com/tehnomon",
+      category_label: "Мэдээллийн технологи", service_type: "Вэб хөгжүүлэлт", specialization: "Вэб хөгжүүлэлт",
+      location: "Улаанбаатар", district: "Хан-Уул", revenue: "500 сая - 1 тэрбум ₮", mobile: "+97695556677",
+      email: "hello@tehnomon.mn", registration_number: "6045678",
+      description: "Вэб сайт, мобайл апп, системийн интеграц хийдэг баг.",
+      image: nil, price: 95, emergency_service: true, employees: "31-50", industry: "Программ хангамж" }
   ]
   records = companies.map do |attrs|
-    slug = attrs[:name].downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "")
+    slug = Api::Text.slugify(attrs[:name])
     company = Company.find_or_initialize_by(slug: slug)
     company.assign_attributes(
-      owner: company.new_record? ? seed_user : company.owner, category: Category.find_by(name: attrs[:category_label]),
-      name: attrs[:name], website: attrs[:website], category_label: attrs[:category_label], service_type: attrs[:service_type],
+      owner: company.new_record? ? seed_user : company.owner, category: Category.find_by(name_mn: attrs[:category_label]),
+      name: attrs[:name], website: attrs[:website],
+      category_label: Category.find_by(name_mn: attrs[:category_label])&.name || attrs[:category_label],
+      service_type: attrs[:service_type],
       specialization: attrs[:specialization], location: attrs[:location], revenue: attrs[:revenue], mobile: attrs[:mobile],
       phone_number: attrs[:mobile], email: attrs[:email], contact_email: attrs[:email], description: attrs[:description],
       image: attrs[:image], price: attrs[:price], emergency_service: attrs[:emergency_service], employees: attrs[:employees],
-      industry: attrs[:industry], status: "approved", verified: true, signup_channel: "Seed", owner_name: "Seed Owner"
+      industry: attrs[:industry], district: attrs[:district], registration_number: attrs[:registration_number],
+      facebook_url: attrs[:facebook_url], status: "approved", verified: true, signup_channel: "Seed",
+      owner_name: "Сэлэнгэ Батаа"
     )
     company.save!
     company
   end
-  petcare, beauty, gobi, = records
-  seed_user.update_column(:company_id, petcare.id)
-  beauty.update!(owner: company_owner, owner_name: "Company Owner", first_name: "Company", last_name: "Owner", job_title: "Founder")
-  company_owner.update_column(:company_id, beauty.id)
+  vet, salon, travel, = records
+  seed_user.update_column(:company_id, vet.id)
+  salon.update!(owner: company_owner, owner_name: "Сэлэнгэ Батаа", first_name: "Сэлэнгэ", last_name: "Батаа", job_title: "Захирал")
+  company_owner.update_column(:company_id, salon.id)
   seed_user.sync_role!
   company_owner.sync_role!
 
-  # Each review belongs to a different customer: one review per customer per company.
+  # Customers are named people; each writes one review per company.
   reviewers = [
     [ "alice@yellowbook.local", "Alice Johnson" ],
     [ "bob@yellowbook.local", "Bob Smith" ],
@@ -115,12 +164,12 @@ else
 
   if Review.none?
     [
-      [ "petcare-plus", "alice@yellowbook.local", 5, "Excellent pet care. They fitted my dog in the same day and explained every step of the treatment." ],
-      [ "petcare-plus", "bob@yellowbook.local", 4, "Good service and friendly staff. Parking near the clinic is tight, everything else was easy." ],
-      [ "beauty-haven", "carol@yellowbook.local", 5, "Best salon in town. The stylist listened, and the colour is exactly what I asked for." ],
-      [ "beauty-haven", "david@yellowbook.local", 4, "Great haircut and styling, and they ran on time. I will book here again." ],
-      [ "gobi-adventures", "eve@yellowbook.local", 5, "Amazing tour. The guide knew every route and the camp food was far better than expected." ],
-      [ "tech-solutions", "user@yellowbook.local", 5, "Professional web development. Clear estimates, weekly demos, and they shipped on the agreed date." ]
+      [ "nairamdal-mal-emneleg", "alice@yellowbook.local", 5, "Нохойгоо яаралтай үзүүлэхэд тэр өдөртөө хүлээн авч, эмчилгээний явцыг алхам алхмаар тайлбарлаж өгсөн." ],
+      [ "goo-urlan-salon", "bob@yellowbook.local", 4, "Захиалгаараа яг цагтаа орлоо. Үс засалт сайхан болсон, зогсоол нь л жаахан давчуу юм." ],
+      [ "goo-urlan-salon", "carol@yellowbook.local", 5, "Ярьсан өнгийг яг таг гаргаж өглөө. Мастер маань юу хийж байгаагаа тайлбарлаж байсан нь таалагдсан." ],
+      [ "govi-ayalal-trevel", "david@yellowbook.local", 4, "Говь руу 5 хоног яваад ирлээ. Хөтөч маш туршлагатай, хоолны зохион байгуулалт сайн байсан." ],
+      [ "govi-ayalal-trevel", "eve@yellowbook.local", 5, "Гэр бүлээрээ явсан. Хуваарь тодорхой, машин нь цэвэрхэн, үнэ нь ярьсан дүнгээсээ хэтрээгүй." ],
+      [ "tekhnomon-solyushns", "user@yellowbook.local", 5, "Вэб сайтаа хийлгэсэн. Долоо хоног бүр ахицаа үзүүлж, тохирсон хугацаандаа багтаасан." ]
     ].each do |slug, email, rating, content|
       company = Company.find_by!(slug: slug)
       author = reviewers[email] || regular_user
@@ -139,25 +188,28 @@ else
     ReviewLikeShare.find_or_create_by!(user: company_owner, review: first_review, action: "share")
   end
 
-  Favorite.find_or_create_by!(user: regular_user, company: petcare) { |f| f.assign_attributes(name: petcare.name, slug: petcare.slug, category: "Animals & Pets", rating: 4.5, saved_at: Time.current) }
-  Favorite.find_or_create_by!(user: regular_user, company: gobi) { |f| f.assign_attributes(name: gobi.name, slug: gobi.slug, category: "Tourism & Hospitality", rating: 5, saved_at: Time.current) }
-
-  if Notification.none?
-    Notification.create!(user: seed_user, title: "Welcome to Yellow Book", message: "Your account has been set up successfully.", icon: "CheckCircle", icon_color: "text-green-600", bg_color: "bg-green-100", unread: true)
-    Notification.create!(company: petcare, title: "Company Approved", message: %(Your company "#{petcare.name}" is now live on the directory.), icon: "BadgeCheck", icon_color: "text-blue-600", bg_color: "bg-blue-100", unread: false)
-    Notification.create!(company: beauty, title: "New review received", message: "Carol White left a 5-star review for Beauty Haven.", icon: "Star", icon_color: "text-yellow-600", bg_color: "bg-yellow-100", unread: true)
-    Notification.create!(admin: super_admin, title: "New Company Pending", message: "A new company has been submitted for review.", icon: "Bell", icon_color: "text-amber-600", bg_color: "bg-amber-100", unread: true)
+  [ vet, travel ].each do |company|
+    Favorite.find_or_create_by!(user: regular_user, company: company) do |f|
+      f.assign_attributes(name: company.name, slug: company.slug, category: company.category_label, saved_at: Time.current)
+    end
   end
 
-  [ petcare, beauty ].each do |company|
+  if Notification.none?
+    Notification.create!(user: seed_user, title: "Тавтай морилно уу", message: "Таны бүртгэл амжилттай үүслээ.", icon: "CheckCircle", icon_color: "text-green-600", bg_color: "bg-green-100", unread: true)
+    Notification.create!(company: vet, title: "Байгууллага баталгаажлаа", message: %(Таны "#{vet.name}" хуудас лавлахад нийтлэгдлээ.), icon: "BadgeCheck", icon_color: "text-blue-600", bg_color: "bg-blue-100", unread: false)
+    Notification.create!(company: salon, title: "Шинэ сэтгэгдэл", message: "Карол Уайт 5 одтой сэтгэгдэл үлдээлээ.", icon: "Star", icon_color: "text-yellow-600", bg_color: "bg-yellow-100", unread: true)
+    Notification.create!(admin: super_admin, title: "Хүлээгдэж буй байгууллага", message: "Шинэ байгууллага баталгаажуулалт хүлээж байна.", icon: "Bell", icon_color: "text-amber-600", bg_color: "bg-amber-100", unread: true)
+  end
+
+  [ vet, salon ].each do |company|
     assignment = CompanyAssignment.find_or_initialize_by(company: company, admin: agent)
-    assignment.assign_attributes(status: "Assigned", primary_contact: company == beauty ? company_owner.email : seed_user.email)
+    assignment.assign_attributes(status: "Assigned", primary_contact: company == salon ? company_owner.email : seed_user.email)
     assignment.save!
   end
 
   if ActivityEvent.none?
-    ActivityEvent.create!(title: "Database seeded", icon: "Database", time_label: "Just now", payload: { seedVersion: "2.0" })
-    ActivityEvent.create!(title: "New company registered: PetCare Plus", icon: "Building2", time_label: "1h ago", payload: { companyId: petcare.id })
+    ActivityEvent.create!(title: "Database seeded", icon: "Database", time_label: "Just now", payload: { seedVersion: "3.0" })
+    ActivityEvent.create!(title: "New company registered: #{vet.name}", icon: "Building2", time_label: "1h ago", payload: { companyId: vet.id })
     ActivityEvent.create!(title: "Review submitted", icon: "Star", time_label: "2h ago", payload: {})
   end
 

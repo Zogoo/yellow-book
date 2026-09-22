@@ -8,6 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Chart, registerables } from 'chart.js';
 
 import { ApiService } from '../../core/services/api.service';
@@ -20,44 +21,48 @@ Chart.register(...registerables);
 /** `/company/dashboard` — KPIs, monthly review trend and the latest reviews. */
 @Component({
   selector: 'app-company-dashboard-page',
-  imports: [RouterLink, RatingStars],
+  imports: [RouterLink, RatingStars, TranslatePipe],
   template: `
     <header class="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-pink-500/10 p-6">
-      <h1 class="text-2xl font-bold text-[#212121]">Welcome {{ auth.user()?.name || 'back' }}</h1>
-      <p class="text-sm text-gray-600">Here's how your company is doing on Yellow Book.</p>
+      <h1 class="text-2xl font-bold text-[#212121]">
+        {{ 'company.welcome' | translate: { name: auth.user()?.name } }}
+      </h1>
+      <p class="text-sm text-gray-600">{{ 'company.howYouAreDoing' | translate }}</p>
     </header>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div class="yb-card p-5">
-        <p class="text-sm text-gray-500">Total Reviews</p>
+        <p class="text-sm text-gray-500">{{ 'company.totalReviews' | translate }}</p>
         <p class="text-3xl font-bold">{{ stats()?.totalReviews ?? 0 }}</p>
       </div>
       <div class="yb-card p-5">
-        <p class="text-sm text-gray-500">Average Rating</p>
+        <p class="text-sm text-gray-500">{{ 'company.averageRating' | translate }}</p>
         <p class="text-3xl font-bold">{{ (stats()?.averageRating ?? 0).toFixed(1) }}</p>
       </div>
       <div class="yb-card p-5">
-        <p class="text-sm text-gray-500">Verification</p>
+        <p class="text-sm text-gray-500">{{ 'company.verification' | translate }}</p>
         <p class="text-lg font-semibold capitalize">{{ stats()?.verificationStatus ?? '—' }}</p>
       </div>
       <div class="yb-card p-5">
-        <p class="text-sm text-gray-500">Profile</p>
+        <p class="text-sm text-gray-500">{{ 'company.profile' | translate }}</p>
         <p class="text-lg font-semibold">
-          {{ stats()?.profileComplete ? 'Complete' : 'Incomplete' }}
+          {{ (stats()?.profileComplete ? 'company.complete' : 'company.incomplete') | translate }}
         </p>
       </div>
     </div>
     <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
       <section class="yb-card p-5">
-        <h2 class="mb-3 text-lg font-semibold">Review trend</h2>
+        <h2 class="mb-3 text-lg font-semibold">{{ 'company.reviewTrend' | translate }}</h2>
         <canvas #chart height="120" aria-label="Monthly review trend"></canvas>
       </section>
       <section class="yb-card p-5">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Recent reviews</h2>
-          <a routerLink="/company/review" class="text-sm text-[#1877f2]">View all</a>
+          <h2 class="text-lg font-semibold">{{ 'company.recentReviews' | translate }}</h2>
+          <a routerLink="/company/review" class="text-sm text-[#1877f2]">{{
+            'company.viewAll' | translate
+          }}</a>
         </div>
         @if (recent().length === 0) {
-          <p class="text-sm text-gray-500">No reviews yet.</p>
+          <p class="text-sm text-gray-500">{{ 'company.noReviewsYet' | translate }}</p>
         }
         <ul class="space-y-3">
           @for (r of recent(); track r.id) {

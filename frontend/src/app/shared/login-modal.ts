@@ -1,5 +1,6 @@
 import { Component, effect, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { LoginModalService } from '../core/services/login-modal.service';
@@ -10,7 +11,7 @@ import { SignInFlow } from './sign-in-flow';
 /** The same front door as the sign-in page, in a dialog. No role chooser. */
 @Component({
   selector: 'app-login-modal',
-  imports: [SignInFlow, AuthUserSummary, RouterLink],
+  imports: [SignInFlow, AuthUserSummary, RouterLink, TranslatePipe],
   template: `
     @if (modal.open()) {
       <div
@@ -28,14 +29,14 @@ import { SignInFlow } from './sign-in-flow';
           <div class="flex items-start justify-between border-b border-gray-100 px-6 py-4">
             <div>
               <h2 id="sign-in-modal-title" class="text-lg font-bold text-gray-900">
-                Sign in or create an account
+                {{ 'auth.signIn' | translate }}
               </h2>
-              <p class="text-sm text-gray-500">One account for customers and businesses.</p>
+              <p class="text-sm text-gray-500">{{ 'auth.lead' | translate }}</p>
             </div>
             <button
               type="button"
               class="text-gray-500"
-              aria-label="Close"
+              [attr.aria-label]="'common.close' | translate"
               (click)="modal.closeModal()"
             >
               ✕
@@ -48,13 +49,13 @@ import { SignInFlow } from './sign-in-flow';
               <app-sign-in-flow [intro]="modal.reason()" (authenticated)="onAuthenticated()" />
             }
             <p class="mt-5 text-center text-xs text-gray-500">
-              Running a business?
+              {{ 'auth.runningBusiness' | translate }}
               <a
                 routerLink="/business/signup"
                 class="font-semibold text-[#1877f2]"
                 (click)="modal.closeModal()"
               >
-                List your business
+                {{ 'auth.listYourBusiness' | translate }}
               </a>
             </p>
           </div>

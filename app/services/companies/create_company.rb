@@ -34,6 +34,9 @@ module Companies
         owner_name: Api::Params.optional_string(@body["ownerName"]), first_name: Api::Params.optional_string(@body["firstName"]),
         last_name: Api::Params.optional_string(@body["lastName"]), job_title: Api::Params.optional_string(@body["jobTitle"]),
         location: Api::Params.optional_string(@body["location"]), description: Api::Params.optional_string(@body["description"]),
+        district: Api::Params.optional_string(@body["district"]),
+        registration_number: Api::Params.optional_string(@body["registrationNumber"]),
+        facebook_url: Api::Params.optional_string(@body["facebookUrl"]),
         status: status, verified: verified
       )
       owner.sync_role!

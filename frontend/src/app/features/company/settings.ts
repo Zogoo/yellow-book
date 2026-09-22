@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -10,18 +11,18 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
 /** `/company/settings` — password change + notification preference toggles. */
 @Component({
   selector: 'app-company-settings-page',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <header>
-      <h1 class="text-2xl font-bold text-[#212121]">Welcome {{ fullName() }}</h1>
+      <h1 class="text-2xl font-bold text-[#212121]">{{ 'company.settings' | translate }}</h1>
     </header>
     <div class="grid gap-6 lg:grid-cols-2">
       <form class="yb-card space-y-4 p-6" (ngSubmit)="updatePassword()" novalidate>
-        <h2 class="text-lg font-semibold">Change password</h2>
+        <h2 class="text-lg font-semibold">{{ 'user.changePassword' | translate }}</h2>
         <p class="text-xs text-gray-500">{{ passwordRule }}</p>
         @for (field of fields; track field.key) {
           <div>
-            <label class="text-sm font-medium">{{ field.label }}</label>
+            <label class="text-sm font-medium">{{ field.label | translate }}</label>
             <div class="relative">
               <input
                 class="yb-input pr-14"
@@ -45,17 +46,15 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
           </p>
         }
         <button type="submit" class="yb-btn bg-emerald-600 text-white" [disabled]="busy()">
-          {{ busy() ? 'Saving...' : 'Update Password' }}
+          {{ busy() ? ('common.pleaseWait' | translate) : ('user.updatePassword' | translate) }}
         </button>
       </form>
       <section class="yb-card space-y-4 p-6">
-        <h2 class="text-lg font-semibold">Notification Preferences</h2>
+        <h2 class="text-lg font-semibold">{{ 'company.notificationPreferences' | translate }}</h2>
         <div class="flex items-center justify-between">
           <div>
-            <p class="font-medium">Email Notifications</p>
-            <p class="text-xs text-gray-500">
-              Receive email notifications for new reviews and updates
-            </p>
+            <p class="font-medium">{{ 'company.emailNotifications' | translate }}</p>
+            <p class="text-xs text-gray-500">{{ 'company.emailNotificationsHint' | translate }}</p>
           </div>
           <button
             type="button"
@@ -76,8 +75,8 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
         </div>
         <div class="flex items-center justify-between">
           <div>
-            <p class="font-medium">Push Notifications</p>
-            <p class="text-xs text-gray-500">Receive push notifications for important updates</p>
+            <p class="font-medium">{{ 'company.pushNotifications' | translate }}</p>
+            <p class="text-xs text-gray-500">{{ 'company.pushNotificationsHint' | translate }}</p>
           </div>
           <button
             type="button"
@@ -114,9 +113,9 @@ export class CompanySettingsPage implements OnInit {
   readonly ok = signal(false);
   readonly prefMessage = signal<string | null>(null);
   readonly fields = [
-    { key: 'current' as const, label: 'Current Password' },
-    { key: 'next' as const, label: 'New Password' },
-    { key: 'confirm' as const, label: 'Confirm Password' },
+    { key: 'current' as const, label: 'user.currentPassword' },
+    { key: 'next' as const, label: 'user.newPassword' },
+    { key: 'confirm' as const, label: 'user.confirmPassword' },
   ];
   pw: Record<'current' | 'next' | 'confirm', string> = { current: '', next: '', confirm: '' };
   show: Record<'current' | 'next' | 'confirm', boolean> = {

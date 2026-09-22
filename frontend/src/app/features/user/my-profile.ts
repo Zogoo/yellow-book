@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -10,19 +11,20 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
 /** `/user/my-profile` — personal details + password change form. */
 @Component({
   selector: 'app-user-profile-page',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <header class="flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 class="text-2xl font-bold text-[#212121]">My Profile</h1>
-        <p class="text-sm text-gray-500">Keep your contact details current.</p>
+        <h1 class="text-2xl font-bold text-[#212121]">{{ 'user.myProfile' | translate }}</h1>
       </div>
       @if (lastUpdated()) {
-        <p class="text-xs text-gray-500">Last updated {{ lastUpdated() }}</p>
+        <p class="text-xs text-gray-500">
+          {{ 'user.lastUpdated' | translate: { date: lastUpdated() } }}
+        </p>
       }
     </header>
     <form class="yb-card space-y-4 p-6" (ngSubmit)="save()" novalidate>
-      <h2 class="text-lg font-semibold">Personal information</h2>
+      <h2 class="text-lg font-semibold">{{ 'user.personalInformation' | translate }}</h2>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
           <label class="text-sm font-medium">First name</label
@@ -112,14 +114,16 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
         <p class="text-sm text-red-600" role="alert">{{ error() }}</p>
       }
       <button type="submit" class="yb-btn yb-btn-gold" [disabled]="busy()">
-        {{ busy() ? 'Saving...' : 'Save changes' }}
+        {{ busy() ? ('common.pleaseWait' | translate) : ('common.saveChanges' | translate) }}
       </button>
     </form>
     <form class="yb-card space-y-4 p-6" (ngSubmit)="changePassword()" novalidate>
-      <h2 class="text-lg font-semibold">Change password</h2>
+      <h2 class="text-lg font-semibold">{{ 'user.changePassword' | translate }}</h2>
       <p class="text-xs text-gray-500">{{ passwordRule }}</p>
       <div class="grid gap-4 sm:grid-cols-3">
-        <label class="text-sm font-medium" for="user-pw-current">Current password</label>
+        <label class="text-sm font-medium" for="user-pw-current">{{
+          'user.currentPassword' | translate
+        }}</label>
         <input
           class="yb-input"
           id="user-pw-current"
@@ -127,7 +131,9 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
           name="current"
           [(ngModel)]="pw.current"
         />
-        <label class="text-sm font-medium" for="user-pw-next">New password</label>
+        <label class="text-sm font-medium" for="user-pw-next">{{
+          'user.newPassword' | translate
+        }}</label>
         <input
           class="yb-input"
           id="user-pw-next"
@@ -135,7 +141,9 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
           name="next"
           [(ngModel)]="pw.next"
         />
-        <label class="text-sm font-medium" for="user-pw-confirm">Confirm new password</label>
+        <label class="text-sm font-medium" for="user-pw-confirm">{{
+          'user.confirmPassword' | translate
+        }}</label>
         <input
           class="yb-input"
           id="user-pw-confirm"
@@ -150,7 +158,7 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
         </p>
       }
       <button type="submit" class="yb-btn yb-btn-outline" [disabled]="busy()">
-        Update password
+        {{ 'user.updatePassword' | translate }}
       </button>
     </form>
   `,

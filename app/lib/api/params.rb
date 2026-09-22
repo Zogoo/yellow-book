@@ -125,7 +125,7 @@ module Api
     end
 
     def normalize_slug(value, field = "slug")
-      slug = string(value).downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "")
+      slug = Api::Text.slugify(string(value))
       raise Api::BadRequest, "#{field} is required" if slug.empty?
 
       slug

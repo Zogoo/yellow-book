@@ -1,8 +1,11 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
+import { TranslateService } from '@ngx-translate/core';
+
 import { ToastService } from '../../core/services/toast.service';
 import { ApiMeta, ReviewRecord } from '../../core/models';
 import { emptyMeta } from '../../core/services/api.service';
@@ -14,29 +17,31 @@ import { StarRatingBox } from '../../shared/star-rating-box';
 /** `/user/my-reviews` — list, edit and delete the signed-in user's reviews. */
 @Component({
   selector: 'app-my-reviews-page',
-  imports: [FormsModule, Pagination, RatingStars, StarRatingBox],
+  imports: [FormsModule, Pagination, RatingStars, StarRatingBox, TranslatePipe],
   template: `
     <header class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-[#212121]">My Reviews</h1>
-        <p class="text-sm text-gray-500">{{ meta().total }} reviews written</p>
+        <h1 class="text-2xl font-bold text-[#212121]">{{ 'user.myReviews' | translate }}</h1>
+        <p class="text-sm text-gray-500">
+          {{ 'user.reviewsWritten' | translate: { count: meta().total } }}
+        </p>
       </div>
       <div class="flex gap-2">
         <input
           class="yb-input"
           type="search"
-          placeholder="Search reviews"
+          [attr.placeholder]="'common.search' | translate"
           [(ngModel)]="search"
           (ngModelChange)="onSearch()"
-          aria-label="Search reviews"
+          [attr.aria-label]="'common.search' | translate"
         />
         <select
           class="yb-input"
           [(ngModel)]="status"
           (ngModelChange)="load(1)"
-          aria-label="Status filter"
+          [attr.aria-label]="'common.status' | translate"
         >
-          <option value="">All statuses</option>
+          <option value="">{{ 'common.all' | translate }}</option>
           @for (s of ['pending', 'approved', 'rejected', 'on_hold']; track s) {
             <option [value]="s">{{ label(s) }}</option>
           }
@@ -44,9 +49,9 @@ import { StarRatingBox } from '../../shared/star-rating-box';
       </div>
     </header>
     @if (loading()) {
-      <p class="text-gray-500">Loading your reviews...</p>
+      <p class="text-gray-500">{{ 'common.loading' | translate }}</p>
     } @else if (reviews().length === 0) {
-      <div class="yb-card p-10 text-center text-gray-500">You haven't written any reviews yet.</div>
+      <div class="yb-card p-10 text-center text-gray-500">{{ 'user.noReviews' | translate }}</div>
     } @else {
       <div class="space-y-4">
         @for (review of reviews(); track review.id) {
@@ -69,7 +74,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
                   class="yb-input"
                   rows="3"
                   [(ngModel)]="editContent"
-                  aria-label="Review text"
+                  [attr.aria-label]="'agency.reviewDialog' | translate"
                 ></textarea>
                 <div class="flex gap-2">
                   <button
@@ -78,10 +83,10 @@ import { StarRatingBox } from '../../shared/star-rating-box';
                     (click)="saveEdit(review)"
                     [disabled]="busy()"
                   >
-                    Save
+                    {{ 'common.save' | translate }}
                   </button>
                   <button type="button" class="yb-btn yb-btn-outline" (click)="editing.set(null)">
-                    Cancel
+                    {{ 'common.cancel' | translate }}
                   </button>
                 </div>
               </div>
@@ -99,7 +104,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
               }
               <div class="mt-3 flex gap-2">
                 <button type="button" class="yb-btn yb-btn-outline" (click)="startEdit(review)">
-                  Edit
+                  {{ 'common.edit' | translate }}
                 </button>
                 <button
                   type="button"
@@ -107,10 +112,10 @@ import { StarRatingBox } from '../../shared/star-rating-box';
                   (click)="remove(review)"
                   [attr.data-testid]="'user-delete-review-' + review.id"
                 >
-                  Delete
+                  {{ 'common.delete' | translate }}
                 </button>
                 <button type="button" class="yb-btn yb-btn-outline" (click)="view(review)">
-                  View on page
+                  {{ 'user.viewOnPage' | translate }}
                 </button>
               </div>
             }
@@ -130,6 +135,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
 export class MyReviewsPage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   readonly reviews = signal<ReviewRecord[]>([]);
   readonly meta = signal<ApiMeta>(emptyMeta({ limit: 10 }));
@@ -168,8 +174,11 @@ export class MyReviewsPage implements OnInit {
     this.timer = setTimeout(() => void this.load(1), 300);
   }
 
+  /** Status words come from the dictionary so they change with the language. */
   label(status: string): string {
-    return titleCase(status);
+    const key = `review.status.${String(status || '').toLowerCase()}`;
+    const translated = this.translate.instant(key);
+    return translated === key ? titleCase(status) : translated;
   }
 
   statusClass(status: string): string {

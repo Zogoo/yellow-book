@@ -1,6 +1,9 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+
+import { TranslateService } from '@ngx-translate/core';
 
 import { ApiClientError, ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -30,6 +33,9 @@ interface AgencyView {
   employees: string;
   industry: string;
   category: string;
+  district: string;
+  registrationNumber: string;
+  facebookUrl: string;
   ownerName: string;
   ownerTitle: string;
   ownerBio: string;
@@ -41,31 +47,45 @@ interface AgencyView {
 /** `/agency?slug=&id=&title=&reviewId=` — public company profile with reviews. */
 @Component({
   selector: 'app-agency-page',
-  imports: [FormsModule, Footer, RatingStars, StarRatingBox, Avatar],
+  imports: [FormsModule, Footer, RatingStars, StarRatingBox, Avatar, TranslatePipe],
   template: `
     <div class="container mx-auto px-4 py-6">
       <div class="mb-4 flex items-center gap-4 text-sm">
-        <button type="button" class="yb-btn yb-btn-outline" (click)="back()">← Back</button>
+        <button type="button" class="yb-btn yb-btn-outline" (click)="back()">
+          ← {{ 'common.back' | translate }}
+        </button>
         <nav aria-label="Breadcrumb" class="text-gray-500">
-          Agency <span class="mx-1">›</span>
+          {{ 'agency.breadcrumb' | translate }} <span class="mx-1">›</span>
           <span class="text-sky-500">{{ agency().name || 'Unknown' }}</span>
         </nav>
       </div>
 
       <section class="relative mb-16">
-        <img
-          [src]="agency().heroImage"
-          [alt]="agency().name"
-          class="h-64 w-full rounded-3xl object-cover md:h-[50vh]"
-        />
+        @if (agency().heroImage) {
+          <img
+            [src]="agency().heroImage"
+            [alt]="agency().name"
+            class="h-64 w-full rounded-3xl object-cover md:h-[50vh]"
+          />
+        } @else {
+          <div
+            class="flex h-48 w-full items-center justify-center rounded-3xl bg-gradient-to-br from-[#fff3c4] to-[#feecb2] md:h-64"
+          >
+            <span class="text-sm text-[#a67c00]">{{ 'common.noPhoto' | translate }}</span>
+          </div>
+        }
         <div
           class="absolute -bottom-10 left-1/2 -translate-x-1/2 rounded-2xl border-4 border-white bg-white shadow-lg"
         >
-          <img
-            [src]="agency().logoImage"
-            [alt]="agency().name + ' logo'"
-            class="h-20 w-20 rounded-xl object-cover"
-          />
+          @if (agency().logoImage) {
+            <img
+              [src]="agency().logoImage"
+              [alt]="agency().name"
+              class="h-20 w-20 rounded-xl object-cover"
+            />
+          } @else {
+            <app-avatar [name]="agency().name" [size]="80" />
+          }
         </div>
       </section>
       <section class="mb-8 text-center">
@@ -84,27 +104,48 @@ interface AgencyView {
             [showValue]="false"
           />
           <span class="font-bold">{{ overallRating().toFixed(1) }}</span>
-          <span class="text-sm text-gray-500">({{ reviews().length }} reviews)</span>
+          <span class="text-sm text-gray-500">
+            {{ 'category.resultsCount' | translate: { count: reviews().length } }}
+          </span>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+          @if (agency().phone) {
+            <a [href]="'tel:' + agency().phone.replace(' ', '')" class="yb-btn yb-btn-gold">
+              📞 {{ 'common.call' | translate }} {{ agency().phone }}
+            </a>
+          }
+          @if (agency().facebookUrl) {
+            <a
+              [href]="agency().facebookUrl"
+              target="_blank"
+              rel="noopener nofollow"
+              class="yb-btn yb-btn-outline"
+            >
+              {{ 'common.facebook' | translate }} ↗
+            </a>
+          }
         </div>
       </section>
 
       @if (agency().about) {
         <section class="mb-8 rounded-3xl bg-[#fff5f5] p-6">
-          <h2 class="mb-2 text-xl font-bold text-[#212121]">About this company</h2>
+          <h2 class="mb-2 text-xl font-bold text-[#212121]">{{ 'agency.about' | translate }}</h2>
           <p class="text-gray-600">{{ agency().about }}</p>
         </section>
       }
 
       <section class="mb-10 grid gap-6 md:grid-cols-2">
         <div class="yb-card p-6">
-          <h2 class="mb-4 text-lg font-bold text-[#212121]">Company information</h2>
+          <h2 class="mb-4 text-lg font-bold text-[#212121]">
+            {{ 'agency.companyInformation' | translate }}
+          </h2>
           @if (contactRows().length === 0) {
             <p class="text-sm text-gray-500">This company has not published contact details yet.</p>
           } @else {
             <dl class="space-y-3 text-sm">
               @for (row of contactRows(); track row.label) {
                 <div class="flex gap-2">
-                  <dt class="w-44 text-gray-500">{{ row.icon }} {{ row.label }}</dt>
+                  <dt class="w-44 text-gray-500">{{ row.icon }} {{ row.label | translate }}</dt>
                   <dd>
                     @if (row.href) {
                       <a
@@ -149,14 +190,14 @@ interface AgencyView {
                   (click)="filterOpen.set(!filterOpen())"
                   [attr.aria-expanded]="filterOpen()"
                 >
-                  Filter <span [class.rotate-180]="filterOpen()">⌄</span>
+                  {{ 'agency.filter' | translate }} <span [class.rotate-180]="filterOpen()">⌄</span>
                 </button>
                 @if (filterOpen()) {
                   <div
                     class="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl"
                   >
-                    <h3 class="mb-2 text-sm font-semibold">Filter Options</h3>
-                    <p class="mb-1 text-xs text-gray-500">Review Score</p>
+                    <h3 class="mb-2 text-sm font-semibold">{{ 'agency.filter' | translate }}</h3>
+                    <p class="mb-1 text-xs text-gray-500">{{ 'agency.reviewScore' | translate }}</p>
                     @for (star of [1, 2, 3, 4, 5]; track star) {
                       <label class="flex items-center gap-2 py-0.5 text-sm"
                         ><input
@@ -167,7 +208,9 @@ interface AgencyView {
                         {{ star }} Star</label
                       >
                     }
-                    <p class="mt-3 mb-1 text-xs text-gray-500">Date Filter</p>
+                    <p class="mt-3 mb-1 text-xs text-gray-500">
+                      {{ 'agency.dateFilter' | translate }}
+                    </p>
                     @for (option of dateOptions; track option.value) {
                       <label class="flex items-center gap-2 py-0.5 text-sm"
                         ><input
@@ -176,7 +219,7 @@ interface AgencyView {
                           [checked]="dateFilter() === option.value"
                           (change)="dateFilter.set(option.value)"
                         />
-                        {{ option.label }}</label
+                        {{ option.label | translate }}</label
                       >
                     }
                   </div>
@@ -188,16 +231,16 @@ interface AgencyView {
                   target="_blank"
                   rel="noopener nofollow"
                   class="yb-btn yb-btn-gold"
-                  >Visit website ↗</a
+                  >{{ 'agency.visitWebsite' | translate }} ↗</a
                 >
               }
             </div>
           </div>
 
           @if (reviewsLoading()) {
-            <p class="py-10 text-center text-gray-500">Loading reviews...</p>
+            <p class="py-10 text-center text-gray-500">{{ 'common.loading' | translate }}</p>
           } @else if (filteredReviews().length === 0) {
-            <p class="py-10 text-center text-gray-500">No reviews found.</p>
+            <p class="py-10 text-center text-gray-500">{{ 'agency.noReviews' | translate }}</p>
           }
           <div class="space-y-4">
             @for (review of filteredReviews(); track review.id) {
@@ -272,26 +315,30 @@ interface AgencyView {
 
           <div class="yb-card mt-6 flex flex-col items-center gap-3 p-6 text-center">
             @if (myReview(); as mine) {
-              <h3 class="text-lg font-semibold text-[#212121]">You reviewed this company</h3>
+              <h3 class="text-lg font-semibold text-[#212121]">
+                {{ 'agency.youReviewed' | translate }}
+              </h3>
               <app-rating-stars [rating]="mine.rating" size="md" [showValue]="false" />
               <p class="max-w-lg text-sm text-gray-600">{{ mine.content }}</p>
               <button type="button" class="yb-btn yb-btn-outline" (click)="openReviewModal()">
-                Edit your review
+                {{ 'agency.editYourReview' | translate }}
               </button>
             } @else if (isOwnCompany()) {
-              <h3 class="text-lg font-semibold text-[#212121]">This is your company</h3>
+              <h3 class="text-lg font-semibold text-[#212121]">
+                {{ 'agency.ownCompany' | translate }}
+              </h3>
               <p class="text-sm text-gray-600">
-                You cannot review your own company. You can reply to reviews from your dashboard.
+                {{ 'agency.ownCompanyHint' | translate }}
               </p>
             } @else {
               <h3 class="text-lg font-semibold text-[#212121]">
-                Have you used {{ agency().name || 'this company' }}?
+                {{ 'agency.haveYouUsed' | translate: { company: agency().name } }}
               </h3>
               <p class="text-sm text-gray-600">
                 Share what happened so other people know what to expect.
               </p>
               <button type="button" class="yb-btn yb-btn-gold" (click)="openReviewModal()">
-                Write a review
+                {{ 'agency.writeReview' | translate }}
               </button>
             }
           </div>
@@ -299,7 +346,7 @@ interface AgencyView {
 
         <aside class="yb-card h-fit p-6 text-center">
           <p class="text-5xl font-bold text-[#212121]">{{ overallRating().toFixed(1) }}</p>
-          <p class="text-sm font-semibold text-[#e5b106]">{{ ratingLabel() }}</p>
+          <p class="text-sm font-semibold text-[#e5b106]">{{ ratingLabel() | translate }}</p>
           <div class="my-2 flex justify-center">
             <app-rating-stars [rating]="5" size="md" [showValue]="false" />
           </div>
@@ -328,41 +375,47 @@ interface AgencyView {
           class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-2xl"
           role="dialog"
           aria-modal="true"
-          aria-label="Write a review"
+          [attr.aria-label]="'agency.reviewDialog' | translate"
           (click)="$event.stopPropagation()"
           (ngSubmit)="submitReview()"
         >
-          <h2 class="text-xl font-bold">Share your experience with {{ agency().name }}</h2>
+          <h2 class="text-xl font-bold">
+            {{ 'agency.haveYouUsed' | translate: { company: agency().name } }}
+          </h2>
           <div class="flex justify-center">
             <app-star-rating-box [(rating)]="form.rating" [boxSize]="44" [iconSize]="26" />
           </div>
           <input
             class="yb-input"
-            placeholder="Your name"
+            [attr.placeholder]="'agency.yourName' | translate"
             [(ngModel)]="form.reviewerName"
             name="reviewerName"
           />
           <input
             class="yb-input"
             type="email"
-            placeholder="Your email"
+            [attr.placeholder]="'agency.yourEmail' | translate"
             [(ngModel)]="form.reviewerEmail"
             name="reviewerEmail"
           />
           <textarea
             class="yb-input"
             rows="4"
-            placeholder="Write your review..."
+            [attr.placeholder]="'agency.reviewPlaceholder' | translate"
             [(ngModel)]="form.content"
             name="content"
             required
           ></textarea>
           <div class="flex justify-end gap-2">
             <button type="button" class="yb-btn yb-btn-outline" (click)="modalOpen.set(false)">
-              Cancel
+              {{ 'common.cancel' | translate }}
             </button>
             <button type="submit" class="yb-btn yb-btn-gold" [disabled]="submitting()">
-              {{ submitting() ? 'Submitting...' : 'Submit review' }}
+              {{
+                submitting()
+                  ? ('common.pleaseWait' | translate)
+                  : ('agency.submitReview' | translate)
+              }}
             </button>
           </div>
         </form>
@@ -377,6 +430,7 @@ export class AgencyPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly directory = inject(DirectoryService);
   private readonly loginModal = inject(LoginModalService);
+  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -391,11 +445,11 @@ export class AgencyPage implements OnInit {
   readonly modalOpen = signal(false);
   readonly submitting = signal(false);
   readonly dateOptions = [
-    { value: 'all' as const, label: 'All Reviews' },
-    { value: '30' as const, label: 'Last 30 Days' },
-    { value: '90' as const, label: 'Last 3 Months' },
-    { value: '180' as const, label: 'Last 6 Months' },
-    { value: '365' as const, label: 'Last 12 Months' },
+    { value: 'all' as const, label: 'agency.allReviews' },
+    { value: '30' as const, label: 'agency.last30' },
+    { value: '90' as const, label: 'agency.last3Months' },
+    { value: '180' as const, label: 'agency.last6Months' },
+    { value: '365' as const, label: 'agency.last12Months' },
   ];
   form = { rating: 0, reviewerName: '', reviewerEmail: '', content: '' };
   private companyId: number | null = null;
@@ -422,12 +476,12 @@ export class AgencyPage implements OnInit {
   });
   readonly ratingLabel = computed(() => {
     const r = this.overallRating();
-    if (r >= 4.5) return 'Excellent';
-    if (r >= 4) return 'Great';
-    if (r >= 3) return 'Good';
-    if (r >= 2) return 'Fair';
-    if (r > 0) return 'Poor';
-    return 'No ratings';
+    if (r >= 4.5) return 'agency.excellent';
+    if (r >= 4) return 'agency.great';
+    if (r >= 3) return 'agency.good';
+    if (r >= 2) return 'agency.fair';
+    if (r > 0) return 'agency.poor';
+    return 'agency.noRatings';
   });
   readonly breakdown = computed(() => {
     const total = this.reviews().length || 1;
@@ -463,7 +517,11 @@ export class AgencyPage implements OnInit {
       rating: l?.rating ?? c?.rating ?? 0,
       ratingCount: l?.ratingCount ?? c?.ratingCount ?? 0,
       // Everything below is shown only when the company actually provided it.
-      tagline: c?.tagline || (serviceType && location ? `${serviceType} in ${location}` : ''),
+      tagline:
+        c?.tagline ||
+        (serviceType && location
+          ? this.translate.instant('agency.taglineIn', { service: serviceType, location })
+          : ''),
       about: c?.description || l?.description || '',
       website: (l?.website || c?.website || '').trim(),
       phone: (c?.phone || c?.mobile || c?.phoneNumber || '').trim(),
@@ -473,11 +531,14 @@ export class AgencyPage implements OnInit {
       employees: (c?.employees || '').toString().trim(),
       industry: (c?.industry || '').toString().trim(),
       category,
+      district: (c?.district || '').toString().trim(),
+      registrationNumber: (c?.registrationNumber || '').toString().trim(),
+      facebookUrl: (c?.facebookUrl || '').toString().trim(),
       ownerName: owner,
       ownerTitle: c?.jobTitle || '',
       ownerBio: '',
-      heroImage: l?.image || c?.image || getDefaultListingImage(category),
-      logoImage: l?.image || c?.image || '/logo/logo.png',
+      heroImage: (l?.image || c?.image || '').toString(),
+      logoImage: (l?.image || c?.image || '').toString(),
       profileImage: '',
     };
   });
@@ -594,22 +655,41 @@ export class AgencyPage implements OnInit {
   readonly contactRows = computed(() => {
     const a = this.agency();
     const rows: { icon: string; label: string; value: string; href?: string }[] = [];
-    if (a.website)
-      rows.push({ icon: '🌐', label: 'Website', value: a.website, href: this.websiteHref() });
     if (a.phone)
       rows.push({
         icon: '📞',
-        label: 'Phone',
+        label: 'common.phone',
         value: a.phone,
         href: `tel:${a.phone.replace(/\s+/g, '')}`,
       });
+    if (a.facebookUrl)
+      rows.push({
+        icon: '📘',
+        label: 'common.facebook',
+        value: a.facebookUrl,
+        href: a.facebookUrl,
+      });
+    if (a.website)
+      rows.push({
+        icon: '🌐',
+        label: 'common.website',
+        value: a.website,
+        href: this.websiteHref(),
+      });
     if (a.email)
       rows.push({ icon: '✉', label: 'Email', value: a.email, href: `mailto:${a.email}` });
-    if (a.location) rows.push({ icon: '📍', label: 'Location', value: a.location });
-    if (a.industry) rows.push({ icon: '🏭', label: 'Industry', value: a.industry });
-    if (a.category) rows.push({ icon: '🏷', label: 'Category', value: a.category });
-    if (a.employees) rows.push({ icon: '👥', label: 'Employees', value: a.employees });
-    if (a.revenue) rows.push({ icon: '💲', label: 'Annual revenue', value: a.revenue });
+    if (a.district) rows.push({ icon: '📍', label: 'common.district', value: a.district });
+    if (a.location) rows.push({ icon: '🏙', label: 'common.location', value: a.location });
+    if (a.registrationNumber)
+      rows.push({
+        icon: '🪪',
+        label: 'agency.registrationNumber',
+        value: a.registrationNumber,
+      });
+    if (a.industry) rows.push({ icon: '🏭', label: 'agency.industry', value: a.industry });
+    if (a.category) rows.push({ icon: '🏷', label: 'common.category', value: a.category });
+    if (a.employees) rows.push({ icon: '👥', label: 'agency.employees', value: a.employees });
+    if (a.revenue) rows.push({ icon: '💲', label: 'agency.revenue', value: a.revenue });
     return rows;
   });
 
@@ -624,7 +704,9 @@ export class AgencyPage implements OnInit {
 
   async react(review: ReviewRecord, action: 'like' | 'dislike'): Promise<void> {
     if (!this.auth.isAuthenticated()) {
-      this.loginModal.openModal('review', { reason: 'Sign in to react to reviews.' });
+      this.loginModal.openModal('review', {
+        reason: this.translate.instant('agency.signInToReact'),
+      });
       return;
     }
     if (!this.canLikeDislike()) return;
@@ -657,12 +739,14 @@ export class AgencyPage implements OnInit {
       // Remember the intent so the composer opens again after signing in.
       this.resumeReview.set(true);
       this.loginModal.openModal('review', {
-        reason: `Sign in to review ${this.agency().name || 'this company'}. It takes a minute.`,
+        reason: this.translate.instant('agency.signInToReview', {
+          company: this.agency().name || '',
+        }),
       });
       return;
     }
     if (this.isOwnCompany()) {
-      this.toast.alert('You cannot review your own company.');
+      this.toast.alert(this.translate.instant('agency.ownCompanyHint'));
       return;
     }
     if (this.myReview()) {
@@ -682,7 +766,7 @@ export class AgencyPage implements OnInit {
 
   async submitReview(): Promise<void> {
     if (!this.form.rating || !this.form.content.trim()) {
-      this.toast.alert('Please add a rating and your feedback.');
+      this.toast.alert(this.translate.instant('agency.ratingRequired'));
       return;
     }
     this.submitting.set(true);
@@ -698,7 +782,7 @@ export class AgencyPage implements OnInit {
         companyId: this.companyId,
         companySlug: this.agency().slug,
       });
-      this.toast.success('Review submitted');
+      this.toast.success(this.translate.instant('agency.submitted'));
       this.modalOpen.set(false);
       await this.loadReviews();
     } catch (e) {

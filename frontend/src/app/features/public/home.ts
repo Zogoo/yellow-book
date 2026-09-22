@@ -10,7 +10,7 @@ import { StarBand } from './star-band';
   imports: [CategoryGrid, PopularListings, StarBand, FrequentFaq],
   template: `
     <div class="flex flex-col gap-10 py-8">
-      <app-category-grid />
+      <app-category-grid [limit]="8" />
       <app-popular-listings [limit]="8" />
       <app-star-band />
       <app-frequent-faq />

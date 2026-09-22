@@ -46,7 +46,7 @@ module Reviews
 
       slug_raw = %w[companySlug company_slug].map { |k| @body[k].presence || @query[k] }.find(&:present?)
       if slug_raw.present?
-        slug = slug_raw.to_s.strip.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "")
+        slug = Api::Text.slugify(slug_raw)
         company = Company.find_by(slug: slug) if slug.present?
         return company.id if company
       end

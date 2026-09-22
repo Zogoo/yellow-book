@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,28 +9,29 @@ import { AuthService } from '../../core/services/auth.service';
 /** `/contact` — reaches a real administrator queue. */
 @Component({
   selector: 'app-contact-page',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <section class="mx-auto max-w-xl py-12">
-      <h1 class="mb-2 text-3xl font-bold text-[#212121]">Contact us</h1>
-      <p class="mb-6 text-gray-600">
-        Questions about a review, your business page, or your account? Send us a message and we will
-        reply by email.
-      </p>
+      <h1 class="mb-2 text-3xl font-bold text-[#212121]">{{ 'contact.title' | translate }}</h1>
+      <p class="mb-6 text-gray-600">{{ 'contact.lead' | translate }}</p>
       @if (sent()) {
         <div class="yb-card p-6" role="status">
-          <h2 class="text-lg font-semibold text-emerald-700">Message received</h2>
+          <h2 class="text-lg font-semibold text-emerald-700">
+            {{ 'contact.received' | translate }}
+          </h2>
           <p class="mt-1 text-sm text-gray-600">
-            Thanks {{ form.name }} — we have your message and will reply to {{ form.email }}.
+            {{ 'contact.receivedLead' | translate: { name: form.name, email: form.email } }}
           </p>
           <button type="button" class="yb-btn yb-btn-outline mt-4" (click)="again()">
-            Send another message
+            {{ 'contact.sendAnother' | translate }}
           </button>
         </div>
       } @else {
         <form class="space-y-4" (ngSubmit)="submit()" novalidate>
           <div>
-            <label class="mb-1 block text-sm font-medium" for="contact-name">Your name</label>
+            <label class="mb-1 block text-sm font-medium" for="contact-name">{{
+              'contact.yourName' | translate
+            }}</label>
             <input
               id="contact-name"
               class="yb-input"
@@ -39,7 +41,9 @@ import { AuthService } from '../../core/services/auth.service';
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium" for="contact-email">Your email</label>
+            <label class="mb-1 block text-sm font-medium" for="contact-email">{{
+              'contact.yourEmail' | translate
+            }}</label>
             <input
               id="contact-email"
               class="yb-input"
@@ -50,13 +54,15 @@ import { AuthService } from '../../core/services/auth.service';
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium" for="contact-message">Message</label>
+            <label class="mb-1 block text-sm font-medium" for="contact-message">{{
+              'contact.message' | translate
+            }}</label>
             <textarea
               id="contact-message"
               class="yb-input"
               rows="5"
               name="message"
-              placeholder="Tell us what happened, and include a link if it is about a specific review."
+              [attr.placeholder]="'contact.messagePlaceholder' | translate"
               [(ngModel)]="form.message"
               required
             ></textarea>
@@ -67,7 +73,7 @@ import { AuthService } from '../../core/services/auth.service';
             </p>
           }
           <button type="submit" class="yb-btn yb-btn-gold" [disabled]="busy()">
-            {{ busy() ? 'Sending…' : 'Send message' }}
+            {{ (busy() ? 'contact.sending' : 'contact.send') | translate }}
           </button>
         </form>
       }

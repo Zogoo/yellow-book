@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -9,10 +10,16 @@ import { CompanyProfile } from '../../core/models';
 /** `/company/my-profile` — owner-facing contact profile with avatar upload. */
 @Component({
   selector: 'app-company-profile-page',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   template: `
     <header>
-      <h1 class="text-2xl font-bold text-[#212121]">Welcome {{ form.fullName || 'there' }}</h1>
+      <h1 class="text-2xl font-bold text-[#212121]">{{ 'company.contactDetails' | translate }}</h1>
+      <p class="text-sm text-gray-500">
+        {{ 'company.contactLead' | translate }}
+        <a routerLink="/company/my-company" class="text-[#1877f2]">
+          {{ 'company.myCompany' | translate }}
+        </a>
+      </p>
     </header>
     <form class="yb-card grid gap-6 p-6 md:grid-cols-[220px_1fr]" (ngSubmit)="save()" novalidate>
       <div class="text-center">
@@ -29,7 +36,7 @@ import { CompanyProfile } from '../../core/models';
             @if (form.avatar) {
               <img [src]="form.avatar" alt="Avatar" class="h-full w-full object-cover" />
             } @else {
-              <span class="text-xs text-gray-400">Click to upload</span>
+              <span class="text-xs text-gray-400">{{ 'common.noPhoto' | translate }}</span>
             }
           </div>
           <span class="mt-2 block text-xs text-gray-500">{{
@@ -96,7 +103,7 @@ import { CompanyProfile } from '../../core/models';
           </p>
         }
         <button type="submit" class="yb-btn bg-emerald-600 text-white" [disabled]="busy()">
-          {{ busy() ? 'Saving...' : 'Update Profile' }}
+          {{ busy() ? ('common.pleaseWait' | translate) : ('common.saveChanges' | translate) }}
         </button>
       </div>
     </form>
