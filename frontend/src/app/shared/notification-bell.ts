@@ -76,7 +76,7 @@ import { NotificationRecord } from '../core/models';
                     @if (item.unread) {
                       <span
                         class="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500"
-                        aria-label="Unread"
+                        [attr.aria-label]="'notifications.unread' | translate"
                       ></span>
                     }
                   </button>

@@ -9,12 +9,12 @@ else
   seed_user.save!
 
   regular_user = User.find_or_initialize_by(email: "user@yellowbook.local")
-  regular_user.assign_attributes(password: "UserSecure123!", display_name: "Regular User", first_name: "Regular", last_name: "User",
+  regular_user.assign_attributes(password: "UserSecure123!", display_name: "Болор Ганзориг", first_name: "Болор", last_name: "Ганзориг",
                                  status: "active", role: "user", signup_method: "Email", email_verified_at: Time.current)
   regular_user.save!
 
   company_owner = User.find_or_initialize_by(email: "company@yellowbook.local")
-  company_owner.assign_attributes(password: "CompanySecure123!", display_name: "Company Owner", first_name: "Company", last_name: "Owner",
+  company_owner.assign_attributes(password: "CompanySecure123!", display_name: "Сэлэнгэ Батаа", first_name: "Сэлэнгэ", last_name: "Батаа",
                                   status: "active", role: "company", signup_method: "Email", email_verified_at: Time.current)
   company_owner.save!
 
@@ -101,25 +101,25 @@ else
       location: "Улаанбаатар", district: "Баянзүрх", revenue: "100-500 сая ₮", mobile: "+97699112233",
       email: "sain@nairamdal-vet.mn", registration_number: "6012345",
       description: "Нохой, муурны эмчилгээ, вакцин, 24 цагийн яаралтай тусламж.",
-      image: nil, price: 45, emergency_service: true, employees: "11-30", industry: "Мал эмнэлэг" },
+      image: nil, price: 35_000, emergency_service: true, employees: "11-30", industry: "Мал эмнэлэг" },
     { name: "Гоо Урлан Салон", website: "https://goourlan.mn", facebook_url: "https://facebook.com/goourlan",
       category_label: "Гоо сайхан", service_type: "Гоо сайхны салон", specialization: "Үс засалт",
       location: "Улаанбаатар", district: "Сүхбаатар", revenue: "100-500 сая ₮", mobile: "+97688220044",
       email: "tavtai@goourlan.mn", registration_number: "6023456",
       description: "Үс засалт, будалт, арьс арчилгаа. Урьдчилсан захиалгаар ажиллана.",
-      image: nil, price: 60, emergency_service: false, employees: "1-10", industry: "Гоо сайхан" },
+      image: nil, price: 45_000, emergency_service: false, employees: "1-10", industry: "Гоо сайхан" },
     { name: "Говь Аялал Трэвэл", website: "https://gobi-travel.mn", facebook_url: "https://facebook.com/gobitravel",
       category_label: "Аялал жуулчлал", service_type: "Аялалын компани", specialization: "Аялал зохион байгуулалт",
       location: "Улаанбаатар", district: "Чингэлтэй", revenue: "500 сая - 1 тэрбум ₮", mobile: "+97694445566",
       email: "info@gobi-travel.mn", registration_number: "6034567",
       description: "Говь, Хөвсгөл чиглэлийн аялал, гадаад жуулчдын хөтөлбөр.",
-      image: nil, price: 120, emergency_service: true, employees: "11-30", industry: "Аялал жуулчлал" },
+      image: nil, price: 250_000, emergency_service: true, employees: "11-30", industry: "Аялал жуулчлал" },
     { name: "Тэхномон Солюшнс", website: "https://tehnomon.mn", facebook_url: "https://facebook.com/tehnomon",
       category_label: "Мэдээллийн технологи", service_type: "Вэб хөгжүүлэлт", specialization: "Вэб хөгжүүлэлт",
       location: "Улаанбаатар", district: "Хан-Уул", revenue: "500 сая - 1 тэрбум ₮", mobile: "+97695556677",
       email: "hello@tehnomon.mn", registration_number: "6045678",
       description: "Вэб сайт, мобайл апп, системийн интеграц хийдэг баг.",
-      image: nil, price: 95, emergency_service: true, employees: "31-50", industry: "Программ хангамж" }
+      image: nil, price: 80_000, emergency_service: true, employees: "31-50", industry: "Программ хангамж" }
   ]
   records = companies.map do |attrs|
     slug = Api::Text.slugify(attrs[:name])
@@ -148,35 +148,37 @@ else
 
   # Customers are named people; each writes one review per company.
   reviewers = [
-    [ "alice@yellowbook.local", "Alice Johnson" ],
-    [ "bob@yellowbook.local", "Bob Smith" ],
-    [ "carol@yellowbook.local", "Carol White" ],
-    [ "david@yellowbook.local", "David Brown" ],
-    [ "eve@yellowbook.local", "Eve Davis" ]
+    [ "alice@yellowbook.local", "Алтанцэцэг Ганбат" ],
+    [ "bob@yellowbook.local", "Батбаяр Доржсүрэн" ],
+    [ "carol@yellowbook.local", "Сарангэрэл Энхбаяр" ],
+    [ "david@yellowbook.local", "Даваасүрэн Мөнх" ],
+    [ "eve@yellowbook.local", "Энхжаргал Цэрэн" ]
   ].to_h do |email, name|
     person = User.find_or_initialize_by(email: email)
-    person.assign_attributes(password: "Reviewer#{name.split.first}123!", display_name: name,
+    person.assign_attributes(password: "ReviewerSeed123!", display_name: name,
                              first_name: name.split.first, last_name: name.split.last,
                              status: "active", role: "user", signup_method: "Email", email_verified_at: Time.current)
     person.save!
     [ email, person ]
   end
 
-  if Review.none?
-    [
-      [ "nairamdal-mal-emneleg", "alice@yellowbook.local", 5, "Нохойгоо яаралтай үзүүлэхэд тэр өдөртөө хүлээн авч, эмчилгээний явцыг алхам алхмаар тайлбарлаж өгсөн." ],
-      [ "goo-urlan-salon", "bob@yellowbook.local", 4, "Захиалгаараа яг цагтаа орлоо. Үс засалт сайхан болсон, зогсоол нь л жаахан давчуу юм." ],
-      [ "goo-urlan-salon", "carol@yellowbook.local", 5, "Ярьсан өнгийг яг таг гаргаж өглөө. Мастер маань юу хийж байгаагаа тайлбарлаж байсан нь таалагдсан." ],
-      [ "govi-ayalal-trevel", "david@yellowbook.local", 4, "Говь руу 5 хоног яваад ирлээ. Хөтөч маш туршлагатай, хоолны зохион байгуулалт сайн байсан." ],
-      [ "govi-ayalal-trevel", "eve@yellowbook.local", 5, "Гэр бүлээрээ явсан. Хуваарь тодорхой, машин нь цэвэрхэн, үнэ нь ярьсан дүнгээсээ хэтрээгүй." ],
-      [ "tekhnomon-solyushns", "user@yellowbook.local", 5, "Вэб сайтаа хийлгэсэн. Долоо хоног бүр ахицаа үзүүлж, тохирсон хугацаандаа багтаасан." ]
-    ].each do |slug, email, rating, content|
-      company = Company.find_by!(slug: slug)
-      author = reviewers[email] || regular_user
-      Review.create!(company: company, user: author, reviewer_name: author.display_name, reviewer_email: author.email,
-                     content: content, rating: rating, status: "approved", company_name: company.name,
-                     moderated_at: Time.current)
-    end
+  # Kept in step with this list rather than created once, so renaming a demo
+  # reviewer actually shows up on the page.
+  [
+    [ "nairamdal-mal-emneleg", "alice@yellowbook.local", 5, "Нохойгоо яаралтай үзүүлэхэд тэр өдөртөө хүлээн авч, эмчилгээний явцыг алхам алхмаар тайлбарлаж өгсөн." ],
+    [ "goo-urlan-salon", "bob@yellowbook.local", 4, "Захиалгаараа яг цагтаа орлоо. Үс засалт сайхан болсон, зогсоол нь л жаахан давчуу юм." ],
+    [ "goo-urlan-salon", "carol@yellowbook.local", 5, "Ярьсан өнгийг яг таг гаргаж өглөө. Мастер маань юу хийж байгаагаа тайлбарлаж байсан нь таалагдсан." ],
+    [ "govi-ayalal-trevel", "david@yellowbook.local", 4, "Говь руу 5 хоног яваад ирлээ. Хөтөч маш туршлагатай, хоолны зохион байгуулалт сайн байсан." ],
+    [ "govi-ayalal-trevel", "eve@yellowbook.local", 5, "Гэр бүлээрээ явсан. Хуваарь тодорхой, машин нь цэвэрхэн, үнэ нь ярьсан дүнгээсээ хэтрээгүй." ],
+    [ "tekhnomon-solyushns", "user@yellowbook.local", 5, "Вэб сайтаа хийлгэсэн. Долоо хоног бүр ахицаа үзүүлж, тохирсон хугацаандаа багтаасан." ]
+  ].each do |slug, email, rating, content|
+    company = Company.find_by!(slug: slug)
+    author = reviewers[email] || regular_user
+    review = Review.find_or_initialize_by(company: company, user: author)
+    review.assign_attributes(reviewer_name: author.display_name, reviewer_email: author.email,
+                             content: content, rating: rating, status: "approved",
+                             company_name: company.name, moderated_at: Time.current)
+    review.save!
   end
 
   Review.order(:id).limit(3).each do |review|

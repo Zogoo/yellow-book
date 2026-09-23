@@ -1,16 +1,21 @@
 import { Component, computed, input, model } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /** ‹ 1 2 3 › pager with the gold active page. */
 @Component({
   selector: 'app-pagination',
+  imports: [TranslatePipe],
   template: `
-    <nav class="flex items-center justify-center gap-2" aria-label="Pagination">
+    <nav
+      class="flex items-center justify-center gap-2"
+      [attr.aria-label]="'common.pagination' | translate"
+    >
       <button
         type="button"
         class="rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:opacity-40"
         [disabled]="page() <= 1"
         (click)="go(page() - 1)"
-        aria-label="Previous page"
+        [attr.aria-label]="'common.previousPage' | translate"
       >
         ‹
       </button>
@@ -34,7 +39,7 @@ import { Component, computed, input, model } from '@angular/core';
         class="rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:opacity-40"
         [disabled]="page() >= totalPages()"
         (click)="go(page() + 1)"
-        aria-label="Next page"
+        [attr.aria-label]="'common.nextPage' | translate"
       >
         ›
       </button>

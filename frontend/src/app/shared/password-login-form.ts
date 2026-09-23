@@ -1,5 +1,6 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { AuthUser } from '../core/models';
@@ -7,13 +8,13 @@ import { AuthUser } from '../core/models';
 /** Email + password form shared by the company and staff sign-in pages. */
 @Component({
   selector: 'app-password-login-form',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <form class="space-y-4" (ngSubmit)="submit()" novalidate>
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700" [for]="idPrefix() + '-email'"
-          >Email</label
-        >
+        <label class="mb-1 block text-sm font-medium text-gray-700" [for]="idPrefix() + '-email'">{{
+          'common.email' | translate
+        }}</label>
         <input
           [id]="idPrefix() + '-email'"
           class="yb-input"
@@ -27,8 +28,10 @@ import { AuthUser } from '../core/models';
         />
       </div>
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700" [for]="idPrefix() + '-password'"
-          >Password</label
+        <label
+          class="mb-1 block text-sm font-medium text-gray-700"
+          [for]="idPrefix() + '-password'"
+          >{{ 'auth.password' | translate }}</label
         >
         <div class="relative">
           <input
@@ -46,9 +49,9 @@ import { AuthUser } from '../core/models';
             type="button"
             class="absolute top-1/2 right-3 -translate-y-1/2 text-xs text-gray-500"
             (click)="show.set(!show())"
-            [attr.aria-label]="show() ? 'Hide password' : 'Show password'"
+            [attr.aria-label]="(show() ? 'auth.hidePassword' : 'auth.showPassword') | translate"
           >
-            {{ show() ? 'Hide' : 'Show' }}
+            {{ (show() ? 'auth.hide' : 'auth.show') | translate }}
           </button>
         </div>
       </div>
@@ -58,7 +61,7 @@ import { AuthUser } from '../core/models';
         </p>
       }
       <button type="submit" class="yb-btn yb-btn-gold w-full" [disabled]="busy()">
-        {{ busy() ? 'Signing in...' : submitLabel() }}
+        {{ busy() ? ('common.pleaseWait' | translate) : (submitLabel() | translate) }}
       </button>
     </form>
   `,
@@ -66,7 +69,8 @@ import { AuthUser } from '../core/models';
 export class PasswordLoginForm {
   private readonly auth = inject(AuthService);
   readonly idPrefix = input('login');
-  readonly submitLabel = input('Sign in');
+  /** Translation key for the submit button. */
+  readonly submitLabel = input('auth.signInAction');
   readonly authenticated = output<AuthUser>();
   email = '';
   password = '';

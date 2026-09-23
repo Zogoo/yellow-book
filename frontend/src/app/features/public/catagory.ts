@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { ApiService } from '../../core/services/api.service';
@@ -18,6 +18,7 @@ import { getFilterChipClass } from '../../core/utils/status-class';
 import { Pagination } from '../../shared/pagination';
 import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
+import { formatPhone, formatTugrik } from '../../core/utils/mongolia';
 import { CategoryGrid } from './category-grid';
 
 interface Chip {
@@ -50,8 +51,8 @@ const PAGE_SIZE = 5;
           <button type="button" class="yb-btn yb-btn-outline" (click)="back()">
             ← {{ 'common.back' | translate }}
           </button>
-          <nav aria-label="Breadcrumb" class="text-gray-500">
-            Category <span class="mx-1">›</span>
+          <nav [attr.aria-label]="'common.breadcrumb' | translate" class="text-gray-500">
+            {{ 'common.category' | translate }} <span class="mx-1">›</span>
             <span class="text-sky-500">{{ categoryLabel() }}</span>
           </nav>
         </div>
@@ -65,8 +66,10 @@ const PAGE_SIZE = 5;
             </h1>
             @if (!loading()) {
               <p class="text-sm text-gray-500">
-                {{ filtered().length }}
-                {{ filtered().length === 1 ? 'company' : 'companies' }}
+                {{
+                  (filtered().length === 1 ? 'category.resultsCountOne' : 'category.resultsCount')
+                    | translate: { count: filtered().length }
+                }}
               </p>
             }
           </div>
@@ -92,7 +95,7 @@ const PAGE_SIZE = 5;
               class="yb-btn yb-btn-outline mb-3 w-full lg:hidden"
               (click)="filtersOpen.set(!filtersOpen())"
             >
-              Filters
+              {{ 'category.filters' | translate }}
             </button>
             <div class="space-y-6" [class.hidden]="!filtersOpen()" [class.lg:block]="true">
               <div class="yb-card p-4">
@@ -115,8 +118,8 @@ const PAGE_SIZE = 5;
                     {{ 'category.priceRange' | translate }}
                   </h3>
                   <div class="flex justify-between text-xs text-gray-500">
-                    <span>min\${{ priceBounds().min }}</span
-                    ><span>max\${{ priceBounds().max }}</span>
+                    <span>{{ formatPrice(priceBounds().min) }}</span
+                    ><span>{{ formatPrice(priceBounds().max) }}</span>
                   </div>
                   <input
                     type="range"
@@ -125,10 +128,10 @@ const PAGE_SIZE = 5;
                     [max]="priceBounds().max"
                     [value]="priceValue()"
                     (input)="onPrice($event)"
-                    aria-label="Maximum price"
+                    [attr.aria-label]="'category.maxPrice' | translate"
                   />
                   <p class="mt-1 text-center text-xs font-semibold text-[#28AED8]">
-                    \${{ priceValue() }}
+                    {{ formatPrice(priceValue()) }}
                   </p>
                 </div>
               }
@@ -143,7 +146,7 @@ const PAGE_SIZE = 5;
                         [checked]="emergency() === true"
                         (click)="setEmergency(true)"
                       />
-                      Yes</label
+                      {{ 'common.yes' | translate }}</label
                     >
                     <label class="flex items-center gap-2"
                       ><input
@@ -152,50 +155,55 @@ const PAGE_SIZE = 5;
                         [checked]="emergency() === false"
                         (click)="setEmergency(false)"
                       />
-                      No</label
+                      {{ 'common.no' | translate }}</label
                     >
                   </div>
                 </div>
               }
-              <div class="yb-card p-4">
-                <h3 class="mb-3 text-sm font-semibold">
-                  {{
-                    category().filters.serviceTypes?.label || ('category.serviceTypes' | translate)
-                  }}
-                </h3>
-                <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
-                  @for (option of serviceOptions(); track option) {
-                    <label class="flex items-center gap-2"
-                      ><input
-                        type="checkbox"
-                        [checked]="services().has(option)"
-                        (change)="toggleSet('services', option)"
-                      />
-                      {{ option }}</label
-                    >
-                  }
+              @if (serviceOptions().length) {
+                <div class="yb-card p-4">
+                  <h3 class="mb-3 text-sm font-semibold">
+                    {{
+                      category().filters.serviceTypes?.label ||
+                        ('category.serviceTypes' | translate)
+                    }}
+                  </h3>
+                  <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
+                    @for (option of serviceOptions(); track option) {
+                      <label class="flex items-center gap-2"
+                        ><input
+                          type="checkbox"
+                          [checked]="services().has(option)"
+                          (change)="toggleSet('services', option)"
+                        />
+                        {{ option }}</label
+                      >
+                    }
+                  </div>
                 </div>
-              </div>
-              <div class="yb-card p-4">
-                <h3 class="mb-3 text-sm font-semibold">
-                  {{
-                    category().filters.specializations?.label ||
-                      ('category.specializations' | translate)
-                  }}
-                </h3>
-                <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
-                  @for (option of specializationOptions(); track option) {
-                    <label class="flex items-center gap-2"
-                      ><input
-                        type="checkbox"
-                        [checked]="specializations().has(option)"
-                        (change)="toggleSet('specializations', option)"
-                      />
-                      {{ option }}</label
-                    >
-                  }
+              }
+              @if (specializationOptions().length) {
+                <div class="yb-card p-4">
+                  <h3 class="mb-3 text-sm font-semibold">
+                    {{
+                      category().filters.specializations?.label ||
+                        ('category.specializations' | translate)
+                    }}
+                  </h3>
+                  <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
+                    @for (option of specializationOptions(); track option) {
+                      <label class="flex items-center gap-2"
+                        ><input
+                          type="checkbox"
+                          [checked]="specializations().has(option)"
+                          (change)="toggleSet('specializations', option)"
+                        />
+                        {{ option }}</label
+                      >
+                    }
+                  </div>
                 </div>
-              </div>
+              }
               <div class="flex gap-2 lg:hidden">
                 <button
                   type="button"
@@ -276,7 +284,7 @@ const PAGE_SIZE = 5;
                   class="yb-btn mt-4 bg-red-500 text-white"
                   (click)="clearAll()"
                 >
-                  Clear Filters
+                  {{ 'category.clearFilters' | translate }}
                 </button>
               </div>
             } @else {
@@ -339,7 +347,7 @@ const PAGE_SIZE = 5;
                           [href]="'tel:' + item.phone"
                           class="inline-flex text-sm font-semibold text-[#1877f2]"
                           (click)="$event.stopPropagation()"
-                          >📞 {{ 'common.call' | translate }} {{ item.phone }}</a
+                          >📞 {{ 'common.call' | translate }} {{ formatPhone(item.phone) }}</a
                         >
                       }
                       @if (item.revenue) {
@@ -396,6 +404,7 @@ export class CatagoryPage implements OnInit {
   private readonly directory = inject(DirectoryService);
   private readonly locale = inject(LocaleService);
   readonly favorites = inject(FavoritesService);
+  private readonly translate = inject(TranslateService);
   readonly categoryName = toSignal(
     this.route.queryParamMap.pipe(map((q) => (q.get('name') ?? '').trim())),
     { initialValue: '' },
@@ -500,7 +509,11 @@ export class CatagoryPage implements OnInit {
       chips.push({ type: 'specialization', value: v, label: v }),
     );
     this.ratings().forEach((v) =>
-      chips.push({ type: 'rating', value: String(v), label: `${v} star` }),
+      chips.push({
+        type: 'rating',
+        value: String(v),
+        label: this.translate.instant('category.chipStar', { count: v }),
+      }),
     );
     if (this.district())
       chips.push({ type: 'district', value: this.district(), label: this.district() });
@@ -508,14 +521,34 @@ export class CatagoryPage implements OnInit {
       chips.push({
         type: 'emergency',
         value: 'x',
-        label: `Emergency: ${this.emergency() ? 'Yes' : 'No'}`,
+        label: this.translate.instant('category.chipEmergency', {
+          value: this.translate.instant(this.emergency() ? 'common.yes' : 'common.no'),
+        }),
       });
     if (Number.isFinite(this.maxPrice()))
-      chips.push({ type: 'price', value: 'x', label: `Max: $${this.maxPrice()}` });
+      chips.push({
+        type: 'price',
+        value: 'x',
+        label: this.translate.instant('category.chipMaxPrice', {
+          price: this.formatPrice(this.maxPrice()),
+        }),
+      });
     if (this.queryTerm())
-      chips.push({ type: 'query', value: 'x', label: `Search: ${this.queryTerm()}` });
+      chips.push({
+        type: 'query',
+        value: 'x',
+        label: this.translate.instant('category.chipSearch', { term: this.queryTerm() }),
+      });
     return chips;
   });
+
+  formatPrice(value: number): string {
+    return formatTugrik(value);
+  }
+
+  formatPhone(value: string | null | undefined): string {
+    return formatPhone(value);
+  }
 
   ngOnInit(): void {
     void this.directory.ensureHydrated();

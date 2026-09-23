@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-about-page',
@@ -14,6 +14,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 })
 export class AboutPage {
   constructor() {
-    inject(Title).setTitle('About Us - Yellow Book');
+    inject(Title).setTitle(`${inject(TranslateService).instant('about.title')} • Yellow Book`);
   }
 }

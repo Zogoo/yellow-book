@@ -11,10 +11,12 @@ import { Router } from '@angular/router';
 
 import { AuthService } from '../core/services/auth.service';
 import { getDefaultRouteForUser } from '../core/utils/role-access';
+import { TranslatePipe } from '@ngx-translate/core';
 
-/** Avatar button + "Signed in as" dropdown with Dashboard / Logout. */
+/** Avatar button with a "signed in as" dropdown holding dashboard and log out. */
 @Component({
   selector: 'app-panel-profile-menu',
+  imports: [TranslatePipe],
   template: `
     <div class="relative">
       <button
@@ -24,7 +26,7 @@ import { getDefaultRouteForUser } from '../core/utils/role-access';
         [attr.aria-expanded]="open()"
         (click)="open.set(!open())"
       >
-        <span class="sr-only">Open profile menu</span>
+        <span class="sr-only">{{ 'auth.openProfileMenu' | translate }}</span>
         <span aria-hidden="true">{{ initials() }}</span>
       </button>
       @if (open()) {
@@ -33,7 +35,7 @@ import { getDefaultRouteForUser } from '../core/utils/role-access';
           role="menu"
         >
           <div class="px-3 py-2">
-            <p class="text-xs text-gray-500">Signed in as</p>
+            <p class="text-xs text-gray-500">{{ 'auth.signedInAsLabel' | translate }}</p>
             <p class="truncate text-sm font-semibold text-gray-900">{{ displayName() }}</p>
             <p class="text-xs text-gray-400">{{ roleLabel() }}</p>
           </div>
@@ -43,7 +45,7 @@ import { getDefaultRouteForUser } from '../core/utils/role-access';
             class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
             (click)="goDashboard()"
           >
-            <span aria-hidden="true">▦</span> Dashboard
+            <span aria-hidden="true">▦</span> {{ 'common.dashboard' | translate }}
           </button>
           <button
             type="button"
@@ -51,7 +53,7 @@ import { getDefaultRouteForUser } from '../core/utils/role-access';
             class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
             (click)="logout()"
           >
-            <span aria-hidden="true">⎋</span> Logout
+            <span aria-hidden="true">⎋</span> {{ 'common.logout' | translate }}
           </button>
         </div>
       }

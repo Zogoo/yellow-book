@@ -46,6 +46,28 @@ RSpec.describe "Localisation", type: :request do
     expect(data).to include("registrationNumber" => "6023456", "district" => "Сүхбаатар")
   end
 
+  describe "the business registration wizard" do
+    it "offers every category, not only the ones that already have a listing" do
+      get "/api/v1/company-registration-options"
+      expect(data["categories"]).to include(category.name_mn)
+      expect(data["categories"].length).to eq(Category.count)
+    end
+
+    it "names the categories in English when the caller asks for it" do
+      get "/api/v1/company-registration-options", headers: { "X-Locale" => "en" }
+      expect(data["categories"]).to include(category.name)
+    end
+
+    it "files a company under the category the owner picked by its Mongolian name" do
+      post "/api/v1/auth/register", params: {
+        email: "salon@example.mn", password: "SalonKompani123!",
+        companyName: "Хоёрдугаар Салон", category: category.name_mn
+      }, as: :json
+      expect(response).to have_http_status(:created)
+      expect(Company.find_by(name: "Хоёрдугаар Салон").category_id).to eq(category.id)
+    end
+  end
+
   describe "slugs" do
     it "transliterates Mongolian names instead of producing an empty slug" do
       expect(Api::Text.slugify("Гоо Урлан Салон")).to eq("goo-urlan-salon")

@@ -1,3 +1,4 @@
+import { transliterate } from './mongolia';
 /** Badge classes shared by every table (port of `useStatusClass`). */
 export function getStatusClass(status: unknown, variant: 'badge' | 'soft' = 'badge'): string {
   const key = String(status ?? '')
@@ -80,17 +81,20 @@ export function formatDate(value: unknown): string {
 }
 
 export function slugify(value: unknown): string {
-  return String(value ?? '')
-    .toLowerCase()
-    .replace(/&/g, 'and')
+  return transliterate(String(value ?? '').replace(/&/g, ' and '))
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
 
+/**
+ * A comparison key that keeps Cyrillic. Stripping to `[a-z0-9]` used to fold
+ * every Mongolian name to an empty string, so unrelated names matched.
+ */
 export function normalizeName(value: unknown): string {
   return String(value ?? '')
+    .normalize('NFKC')
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
+    .replace(/[^\p{L}\p{N}]/gu, '');
 }
 
 export function getDefaultListingImage(category: unknown): string {

@@ -30,7 +30,7 @@ import { LanguageSwitcher } from '../shared/language-switcher';
       style="border-bottom-left-radius: 50% 52px; border-bottom-right-radius: 50% 52px"
     >
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-5">
-        <a routerLink="/" aria-label="Yellow Book home"
+        <a routerLink="/" [attr.aria-label]="'common.homeLink' | translate"
           ><img src="/logo/logo.png" alt="Yellow Book" width="140" height="34"
         /></a>
         <nav class="hidden items-center gap-8 md:flex">
@@ -91,12 +91,12 @@ import { LanguageSwitcher } from '../shared/language-switcher';
         <aside
           class="fixed top-0 right-0 z-50 flex h-full w-[80vw] max-w-[400px] flex-col gap-4 bg-white p-6 shadow-xl md:hidden"
           role="dialog"
-          aria-label="Mobile menu"
+          [attr.aria-label]="'common.mobileMenu' | translate"
         >
           <button
             type="button"
             class="self-end text-gray-500"
-            aria-label="Close menu"
+            [attr.aria-label]="'common.closeMenu' | translate"
             (click)="menuOpen.set(false)"
           >
             ✕

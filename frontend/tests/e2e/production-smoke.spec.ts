@@ -197,18 +197,20 @@ test.describe('Yellow Book production smoke', () => {
     const page = await context.newPage();
 
     await page.goto('/company/my-company');
-    const about = page.getByPlaceholder(
-      "Describe your company's mission, products, and services...",
-    );
+    const about = page.getByLabel('What your business does');
     await expect(about).toBeVisible();
+    const original = await about.inputValue();
     const text = `${SEED.salon} e2e ${Date.now()}`;
     await about.fill(text);
     await page.getByTestId('company-profile-save').click();
-    await expect(page.getByText(/company profile saved|profile updated/i).first()).toBeVisible();
+    await expect(page.getByText(/company page saved/i).first()).toBeVisible();
     await page.reload();
-    await expect(
-      page.getByPlaceholder("Describe your company's mission, products, and services..."),
-    ).toHaveValue(text);
+    await expect(page.getByLabel('What your business does')).toHaveValue(text);
+
+    // Put the demo copy back, so the seeded page stays presentable.
+    await page.getByLabel('What your business does').fill(original);
+    await page.getByTestId('company-profile-save').click();
+    await expect(page.getByText(/company page saved/i).first()).toBeVisible();
 
     await page.goto('/company/notification');
     await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible();
@@ -248,8 +250,8 @@ test.describe('Yellow Book production smoke', () => {
     const context = await createContextForRole(browser, 'user');
     const page = await context.newPage();
     await page.goto('/user/my-profile');
-    await page.getByPlaceholder('Jane').fill('Jane');
-    await page.getByPlaceholder('Cooper').fill('Cooper');
+    await page.getByLabel('First name').fill('Jane');
+    await page.getByLabel('Last name').fill('Cooper');
     await page.getByRole('button', { name: /save changes/i }).click();
     await expect(page.getByText(/last updated/i)).toBeVisible();
     await context.close();

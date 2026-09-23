@@ -1,6 +1,15 @@
 import { expect, request, test } from '@playwright/test';
 
-import { apiLogin, apiRequest, createContextForRole, pinLocale, SEED } from './helpers';
+import {
+  apiLogin,
+  apiRequest,
+  contextForSession,
+  createContextForRole,
+  createCustomer,
+  deleteCustomer,
+  pinLocale,
+  SEED,
+} from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await pinLocale(page);
@@ -21,13 +30,13 @@ test.describe('Yellow Book feature walkthrough', () => {
     await expect(page.getByRole('heading', { name: SEED.salon, exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Write a review' }).click();
-    const dialog = page.getByRole('dialog', { name: /sign in or create an account/i });
+    const dialog = page.getByRole('dialog', { name: /sign in to yellow book/i });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText(/sign in to review beauty haven/i)).toBeVisible();
+    await expect(dialog.getByText(new RegExp(`Sign in to review ${SEED.salon}`))).toBeVisible();
     await dialog.getByRole('button', { name: 'Close' }).click();
 
     await page.getByRole('button', { name: 'Like review' }).first().click();
-    await expect(page.getByRole('dialog', { name: /sign in or create an account/i })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /sign in to yellow book/i })).toBeVisible();
   });
 
   test('category filters narrow the listing set and clear again', async ({ page }) => {
@@ -35,20 +44,20 @@ test.describe('Yellow Book feature walkthrough', () => {
     await expect(page.getByRole('heading', { name: SEED.beautyCategory.en })).toBeVisible();
     await expect(page.getByRole('heading', { name: SEED.salon })).toBeVisible();
 
-    // "Spa" excludes the only listing in this category, which is a salon.
-    await page.getByLabel('Spa', { exact: true }).check();
-    await expect(page.getByText(/no listings found matching your filters/i)).toBeVisible();
+    // A speciality the one salon in this category does not offer empties the list.
+    await page.getByLabel(SEED.beautyOtherService, { exact: true }).check();
+    await expect(page.getByText(/no companies match these filters/i)).toBeVisible();
 
-    await page.getByRole('button', { name: 'Clear Filters' }).click();
+    await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(page.getByRole('heading', { name: SEED.salon })).toBeVisible();
   });
 
   test('popular list search filters the results', async ({ page }) => {
     await page.goto('/popular-list');
-    await expect(page.getByRole('heading', { name: 'Popular List' })).toBeVisible();
-    await page.getByPlaceholder('Search by company, service, or city').fill('tech');
+    await expect(page.getByRole('heading', { name: 'Popular list' })).toBeVisible();
+    await page.getByPlaceholder('Search by company, service or city').fill('tekhno');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
-    await expect(page.getByText(/showing 1–1 of 1 companies/i)).toBeVisible();
+    await expect(page.getByText(/showing 1–1 of 1 companies/i).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: SEED.tech })).toBeVisible();
   });
 
@@ -59,21 +68,17 @@ test.describe('Yellow Book feature walkthrough', () => {
     const email = `e2e-agency-${stamp}@example.com`;
 
     await page.goto('/auth/register');
-    await page.getByPlaceholder('e.g., Yellow.Book Travel Agency').fill(`E2E Agency ${stamp}`);
-    await page
-      .getByPlaceholder('https://www.yourcompany.com')
-      .fill('https://e2e-agency.example.com');
+    await page.getByLabel(/company name/i).fill(`E2E Agency ${stamp}`);
+    await page.getByLabel('Website', { exact: true }).fill('https://e2e-agency.example.com');
     await page.getByRole('button', { name: 'Next' }).click();
 
-    await page
-      .getByPlaceholder('Brief description of the company...')
-      .fill('Registered by the e2e suite.');
+    await page.getByLabel(/what does your business do/i).fill('Registered by the e2e suite.');
     await page.getByRole('button', { name: 'Next' }).click();
 
-    await page.getByPlaceholder('John').fill('E2E');
-    await page.getByPlaceholder('Doe').fill('Owner');
-    await page.getByPlaceholder('you@company.com').fill(email);
-    await page.getByPlaceholder('At least 12 characters with a symbol').fill('E2eAgencyStrong1!');
+    await page.getByLabel(/first name/i).fill('E2E');
+    await page.getByLabel(/last name/i).fill('Owner');
+    await page.getByLabel(/work email/i).fill(email);
+    await page.getByLabel(/^password/i).fill('E2eAgencyStrong1!');
     await page.getByRole('button', { name: 'Submit' }).click();
 
     await expect(page).toHaveURL(/\/company\/dashboard/);
@@ -228,16 +233,16 @@ test.describe('Yellow Book feature walkthrough', () => {
 
   test('a user can edit and delete one of their own reviews', async ({ browser }) => {
     const api = await request.newContext();
-    const user = await apiLogin('user');
+    const customer = await createCustomer(api, 'edit-review');
     const listings = await apiRequest(api, 'get', '/listings?limit=10');
     const listing = listings.body.data.listings[0];
     const created = await apiRequest(api, 'post', '/agency/reviews', {
-      token: user.token,
+      token: customer.token,
       data: { companyId: listing.id, rating: 3, content: `Editable review ${Date.now()}` },
     });
     const reviewId = created.body.data.id;
 
-    const context = await createContextForRole(browser, 'user');
+    const context = await contextForSession(browser, customer.token, customer.user);
     const page = await context.newPage();
     await page.goto('/user/my-reviews');
 
@@ -260,6 +265,7 @@ test.describe('Yellow Book feature walkthrough', () => {
       token: admin.token,
       expectStatus: [200, 404],
     });
+    await deleteCustomer(api, customer.id);
     await api.dispose();
   });
 
@@ -267,11 +273,11 @@ test.describe('Yellow Book feature walkthrough', () => {
     browser,
   }) => {
     const api = await request.newContext();
-    const user = await apiLogin('user');
+    const customer = await createCustomer(api, 'moderation');
     const listings = await apiRequest(api, 'get', '/listings?limit=10');
     const marker = `Moderation ${Date.now()}`;
     const created = await apiRequest(api, 'post', '/agency/reviews', {
-      token: user.token,
+      token: customer.token,
       data: {
         companyId: listings.body.data.listings[0].id,
         rating: 2,
@@ -300,6 +306,7 @@ test.describe('Yellow Book feature walkthrough', () => {
 
     await apiRequest(api, 'delete', `/agency/reviews/${reviewId}`, { token: admin.token });
     await context.close();
+    await deleteCustomer(api, customer.id);
     await api.dispose();
   });
 
@@ -362,7 +369,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     await expect(page.getByLabel('Your name')).toBeVisible();
     await page.getByLabel('Your name').fill('E2E Newcomer');
     await page.getByLabel('Choose a password').fill('E2eNewcomerPass1!');
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByRole('button', { name: 'Create your account' }).click();
 
     await expect(page).toHaveURL(/\/user\/dashboard/);
     await expect(page.getByRole('heading', { name: /welcome back, e2e newcomer/i })).toBeVisible();
@@ -388,7 +395,7 @@ test.describe('Yellow Book feature walkthrough', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByLabel('Your name').fill('Weak Password');
     await page.getByLabel('Choose a password').fill('password');
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByRole('button', { name: 'Create your account' }).click();
     await expect(page.getByRole('alert')).toContainText(/at least 12 characters/i);
   });
 
@@ -401,12 +408,12 @@ test.describe('Yellow Book feature walkthrough', () => {
     await page.goto(`/agency?id=${target.id}&slug=${target.slug}`);
     await page.getByRole('button', { name: 'Write a review' }).click();
 
-    const dialog = page.getByRole('dialog', { name: /sign in or create an account/i });
+    const dialog = page.getByRole('dialog', { name: /sign in to yellow book/i });
     await dialog.getByLabel('Email address').fill(email);
     await dialog.getByRole('button', { name: 'Continue' }).click();
     await dialog.getByLabel('Your name').fill('Resumed Reviewer');
     await dialog.getByLabel('Choose a password').fill('ResumedReviewer1!');
-    await dialog.getByRole('button', { name: 'Create account' }).click();
+    await dialog.getByRole('button', { name: 'Create your account' }).click();
 
     // Straight into the composer, on the same page, without asking again.
     await expect(page.getByRole('dialog', { name: /write a review/i })).toBeVisible();
@@ -489,14 +496,7 @@ test.describe('Yellow Book feature walkthrough', () => {
       data: { email, password: 'FirstPassword123!' },
     });
 
-    const context = await browser.newContext();
-    await context.addInitScript(
-      ([t, u]) => {
-        window.localStorage.setItem('token', t as string);
-        window.localStorage.setItem('user', u as string);
-      },
-      [login.body.data.token, JSON.stringify(login.body.data.user)],
-    );
+    const context = await contextForSession(browser, login.body.data.token, login.body.data.user);
     const page = await context.newPage();
     await page.goto('/user/my-profile');
     await page.getByLabel('Current password').fill('FirstPassword123!');

@@ -42,6 +42,8 @@ export const SEED = {
   tech: 'Тэхномон Солюшнс',
   salonSlug: 'goo-urlan-salon',
   beautyCategory: { en: 'Beauty & wellbeing', mn: 'Гоо сайхан' },
+  /** A speciality in the beauty category that the seeded salon does not offer. */
+  beautyOtherService: 'Массаж',
 } as const;
 
 export interface Session {

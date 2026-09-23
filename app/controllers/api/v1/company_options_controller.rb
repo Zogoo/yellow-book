@@ -7,10 +7,20 @@ module Api
           Company.approved.where.not(category_label: nil).limit(2_000).pluck(:category_label, :service_type, :location)
         end
         render_data(
-          categories: rows.map(&:first).compact_blank.uniq.sort,
+          # Every category, named in the caller's language: a new business must
+          # not be limited to the ones that already have a listing.
+          categories: categories,
           services: rows.map { |r| r[1] }.compact_blank.uniq.sort,
           destinations: rows.map { |r| r[2] }.compact_blank.uniq.sort
         )
+      end
+
+      private
+
+      # Not cached: the list is small, and a category added today should appear
+      # in the wizard today.
+      def categories
+        Category.alphabetical.map { |category| category.display_name(I18n.locale) }.compact_blank
       end
     end
   end

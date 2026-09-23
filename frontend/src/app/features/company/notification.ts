@@ -41,7 +41,7 @@ import { NotificationRecord } from '../../core/models';
     } @else if (items().length === 0) {
       <div class="yb-card p-10 text-center">
         <h2 class="text-lg font-semibold">{{ 'company.noNotifications' | translate }}</h2>
-        <p class="text-sm text-gray-500">You're all caught up! Check back later for new updates.</p>
+        <p class="text-sm text-gray-500">{{ 'company.allCaughtUp' | translate }}</p>
       </div>
     } @else {
       <ul class="yb-card divide-y divide-gray-100" data-testid="company-notification-list">
@@ -58,7 +58,10 @@ import { NotificationRecord } from '../../core/models';
               <p class="text-xs text-gray-400">{{ n.timeLabel || n.time }}</p>
             </div>
             @if (n.unread) {
-              <span class="mt-2 h-2 w-2 rounded-full bg-blue-500" aria-label="Unread"></span>
+              <span
+                class="mt-2 h-2 w-2 rounded-full bg-blue-500"
+                [attr.aria-label]="'notifications.unread' | translate"
+              ></span>
             }
           </li>
         }

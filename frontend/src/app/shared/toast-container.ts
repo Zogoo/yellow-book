@@ -1,9 +1,11 @@
 import { Component, inject } from '@angular/core';
 
 import { ToastService } from '../core/services/toast.service';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-toast-container',
+  imports: [TranslatePipe],
   template: `
     <div
       class="pointer-events-none fixed right-4 bottom-4 z-[100] flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2"
@@ -22,7 +24,7 @@ import { ToastService } from '../core/services/toast.service';
           <button
             type="button"
             class="opacity-70 hover:opacity-100"
-            aria-label="Dismiss"
+            [attr.aria-label]="'common.dismiss' | translate"
             (click)="toasts.dismiss(toast.id)"
           >
             ✕

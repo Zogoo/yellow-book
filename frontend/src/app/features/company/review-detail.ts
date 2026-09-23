@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,13 +13,17 @@ import { RatingStars } from '../../shared/rating-stars';
 /** `/company/review/:id` — review detail with the one-shot public reply composer. */
 @Component({
   selector: 'app-company-review-detail-page',
-  imports: [FormsModule, RouterLink, RatingStars],
+  imports: [FormsModule, RouterLink, RatingStars, TranslatePipe],
   template: `
-    <a routerLink="/company/review" class="text-sm text-[#1877f2]">← Back to reviews</a>
+    <a routerLink="/company/review" class="text-sm text-[#1877f2]">{{
+      'company.backToReviews' | translate
+    }}</a>
     @if (loading()) {
-      <p class="text-gray-500">Loading review...</p>
+      <p class="text-gray-500">{{ 'company.loadingReview' | translate }}</p>
     } @else if (!review()) {
-      <div class="yb-card p-10 text-center text-gray-500">Review not found.</div>
+      <div class="yb-card p-10 text-center text-gray-500">
+        {{ 'company.reviewNotFound' | translate }}
+      </div>
     } @else {
       <article class="yb-card p-6">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -28,7 +33,8 @@ import { RatingStars } from '../../shared/rating-stars';
               <span class="text-sm font-normal text-gray-400">#{{ review()!.id }}</span>
             </h1>
             <p class="text-xs text-gray-400">
-              {{ review()!.reviewerEmail || 'No email' }} · {{ review()!.date }}
+              {{ review()!.reviewerEmail || ('company.noEmail' | translate) }} ·
+              {{ review()!.date }}
               {{ review()!.time }}
             </p>
           </div>
@@ -45,7 +51,7 @@ import { RatingStars } from '../../shared/rating-stars';
         </p>
       </article>
       <section class="yb-card p-6">
-        <h2 class="text-lg font-semibold">Public reply</h2>
+        <h2 class="text-lg font-semibold">{{ 'company.publicReply' | translate }}</h2>
         @if (review()!.companyResponse && !submitted()) {
           <div class="mt-3 rounded-lg bg-[#fff9e6] p-4 text-sm">
             <p class="font-semibold">
@@ -55,31 +61,31 @@ import { RatingStars } from '../../shared/rating-stars';
             <p class="mt-1 text-gray-700">{{ review()!.companyResponse!.text }}</p>
           </div>
           <p class="mt-3 text-sm">
-            Reply status:
+            {{ 'company.replyStatus' | translate }}:
             <span
               class="rounded-full px-2 py-1 text-xs font-semibold"
               [class]="statusClass(review()!.companyResponseStatus)"
               >{{ title(review()!.companyResponseStatus || 'pending') }}</span
             >
             @if ((review()!.companyResponseStatus || 'pending') === 'pending') {
-              <span class="ml-2 text-gray-500"
-                >Your reply is pending moderation before it appears publicly.</span
-              >
+              <span class="ml-2 text-gray-500">{{ 'company.replyPending' | translate }}</span>
             }
           </p>
         } @else if (!isOwner()) {
-          <p class="mt-2 text-sm text-gray-500">Only the company owner can reply to this review.</p>
+          <p class="mt-2 text-sm text-gray-500">
+            {{ 'company.onlyOwnerCanReply' | translate }}
+          </p>
         } @else {
           <p class="mt-1 text-sm text-gray-500">
-            You can reply once. Replies are reviewed by our moderators before they go live.
+            {{ 'company.replyOnce' | translate }}
           </p>
           <textarea
             class="yb-input mt-3"
             rows="4"
-            placeholder="Write your public reply for this review..."
+            [attr.placeholder]="'company.replyPlaceholder' | translate"
             [(ngModel)]="replyText"
             [disabled]="submitting() || submitted()"
-            aria-label="Reply text"
+            [attr.aria-label]="'company.replyText' | translate"
           ></textarea>
           <div class="mt-3 flex items-center gap-3">
             <button
@@ -90,11 +96,17 @@ import { RatingStars } from '../../shared/rating-stars';
               (click)="submitReply()"
             >
               {{
-                submitting() ? 'Submitting...' : submitted() ? 'Reply submitted' : 'Submit reply'
+                submitting()
+                  ? ('company.submittingReply' | translate)
+                  : submitted()
+                    ? ('company.replySubmitted' | translate)
+                    : ('company.submitReply' | translate)
               }}
             </button>
             @if (submitted()) {
-              <span class="text-sm text-amber-600">Pending moderation</span>
+              <span class="text-sm text-amber-600">{{
+                'company.pendingModeration' | translate
+              }}</span>
             }
           </div>
         }
@@ -104,6 +116,7 @@ import { RatingStars } from '../../shared/rating-stars';
 })
 export class CompanyReviewDetailPage implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly translate = inject(TranslateService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
@@ -154,8 +167,13 @@ export class CompanyReviewDetailPage implements OnInit {
     }
   }
 
+  /** Review states are shown in the caller's language, not raw. */
   title(value: unknown): string {
-    return titleCase(value);
+    const key = String(value ?? '')
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+    const known = ['pending', 'approved', 'rejected', 'on_hold', 'banned'];
+    return known.includes(key) ? this.translate.instant(`review.status.${key}`) : titleCase(value);
   }
 
   statusClass(value: unknown): string {

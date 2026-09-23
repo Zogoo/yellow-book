@@ -8,11 +8,7 @@ export const DEFAULT_CATEGORY: CategoryDefinition = {
   name: 'General Services',
   icon: 'DefaultIcon',
   color: 'text-gray-500',
-  filters: {
-    serviceTypes: { label: 'Service Types', options: ['General Service'] },
-    specializations: { label: 'Specializations', options: ['General Specialist'] },
-    emergencyService: true,
-  },
+  filters: { emergencyService: false },
 };
 
 export interface DirectoryListing extends Listing {
@@ -72,19 +68,28 @@ export class DirectoryService {
     return this.inflight;
   }
 
+  /** Matches whichever of the two names the link carried, or the slug. */
   getCategoryByName(name: unknown): CategoryDefinition {
     const key = normalizeName(name);
+    if (!key) return { ...DEFAULT_CATEGORY, name: String(name ?? DEFAULT_CATEGORY.name) };
     return (
-      this.categories().find((c) => normalizeName(c.name) === key) ?? {
-        ...DEFAULT_CATEGORY,
-        name: String(name ?? DEFAULT_CATEGORY.name),
-      }
+      this.categories().find(
+        (c) =>
+          normalizeName(c.name) === key ||
+          normalizeName(c.nameMn) === key ||
+          normalizeName(c.slug) === key,
+      ) ?? { ...DEFAULT_CATEGORY, name: String(name ?? DEFAULT_CATEGORY.name) }
     );
   }
 
   getListingsByCategory(name: unknown): DirectoryListing[] {
     const key = normalizeName(name);
-    return this.listings().filter((l) => l.normalizedCategory === key);
+    if (!key) return [];
+    const category = this.getCategoryByName(name);
+    const keys = new Set(
+      [key, normalizeName(category.name), normalizeName(category.nameMn)].filter(Boolean),
+    );
+    return this.listings().filter((l) => keys.has(l.normalizedCategory));
   }
 
   getBySlug(slug: unknown): DirectoryListing | undefined {

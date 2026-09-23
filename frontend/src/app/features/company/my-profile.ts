@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -40,66 +40,77 @@ import { CompanyProfile } from '../../core/models';
             }
           </div>
           <span class="mt-2 block text-xs text-gray-500">{{
-            form.avatar ? 'Click to change photo' : 'JPG, GIF or PNG. Max size 2MB.'
+            'company.photoHint' | translate
           }}</span>
           <span class="yb-btn mt-2 bg-blue-600 text-white">{{
-            form.avatar ? 'Change Photo' : 'Upload New Photo'
+            (form.avatar ? 'company.changePhoto' : 'company.uploadPhoto') | translate
           }}</span>
         </label>
       </div>
       <div class="space-y-4">
         <div>
-          <label class="text-sm font-medium">Full name</label
+          <label class="text-sm font-medium" for="cp-full-name">{{
+            'company.fullName' | translate
+          }}</label
           ><input
             class="yb-input"
+            id="cp-full-name"
             name="fullName"
-            placeholder="Your full name"
+            [attr.placeholder]="'company.fullNamePlaceholder' | translate"
             [(ngModel)]="form.fullName"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Phone Number</label
+          <label class="text-sm font-medium" for="cp-phone">{{ 'common.phone' | translate }}</label
           ><input
             class="yb-input"
+            id="cp-phone"
             name="phoneNumber"
-            placeholder="+976 8811 2233"
+            placeholder="88112233"
             [(ngModel)]="form.phoneNumber"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Email</label
+          <label class="text-sm font-medium" for="cp-email">{{ 'common.email' | translate }}</label
           ><input
             class="yb-input"
+            id="cp-email"
             type="email"
             name="email"
-            placeholder="you@company.com"
+            placeholder="you@company.mn"
             [(ngModel)]="form.email"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Location</label
+          <label class="text-sm font-medium" for="cp-location">{{
+            'common.location' | translate
+          }}</label
           ><input
             class="yb-input"
+            id="cp-location"
             name="location"
-            placeholder="City, Country"
+            placeholder="Улаанбаатар"
             [(ngModel)]="form.location"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">About yourself</label>
+          <label class="text-sm font-medium" for="cp-about">{{
+            'company.aboutYou' | translate
+          }}</label>
           <textarea
             class="yb-input"
+            id="cp-about"
             rows="3"
             name="about"
             maxlength="200"
-            placeholder="A sentence or two about you, for customers who read your replies"
+            [attr.placeholder]="'company.aboutYouPlaceholder' | translate"
             [(ngModel)]="form.about"
           ></textarea>
           <p class="text-xs text-gray-400">{{ form.about.length }}/200 characters</p>
         </div>
         @if (success()) {
           <p class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700" role="status">
-            Profile updated successfully!
+            {{ 'company.profileUpdated' | translate }}
           </p>
         }
         <button type="submit" class="yb-btn bg-emerald-600 text-white" [disabled]="busy()">
@@ -112,6 +123,7 @@ import { CompanyProfile } from '../../core/models';
 export class CompanyProfilePage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
   readonly busy = signal(false);
   readonly success = signal(false);
   form = { fullName: '', phoneNumber: '', email: '', location: '', about: '', avatar: '' };
@@ -128,7 +140,7 @@ export class CompanyProfilePage implements OnInit {
         avatar: p.avatar ?? '',
       };
     } catch {
-      this.toast.alert('Unable to load profile');
+      this.toast.alert(this.translate.instant('company.loadFailed'));
     }
   }
 
@@ -157,10 +169,10 @@ export class CompanyProfilePage implements OnInit {
         updatedAt: new Date().toISOString(),
       });
       this.success.set(true);
-      this.toast.success('Profile updated successfully!');
+      this.toast.success(this.translate.instant('company.profileUpdated'));
       setTimeout(() => this.success.set(false), 3000);
     } catch {
-      this.toast.alert('Error updating profile. Please try again.');
+      this.toast.alert(this.translate.instant('company.saveFailed'));
     } finally {
       this.busy.set(false);
     }

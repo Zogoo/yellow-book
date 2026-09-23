@@ -172,8 +172,8 @@ interface RegistrationOptions {
                 }}</label>
                 <select class="yb-input" id="biz-revenue" name="revenue" [(ngModel)]="form.revenue">
                   <option value="">—</option>
-                  @for (r of revenueOptions; track r.value) {
-                    <option [value]="r.value">{{ r.label }}</option>
+                  @for (r of revenueOptions; track r) {
+                    <option [value]="r">{{ r }}</option>
                   }
                 </select>
               </div>
@@ -193,9 +193,11 @@ interface RegistrationOptions {
           } @else {
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
-                <label class="text-sm font-medium">{{ 'business.firstName' | translate }} *</label
+                <label class="text-sm font-medium" for="biz-first-name"
+                  >{{ 'business.firstName' | translate }} *</label
                 ><input
                   class="yb-input"
+                  id="biz-first-name"
                   name="firstName"
                   [attr.placeholder]="'business.firstName' | translate"
                   [(ngModel)]="form.firstName"
@@ -203,9 +205,11 @@ interface RegistrationOptions {
                 />
               </div>
               <div>
-                <label class="text-sm font-medium">{{ 'business.lastName' | translate }} *</label
+                <label class="text-sm font-medium" for="biz-last-name"
+                  >{{ 'business.lastName' | translate }} *</label
                 ><input
                   class="yb-input"
+                  id="biz-last-name"
                   name="lastName"
                   [attr.placeholder]="'business.lastName' | translate"
                   [(ngModel)]="form.lastName"
@@ -214,9 +218,12 @@ interface RegistrationOptions {
               </div>
             </div>
             <div>
-              <label class="text-sm font-medium">{{ 'business.jobTitle' | translate }}</label
+              <label class="text-sm font-medium" for="biz-job-title">{{
+                'business.jobTitle' | translate
+              }}</label
               ><input
                 class="yb-input"
+                id="biz-job-title"
                 name="jobTitle"
                 [attr.placeholder]="'business.jobTitle' | translate"
                 [(ngModel)]="form.jobTitle"
@@ -224,17 +231,27 @@ interface RegistrationOptions {
             </div>
             <div class="grid gap-4 sm:grid-cols-[160px_1fr]">
               <div>
-                <label class="text-sm font-medium">{{ 'business.country' | translate }}</label>
-                <select class="yb-input" name="country" [(ngModel)]="form.countryCode">
+                <label class="text-sm font-medium" for="biz-country">{{
+                  'business.country' | translate
+                }}</label>
+                <select
+                  class="yb-input"
+                  id="biz-country"
+                  name="country"
+                  [(ngModel)]="form.countryCode"
+                >
                   @for (c of countries; track c.code) {
                     <option [value]="c.code">{{ c.flag }} {{ c.code }}</option>
                   }
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium">{{ 'business.phoneNumber' | translate }}</label
+                <label class="text-sm font-medium" for="biz-phone">{{
+                  'business.phoneNumber' | translate
+                }}</label
                 ><input
                   class="yb-input"
+                  id="biz-phone"
                   name="phone"
                   placeholder="88112233"
                   [(ngModel)]="form.phone"
@@ -242,10 +259,12 @@ interface RegistrationOptions {
               </div>
             </div>
             <div>
-              <label class="text-sm font-medium">{{ 'business.workEmail' | translate }} *</label
+              <label class="text-sm font-medium" for="biz-email"
+                >{{ 'business.workEmail' | translate }} *</label
               ><input
                 class="yb-input"
                 type="email"
+                id="biz-email"
                 name="email"
                 placeholder="you@company.mn"
                 [(ngModel)]="form.email"
@@ -253,10 +272,12 @@ interface RegistrationOptions {
               />
             </div>
             <div>
-              <label class="text-sm font-medium">{{ 'business.password' | translate }} *</label
+              <label class="text-sm font-medium" for="biz-password"
+                >{{ 'business.password' | translate }} *</label
               ><input
                 class="yb-input"
                 type="password"
+                id="biz-password"
                 name="password"
                 [attr.placeholder]="ruleText"
                 [(ngModel)]="form.password"
@@ -294,8 +315,10 @@ interface RegistrationOptions {
         </form>
         <div class="mt-6 border-t border-gray-100 pt-4 text-sm text-gray-600">
           <p>
-            Already registered?
-            <a routerLink="/auth/login" class="text-[#1877f2]">Sign in</a>
+            {{ 'auth.alreadyRegistered' | translate }}
+            <a routerLink="/auth/login" class="text-[#1877f2]">{{
+              'business.signIn' | translate
+            }}</a>
           </p>
         </div>
       </div>

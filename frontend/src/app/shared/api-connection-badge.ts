@@ -2,9 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 
 import { ApiConnectionService } from '../core/services/api-connection.service';
 import { environment } from '../../environments/environment';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-api-connection-badge',
+  imports: [TranslatePipe],
   template: `
     @if (show) {
       <div
@@ -32,7 +34,7 @@ import { environment } from '../../environments/environment';
         <span>{{ conn.message() }}</span>
         @if (conn.status() === 'error') {
           <button type="button" class="font-semibold underline" (click)="conn.probe()">
-            Retry
+            {{ 'common.retry' | translate }}
           </button>
         }
       </div>

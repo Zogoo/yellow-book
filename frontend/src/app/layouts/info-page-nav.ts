@@ -15,7 +15,7 @@ import { LanguageSwitcher } from '../shared/language-switcher';
   template: `
     <header class="bg-[#fff9e6]">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-        <a routerLink="/" aria-label="Yellow Book home"
+        <a routerLink="/" [attr.aria-label]="'common.homeLink' | translate"
           ><img src="/logo/logo.png" alt="Yellow Book" width="140" height="34"
         /></a>
         <nav class="hidden items-center gap-8 md:flex">
@@ -69,7 +69,12 @@ import { LanguageSwitcher } from '../shared/language-switcher';
         <aside
           class="fixed top-0 right-0 z-50 flex h-full w-[80vw] max-w-[400px] flex-col gap-4 bg-white p-6 shadow-xl md:hidden"
         >
-          <button type="button" class="self-end" aria-label="Close menu" (click)="open.set(false)">
+          <button
+            type="button"
+            class="self-end"
+            [attr.aria-label]="'common.closeMenu' | translate"
+            (click)="open.set(false)"
+          >
             ✕
           </button>
           <a routerLink="/catagory" (click)="open.set(false)">{{ 'nav.category' | translate }}</a>

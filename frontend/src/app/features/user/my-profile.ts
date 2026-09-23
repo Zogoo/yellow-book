@@ -27,26 +27,28 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
       <h2 class="text-lg font-semibold">{{ 'user.personalInformation' | translate }}</h2>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="text-sm font-medium">First name</label
+          <label class="text-sm font-medium" for="user-firstName">{{
+            'common.firstName' | translate
+          }}</label
           ><input
+            id="user-firstName"
             class="yb-input"
             name="firstName"
-            placeholder="Jane"
             [(ngModel)]="form.firstName"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Last name</label
-          ><input
-            class="yb-input"
-            name="lastName"
-            placeholder="Cooper"
-            [(ngModel)]="form.lastName"
-          />
+          <label class="text-sm font-medium" for="user-lastName">{{
+            'common.lastName' | translate
+          }}</label
+          ><input id="user-lastName" class="yb-input" name="lastName" [(ngModel)]="form.lastName" />
         </div>
         <div>
-          <label class="text-sm font-medium">Email</label
+          <label class="text-sm font-medium" for="user-email">{{
+            'common.email' | translate
+          }}</label
           ><input
+            id="user-email"
             class="yb-input"
             type="email"
             name="email"
@@ -55,8 +57,11 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Phone</label
+          <label class="text-sm font-medium" for="user-phone">{{
+            'common.phone' | translate
+          }}</label
           ><input
+            id="user-phone"
             class="yb-input"
             name="phone"
             placeholder="+976 8811 2233"
@@ -64,49 +69,50 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Job title</label
+          <label class="text-sm font-medium" for="user-jobTitle">{{
+            'common.jobTitle' | translate
+          }}</label
           ><input
+            id="user-jobTitle"
             class="yb-input"
             name="jobTitle"
-            placeholder="Product Designer"
+            [attr.placeholder]="'user.jobTitlePlaceholder' | translate"
             [(ngModel)]="form.jobTitle"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Company</label
-          ><input
-            class="yb-input"
-            name="company"
-            placeholder="Acme Inc."
-            [(ngModel)]="form.company"
-          />
+          <label class="text-sm font-medium" for="user-company">{{
+            'user.company' | translate
+          }}</label
+          ><input id="user-company" class="yb-input" name="company" [(ngModel)]="form.company" />
         </div>
         <div>
-          <label class="text-sm font-medium">Location</label
+          <label class="text-sm font-medium" for="user-location">{{
+            'common.location' | translate
+          }}</label
           ><input
+            id="user-location"
             class="yb-input"
             name="location"
-            placeholder="Ulaanbaatar"
+            placeholder="Улаанбаатар"
             [(ngModel)]="form.location"
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Time zone</label
-          ><input
-            class="yb-input"
-            name="timeZone"
-            placeholder="UTC+8"
-            [(ngModel)]="form.timeZone"
-          />
+          <label class="text-sm font-medium" for="user-timeZone">{{
+            'common.timezone' | translate
+          }}</label
+          ><input id="user-timeZone" class="yb-input" name="timeZone" [(ngModel)]="form.timeZone" />
         </div>
       </div>
       <div>
-        <label class="text-sm font-medium">Bio</label
+        <label class="text-sm font-medium" for="user-bio">{{ 'user.bio' | translate }}</label
         ><textarea
+          id="user-bio"
           class="yb-input"
           rows="3"
           name="bio"
-          placeholder="Tell others a little about yourself"
+          [attr.placeholder]="'user.bioPlaceholder' | translate"
           [(ngModel)]="form.bio"
         ></textarea>
       </div>

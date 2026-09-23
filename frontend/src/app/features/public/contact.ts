@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -93,7 +93,7 @@ export class ContactPage {
   };
 
   constructor() {
-    inject(Title).setTitle('Contact us - Yellow Book');
+    inject(Title).setTitle(`${inject(TranslateService).instant('contact.title')} • Yellow Book`);
   }
 
   async submit(): Promise<void> {

@@ -16,6 +16,7 @@ import { RatingStars } from '../../shared/rating-stars';
 import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
 import { LoginModalService } from '../../core/services/login-modal.service';
+import { formatPhone } from '../../core/utils/mongolia';
 
 interface AgencyView {
   id: number | null;
@@ -54,7 +55,7 @@ interface AgencyView {
         <button type="button" class="yb-btn yb-btn-outline" (click)="back()">
           ← {{ 'common.back' | translate }}
         </button>
-        <nav aria-label="Breadcrumb" class="text-gray-500">
+        <nav [attr.aria-label]="'common.breadcrumb' | translate" class="text-gray-500">
           {{ 'agency.breadcrumb' | translate }} <span class="mx-1">›</span>
           <span class="text-sky-500">{{ agency().name || 'Unknown' }}</span>
         </nav>
@@ -105,13 +106,13 @@ interface AgencyView {
           />
           <span class="font-bold">{{ overallRating().toFixed(1) }}</span>
           <span class="text-sm text-gray-500">
-            {{ 'category.resultsCount' | translate: { count: reviews().length } }}
+            {{ reviewCountLabel() | translate: { count: reviews().length } }}
           </span>
         </div>
         <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
           @if (agency().phone) {
             <a [href]="'tel:' + agency().phone.replace(' ', '')" class="yb-btn yb-btn-gold">
-              📞 {{ 'common.call' | translate }} {{ agency().phone }}
+              📞 {{ 'common.call' | translate }} {{ formatPhone(agency().phone) }}
             </a>
           }
           @if (agency().facebookUrl) {
@@ -140,7 +141,7 @@ interface AgencyView {
             {{ 'agency.companyInformation' | translate }}
           </h2>
           @if (contactRows().length === 0) {
-            <p class="text-sm text-gray-500">This company has not published contact details yet.</p>
+            <p class="text-sm text-gray-500">{{ 'agency.noContact' | translate }}</p>
           } @else {
             <dl class="space-y-3 text-sm">
               @for (row of contactRows(); track row.label) {
@@ -171,7 +172,9 @@ interface AgencyView {
             @if (agency().ownerTitle) {
               <p class="text-sm text-gray-500">{{ agency().ownerTitle }}</p>
             }
-            <p class="mt-3 text-sm text-gray-500">Owner of {{ agency().name }} on Yellow Book.</p>
+            <p class="mt-3 text-sm text-gray-500">
+              {{ 'agency.ownerOf' | translate: { company: agency().name } }}
+            </p>
           </div>
         }
       </section>
@@ -180,7 +183,7 @@ interface AgencyView {
         <div>
           <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 class="flex items-center gap-2 text-xl font-bold text-[#212121]">
-              💬 Customer Reviews
+              💬 {{ 'agency.customerReviews' | translate }}
             </h2>
             <div class="flex items-center gap-2">
               <div class="relative">
@@ -265,7 +268,9 @@ interface AgencyView {
                       />
                     </div>
                     <p class="mt-2 text-gray-600 italic">“{{ review.content }}”</p>
-                    <p class="mt-1 text-xs text-gray-400">Date: {{ review.date }}</p>
+                    <p class="mt-1 text-xs text-gray-400">
+                      {{ 'common.date' | translate }}: {{ review.date }}
+                    </p>
                   </div>
                 </div>
                 <div class="mt-4 flex items-center gap-6 border-t border-gray-100 pt-3 text-sm">
@@ -275,7 +280,7 @@ interface AgencyView {
                     [class.text-gray-400]="!canLikeDislike()"
                     [attr.title]="canLikeDislike() ? null : 'Sign in to react to reviews'"
                     (click)="react(review, 'like')"
-                    aria-label="Like review"
+                    [attr.aria-label]="'agency.likeReview' | translate"
                   >
                     <img src="/thumb_up.svg" alt="" class="h-4 w-4" /> {{ review.likes }}
                   </button>
@@ -285,7 +290,7 @@ interface AgencyView {
                     [class.text-gray-400]="!canLikeDislike()"
                     [attr.title]="canLikeDislike() ? null : 'Sign in to react to reviews'"
                     (click)="react(review, 'dislike')"
-                    aria-label="Dislike review"
+                    [attr.aria-label]="'agency.dislikeReview' | translate"
                   >
                     <img src="/Frame.svg" alt="" class="h-4 w-4" /> {{ review.dislikes }}
                   </button>
@@ -301,7 +306,9 @@ interface AgencyView {
                         <p class="text-sm font-semibold">
                           {{ review.companyResponse.name || agency().name }}
                         </p>
-                        <p class="text-xs text-gray-400">Date: {{ review.companyResponse.date }}</p>
+                        <p class="text-xs text-gray-400">
+                          {{ 'common.date' | translate }}: {{ review.companyResponse.date }}
+                        </p>
                       </div>
                     </div>
                     <p class="mt-2 text-sm text-gray-600 italic">
@@ -335,7 +342,7 @@ interface AgencyView {
                 {{ 'agency.haveYouUsed' | translate: { company: agency().name } }}
               </h3>
               <p class="text-sm text-gray-600">
-                Share what happened so other people know what to expect.
+                {{ 'agency.shareWhatHappened' | translate }}
               </p>
               <button type="button" class="yb-btn yb-btn-gold" (click)="openReviewModal()">
                 {{ 'agency.writeReview' | translate }}
@@ -350,7 +357,9 @@ interface AgencyView {
           <div class="my-2 flex justify-center">
             <app-rating-stars [rating]="5" size="md" [showValue]="false" />
           </div>
-          <p class="text-xs text-gray-500">({{ reviews().length }} Reviews)</p>
+          <p class="text-xs text-gray-500">
+            {{ reviewCountLabel() | translate: { count: reviews().length } }}
+          </p>
           <div class="mt-4 space-y-2">
             @for (row of breakdown(); track row.star) {
               <div class="flex items-center gap-2 text-xs">
@@ -431,6 +440,11 @@ export class AgencyPage implements OnInit {
   private readonly directory = inject(DirectoryService);
   private readonly loginModal = inject(LoginModalService);
   private readonly translate = inject(TranslateService);
+  readonly formatPhone = formatPhone;
+  /** Mongolian has no plural form; English needs one. */
+  readonly reviewCountLabel = computed(() =>
+    this.reviews().length === 1 ? 'common.reviewsCountOne' : 'common.reviewsCount',
+  );
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -659,7 +673,7 @@ export class AgencyPage implements OnInit {
       rows.push({
         icon: '📞',
         label: 'common.phone',
-        value: a.phone,
+        value: formatPhone(a.phone),
         href: `tel:${a.phone.replace(/\s+/g, '')}`,
       });
     if (a.facebookUrl)

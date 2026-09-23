@@ -1,4 +1,5 @@
 import { Component, input, output } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface DetailItem {
   label: string;
@@ -8,6 +9,7 @@ export interface DetailItem {
 /** Label/value dialog used by the "view" actions in the panels. */
 @Component({
   selector: 'app-detail-modal',
+  imports: [TranslatePipe],
   template: `
     @if (open()) {
       <div
@@ -27,7 +29,7 @@ export interface DetailItem {
             <button
               type="button"
               class="rounded-full p-1 text-gray-500 hover:bg-gray-100"
-              aria-label="Close details dialog"
+              [attr.aria-label]="'common.closeDialog' | translate"
               (click)="close.emit()"
             >
               ✕

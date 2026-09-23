@@ -74,7 +74,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
                   class="yb-input"
                   rows="3"
                   [(ngModel)]="editContent"
-                  [attr.aria-label]="'agency.reviewDialog' | translate"
+                  [attr.aria-label]="'user.reviewText' | translate"
                 ></textarea>
                 <div class="flex gap-2">
                   <button

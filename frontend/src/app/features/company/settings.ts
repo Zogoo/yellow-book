@@ -63,7 +63,7 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
             [class.bg-gray-300]="!prefs.emailNotifications"
             role="switch"
             [attr.aria-checked]="prefs.emailNotifications"
-            aria-label="Email notifications"
+            [attr.aria-label]="'company.emailNotifications' | translate"
             (click)="toggle('emailNotifications')"
           >
             <span
@@ -85,7 +85,7 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
             [class.bg-gray-300]="!prefs.pushNotifications"
             role="switch"
             [attr.aria-checked]="prefs.pushNotifications"
-            aria-label="Push notifications"
+            [attr.aria-label]="'company.pushNotifications' | translate"
             (click)="toggle('pushNotifications')"
           >
             <span

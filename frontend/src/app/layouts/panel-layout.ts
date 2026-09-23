@@ -74,12 +74,12 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
           <button
             type="button"
             class="rounded-lg border border-gray-200 p-2 md:hidden"
-            aria-label="Toggle sidebar"
+            [attr.aria-label]="'common.toggleSidebar' | translate"
             (click)="sidebarOpen.set(!sidebarOpen())"
           >
             ☰
           </button>
-          <a routerLink="/" aria-label="Yellow Book home"
+          <a routerLink="/" [attr.aria-label]="'common.homeLink' | translate"
             ><img src="/logo/logo.png" alt="Yellow Book" width="140" height="34"
           /></a>
         </div>
@@ -100,7 +100,7 @@ const ROLE_CAPTIONS: Record<PanelKind, string> = {
         <aside
           class="fixed top-0 left-0 z-40 h-full w-[280px] border-r border-[#eee] bg-white shadow-[4px_12px_23px_rgba(0,0,0,0.08)] transition-transform md:static md:h-auto md:translate-x-0"
           [class.-translate-x-full]="!sidebarOpen()"
-          aria-label="Sidebar"
+          [attr.aria-label]="'common.sidebar' | translate"
         >
           <nav class="flex flex-col gap-1 p-4">
             @for (item of menu(); track item.to) {

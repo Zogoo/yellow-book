@@ -20,7 +20,7 @@ name per category. The list is data, not code, so it can grow without a release.
 | Mongolian | English |
 |---|---|
 | Хоол, ундаа | Food & drink |
-| Гоо сайхан, эрүүл мэнд | Beauty & wellbeing |
+| Гоо сайхан | Beauty & wellbeing |
 | Эмнэлэг, эрүүл мэнд | Health & clinics |
 | Авто үйлчилгээ | Car services |
 | Барилга, засвар | Construction & repair |

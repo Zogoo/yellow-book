@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   OnInit,
+  computed,
   inject,
   signal,
   viewChild,
@@ -40,7 +41,7 @@ Chart.register(...registerables);
       </div>
       <div class="yb-card p-5">
         <p class="text-sm text-gray-500">{{ 'company.verification' | translate }}</p>
-        <p class="text-lg font-semibold capitalize">{{ stats()?.verificationStatus ?? '—' }}</p>
+        <p class="text-lg font-semibold">{{ verificationLabel() | translate }}</p>
       </div>
       <div class="yb-card p-5">
         <p class="text-sm text-gray-500">{{ 'company.profile' | translate }}</p>
@@ -52,7 +53,7 @@ Chart.register(...registerables);
     <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
       <section class="yb-card p-5">
         <h2 class="mb-3 text-lg font-semibold">{{ 'company.reviewTrend' | translate }}</h2>
-        <canvas #chart height="120" aria-label="Monthly review trend"></canvas>
+        <canvas #chart height="120" [attr.aria-label]="'company.monthlyTrend' | translate"></canvas>
       </section>
       <section class="yb-card p-5">
         <div class="mb-3 flex items-center justify-between">
@@ -83,6 +84,12 @@ export class CompanyDashboardPage implements OnInit, AfterViewInit {
   readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   readonly stats = signal<AgencyDashboard | null>(null);
+  /** The API sends the raw status; the panel shows it in the caller's language. */
+  readonly verificationLabel = computed(() => {
+    const status = String(this.stats()?.verificationStatus ?? '').toLowerCase();
+    const known = ['pending', 'approved', 'rejected', 'suspended'];
+    return `company.status.${known.includes(status) ? status : 'unknown'}`;
+  });
   readonly recent = signal<ReviewRecord[]>([]);
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('chart');
   private chart: Chart | null = null;

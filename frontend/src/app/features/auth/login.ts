@@ -91,7 +91,7 @@ export class LoginPage {
   private handled = false;
 
   constructor() {
-    inject(Title).setTitle('Sign in • Yellow Book');
+    inject(Title).setTitle(`${this.translate.instant('nav.logIn')} • Yellow Book`);
     this.signUp.set(this.route.snapshot.data['mode'] === 'signup');
     this.nextPath.set(this.route.snapshot.queryParamMap.get('next') ?? '');
     this.intro.set(this.route.snapshot.queryParamMap.get('reason') ?? '');

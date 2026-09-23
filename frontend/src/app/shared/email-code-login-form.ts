@@ -1,5 +1,6 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { ToastService } from '../core/services/toast.service';
@@ -8,13 +9,13 @@ import { AuthUser } from '../core/models';
 /** Two-step email → 6-digit code sign-in used by the user login page and the modal. */
 @Component({
   selector: 'app-email-code-login-form',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <form class="space-y-4" (ngSubmit)="submit()" novalidate>
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700" for="email-code-email"
-          >Email address</label
-        >
+        <label class="mb-1 block text-sm font-medium text-gray-700" for="email-code-email">{{
+          'auth.emailAddress' | translate
+        }}</label>
         <input
           id="email-code-email"
           class="yb-input"
@@ -29,9 +30,9 @@ import { AuthUser } from '../core/models';
       </div>
       @if (step() === 'code') {
         <div>
-          <label class="mb-1 block text-sm font-medium text-gray-700" for="email-code-otp"
-            >Verification code</label
-          >
+          <label class="mb-1 block text-sm font-medium text-gray-700" for="email-code-otp">{{
+            'auth.verificationCode' | translate
+          }}</label>
           <input
             id="email-code-otp"
             class="yb-input tracking-[0.4em]"
@@ -45,12 +46,12 @@ import { AuthUser } from '../core/models';
             required
           />
           <p class="mt-1 text-xs text-gray-500">
-            We sent a 6-digit code to <strong>{{ email }}</strong
+            {{ 'auth.codeSentToShort' | translate }} <strong>{{ email }}</strong
             >.
             @if (debugCode()) {
-              <span class="ml-1 rounded bg-amber-100 px-1 text-amber-800"
-                >Dev code: {{ debugCode() }}</span
-              >
+              <span class="ml-1 rounded bg-amber-100 px-1 text-amber-800">{{
+                'auth.devCode' | translate: { code: debugCode() }
+              }}</span>
             }
           </p>
         </div>
@@ -61,15 +62,21 @@ import { AuthUser } from '../core/models';
         </p>
       }
       <button type="submit" class="yb-btn yb-btn-gold w-full" [disabled]="busy()">
-        {{ busy() ? 'Please wait...' : step() === 'email' ? 'Send code' : 'Verify & sign in' }}
+        {{
+          busy()
+            ? ('common.pleaseWait' | translate)
+            : step() === 'email'
+              ? ('auth.sendCode' | translate)
+              : ('auth.verifySignIn' | translate)
+        }}
       </button>
       @if (step() === 'code') {
         <div class="flex justify-between text-xs text-gray-500">
           <button type="button" class="underline" (click)="reset()" [disabled]="busy()">
-            Use a different email
+            {{ 'auth.useDifferentEmail' | translate }}
           </button>
           <button type="button" class="underline" (click)="resend()" [disabled]="busy()">
-            Resend code
+            {{ 'auth.resendCode' | translate }}
           </button>
         </div>
       }

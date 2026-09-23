@@ -10,6 +10,7 @@ import { ApiMeta, Listing } from '../../core/models';
 import { DirectoryListing, enrichListing } from '../../core/services/directory.service';
 import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
+import { formatTugrik } from '../../core/utils/mongolia';
 
 const PAGE_SIZE = 6;
 
@@ -283,11 +284,7 @@ export class PopularListPage implements OnInit {
   }
 
   formatPrice(value: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatTugrik(value);
   }
 
   open(item: DirectoryListing): void {

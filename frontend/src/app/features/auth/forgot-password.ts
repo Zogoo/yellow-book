@@ -1,23 +1,24 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-forgot-password-page',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, TranslatePipe],
   template: `
     <div class="mx-auto max-w-md py-16">
       <div class="yb-card p-8">
-        <h1 class="text-2xl font-bold text-[#212121]">Forgot your password?</h1>
+        <h1 class="text-2xl font-bold text-[#212121]">{{ 'auth.forgotTitle' | translate }}</h1>
         <p class="mt-1 mb-6 text-sm text-gray-600">
-          Enter the email on your account and we'll send a reset link.
+          {{ 'auth.forgotLead' | translate }}
         </p>
         @if (sent()) {
           <p class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700" role="status">
-            If an account exists for {{ email }}, a reset link is on its way. Check your inbox.
+            {{ 'auth.resetLinkSent' | translate: { email: email } }}
           </p>
         } @else {
           <form class="space-y-4" (ngSubmit)="submit()" novalidate>
@@ -28,15 +29,17 @@ import { ToastService } from '../../core/services/toast.service';
               placeholder="you@example.com"
               [(ngModel)]="email"
               required
-              aria-label="Email"
+              [attr.aria-label]="'common.email' | translate"
             />
             <button type="submit" class="yb-btn yb-btn-gold w-full" [disabled]="busy()">
-              {{ busy() ? 'Sending...' : 'Send reset link' }}
+              {{ busy() ? ('auth.sending' | translate) : ('auth.sendResetLink' | translate) }}
             </button>
           </form>
         }
         <p class="mt-6 text-sm text-gray-500">
-          <a routerLink="/auth/login" class="text-[#1877f2]">Back to sign in</a>
+          <a routerLink="/auth/login" class="text-[#1877f2]">{{
+            'auth.backToSignIn' | translate
+          }}</a>
         </p>
       </div>
     </div>
