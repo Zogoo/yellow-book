@@ -42,6 +42,11 @@ RUN mkdir -p tmp/pids tmp/cache log
 
 RUN SECRET_KEY_BASE_DUMMY=1 bundle exec bootsnap precompile --gemfile app/ lib/
 
+# Boot the production environment at build time. Development and test boot a
+# different middleware stack, so a config that only works there used to reach
+# production and crash-loop on the machine; now it fails the image build.
+RUN SECRET_KEY_BASE_DUMMY=1 RAILS_ENV=production bundle exec rails middleware > /dev/null
+
 EXPOSE 3000
 ENTRYPOINT ["bin/docker-entrypoint"]
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

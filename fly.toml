@@ -2,7 +2,7 @@
 # region and APP_FRONTEND_URL. See https://fly.io/docs/reference/configuration/
 
 app = 'yellow-book'
-primary_region = 'fra'
+primary_region = 'sin'
 console_command = '/app/bin/rails console'
 swap_size_mb = 512
 

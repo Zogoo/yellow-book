@@ -5,6 +5,9 @@ set -e
 if [ "${*}" == "bundle exec puma -C config/puma.rb" ]; then
   echo "Preparing database..."
   bundle exec rails db:prepare
+  # Categories, and the first administrator if ADMIN_EMAIL/ADMIN_PASSWORD are
+  # set. Idempotent, so it converges on every boot without clobbering anything.
+  bundle exec rails app:bootstrap
 fi
 
 exec "${@}"

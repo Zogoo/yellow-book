@@ -97,14 +97,42 @@ specific to this app:
 
 ## Deploying
 
-`fly.toml` is committed and ready. Run `rake fly:setup` from the generator project to
-create the app, volume, storage bucket and secrets, then:
+`fly.toml` is committed and ready: app `yellow-book`, region `sin` (Singapore — the
+closest well-connected region to Mongolia), one 1 GB volume holding the SQLite
+database at `/mnt/database_storage`. Run `rake fly:setup` from the generator project
+to create the app, volume and secrets interactively, or do it by hand:
 
 ```bash
-fly deploy
+fly apps create yellow-book --org personal
+fly volumes create database_storage -a yellow-book --region sin --size 1 --yes
+fly secrets set RAILS_MASTER_KEY=... JWT_SECRET=... -a yellow-book --stage
+fly deploy --remote-only
 ```
 
 Pushes to `main` deploy automatically once the `FLY_API_TOKEN` repository secret is set.
+
+### What a fresh database gets
+
+`bin/docker-entrypoint` runs `db:prepare` and then `rails app:bootstrap` on every boot.
+The bootstrap task is idempotent: it upserts the category catalogue from
+[db/catalog.rb](db/catalog.rb) — the same list the development seed uses — and creates
+one super-administrator if these secrets are set:
+
+| Secret | Effect |
+|---|---|
+| `ADMIN_EMAIL` | The administrator's sign-in address. Required, or admin creation is skipped. |
+| `ADMIN_PASSWORD` | Their initial password. Only used when the account does not exist yet — an administrator who changes their password keeps it across deploys. |
+| `ADMIN_NAME` | Display name. Defaults to "Administrator". |
+
+Demo companies and reviews live in `db/seeds.rb` and never run in production: a review
+platform seeded with invented reviews is worse than an empty one.
+
+### Email
+
+One-time login codes, password resets and review notifications all go out over SMTP.
+Set `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME` and `SMTP_PASSWORD` as Fly secrets.
+Without them those three flows return a server error; signing in with a password still
+works.
 
 ## Conventions
 
