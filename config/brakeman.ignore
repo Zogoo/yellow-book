@@ -1,0 +1,28 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "1e6d9f5323380ecff2a63e60a82dad1935e347d775f07be2c03b3282fbfec209",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/api/v1/auth_controller.rb",
+      "line": 50,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(Auth::GoogleOauth.callback_redirect(params[:provider], query_params, request), :allow_other_host => true, :status => :found)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::AuthController",
+        "method": "oauth_callback_get"
+      },
+      "user_input": "params[:provider]",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "redirect target is checked by Auth::GoogleOauth.allowed_redirect? (APP_FRONTEND_URL / CORS_ORIGINS only) at authorize and callback; covered by spec/requests/api/v1/auth_spec.rb"
+    }
+  ],
+  "brakeman_version": "8.1.0"
+}

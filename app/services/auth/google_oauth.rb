@@ -10,6 +10,25 @@ module Auth
       def client_id = ENV["GOOGLE_CLIENT_ID"].presence
       def client_secret = ENV["GOOGLE_CLIENT_SECRET"].presence
 
+      # Only origins we serve the SPA from: APP_FRONTEND_URL and the CORS allow-list.
+      def allowed_redirect?(url)
+        origin = origin_of(url)
+        return false if origin.nil?
+
+        allowed = [ ENV.fetch("APP_FRONTEND_URL", "http://localhost:4200"),
+                    *ENV.fetch("CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",") ]
+        allowed.filter_map { |candidate| origin_of(candidate.strip) }.include?(origin)
+      end
+
+      def origin_of(url)
+        uri = URI.parse(url.to_s)
+        return nil unless uri.is_a?(URI::HTTP) && uri.host.present?
+
+        "#{uri.scheme}://#{uri.host.downcase}:#{uri.port}"
+      rescue URI::InvalidURIError
+        nil
+      end
+
       def callback_url
         raw = ENV["GOOGLE_CALLBACK_URL"].presence ||
               "#{ENV.fetch('APP_URL', ENV.fetch('BACKEND_URL', 'http://localhost:3001'))}/api/v1/auth/oauth/google/callback"
@@ -20,6 +39,7 @@ module Auth
         provider = Api::Params.parse_required_enum(provider_raw, PROVIDERS, "provider")
         redirect_uri = Api::Params.string(query["redirectUri"])
         raise Api::BadRequest, "redirectUri is required (e.g. redirectUri=http://localhost:4200)" if redirect_uri.empty?
+        raise Api::BadRequest, "redirectUri must point to the Yellow Book frontend" unless allowed_redirect?(redirect_uri)
 
         state = SecureRandom.hex(16)
         expires_at = 10.minutes.from_now
@@ -55,6 +75,8 @@ module Auth
         end
         redirect_uri = oauth_req.redirect_uri.presence || ENV.fetch("APP_FRONTEND_URL", "http://localhost:4200")
         oauth_req.destroy
+        # The session token is appended to this URL, so it must never leave our own frontend.
+        raise Api::BadRequest, "redirectUri must point to the Yellow Book frontend" unless allowed_redirect?(redirect_uri)
         raise Api::BadRequest, "Google OAuth is not configured (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET required)" unless client_id && client_secret
 
         tokens = exchange_code(code)

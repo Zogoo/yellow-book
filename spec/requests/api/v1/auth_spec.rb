@@ -142,6 +142,21 @@ RSpec.describe "Auth", type: :request do
       get "/api/v1/auth/oauth/facebook/authorize"
       expect(response).to have_http_status(:bad_request)
     end
+
+    it "refuses to start a sign-in that would redirect to another site" do
+      get "/api/v1/auth/oauth/google/authorize", params: { redirectUri: "https://evil.example/steal" }
+      expect(response).to have_http_status(:bad_request)
+      expect(json["message"]).to include("redirectUri")
+      expect(OauthAuthorizationRequest.count).to eq(0)
+    end
+
+    it "never sends the session token to a stored foreign redirect" do
+      OauthAuthorizationRequest.create!(provider: "google", state: "s" * 32, redirect_uri: "https://evil.example/steal",
+                                        expires_at: 5.minutes.from_now)
+      get "/api/v1/auth/oauth/google/callback", params: { code: "abc", state: "s" * 32 }
+      expect(response).to have_http_status(:bad_request)
+      expect(response.headers["Location"]).to be_nil
+    end
   end
 
   it "returns the JSON error contract for unknown routes" do
