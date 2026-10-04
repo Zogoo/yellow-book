@@ -14,7 +14,7 @@ FROM ruby:${RUBY_VERSION}-slim AS production
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
       build-essential libsqlite3-dev curl \
-      libjemalloc2 && \
+      libjemalloc2 libvips42 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/lib/$(dpkg --print-architecture | sed 's/amd64/x86_64-linux-gnu/;s/arm64/aarch64-linux-gnu/')/libjemalloc.so.2 /usr/local/lib/libjemalloc.so.2
