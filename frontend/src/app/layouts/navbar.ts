@@ -140,84 +140,86 @@ import { LanguageSwitcher } from '../shared/language-switcher';
             <button type="button" class="text-left text-base font-medium" (click)="signIn()">
               {{ 'nav.logIn' | translate }}
             </button>
-            <a routerLink="/auth/signup" (click)="menuOpen.set(false)" class="yb-btn yb-btn-gold"
-              >{{ 'nav.signUp' | translate }}</a
-            >
+            <a routerLink="/auth/signup" (click)="menuOpen.set(false)" class="yb-btn yb-btn-gold">{{
+              'nav.signUp' | translate
+            }}</a>
           }
         </aside>
       }
 
       <!-- The headline and big search belong to the home page only. -->
       @if (isHome()) {
-      <div class="mx-auto max-w-4xl px-4 pt-10 pb-16 text-center">
-        <h1 class="text-3xl leading-tight font-bold text-balance text-[#212121] md:text-5xl">
-          {{ 'home.headline' | translate }}
-        </h1>
-        <p class="mt-4 text-sm text-[#616161] md:text-base">
-          {{ 'home.subhead' | translate }}
-        </p>
-        <form
-          class="relative mx-auto mt-8 flex max-w-2xl items-center gap-2 rounded-full bg-[#feecb2] p-2"
-          (ngSubmit)="submitSearch()"
-          role="search"
-        >
-          <input
-            class="flex-1 rounded-full bg-[#fff9e6] px-5 py-3 text-sm outline-none"
-            type="search"
-            name="q"
-            [attr.placeholder]="'nav.searchPlaceholder' | translate"
-            [(ngModel)]="query"
-            (ngModelChange)="onQueryChange()"
-            (focus)="dropdownOpen.set(true)"
-            [attr.aria-label]="'nav.searchPlaceholder' | translate"
-            autocomplete="off"
-          />
-          <button type="submit" class="yb-btn yb-btn-gold rounded-full px-6">
-            🔍 {{ 'common.search' | translate }}
-          </button>
-          @if (dropdownOpen()) {
-            <ul
-              class="absolute top-full right-2 left-2 z-30 mt-2 max-h-[300px] overflow-y-auto rounded-2xl border border-gray-100 bg-white text-left shadow-xl"
-              role="listbox"
-            >
-              @if (searching()) {
-                <li class="px-4 py-3 text-sm text-gray-500">{{ 'common.loading' | translate }}</li>
-              } @else if (results().length === 0) {
-                <li class="px-4 py-3 text-sm text-gray-500">
-                  {{ 'category.noResults' | translate }}
-                </li>
-              } @else {
-                @for (item of results(); track item.id) {
-                  <li>
-                    <button
-                      type="button"
-                      class="w-full px-4 py-3 text-left hover:bg-[#fff9e6]"
-                      role="option"
-                      (click)="pick(item)"
-                    >
-                      <span class="block text-sm font-semibold text-[#212121]">{{
-                        item.name
-                      }}</span>
-                      <span class="block text-xs text-gray-500"
-                        >{{ item.category }} • {{ item.serviceType || item.category }} •
-                        {{ placeLabel(item) || ('common.anywhere' | translate) }}</span
-                      >
-                      <span class="mt-1 flex flex-wrap gap-1">
-                        @for (tag of tags(item); track tag) {
-                          <span
-                            class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600"
-                            >{{ tag }}</span
-                          >
-                        }
-                      </span>
-                    </button>
+        <div class="mx-auto max-w-4xl px-4 pt-10 pb-16 text-center">
+          <h1 class="text-3xl leading-tight font-bold text-balance text-[#212121] md:text-5xl">
+            {{ 'home.headline' | translate }}
+          </h1>
+          <p class="mt-4 text-sm text-[#616161] md:text-base">
+            {{ 'home.subhead' | translate }}
+          </p>
+          <form
+            class="relative mx-auto mt-8 flex max-w-2xl items-center gap-2 rounded-full bg-[#feecb2] p-2"
+            (ngSubmit)="submitSearch()"
+            role="search"
+          >
+            <input
+              class="flex-1 rounded-full bg-[#fff9e6] px-5 py-3 text-sm outline-none"
+              type="search"
+              name="q"
+              [attr.placeholder]="'nav.searchPlaceholder' | translate"
+              [(ngModel)]="query"
+              (ngModelChange)="onQueryChange()"
+              (focus)="dropdownOpen.set(true)"
+              [attr.aria-label]="'nav.searchPlaceholder' | translate"
+              autocomplete="off"
+            />
+            <button type="submit" class="yb-btn yb-btn-gold rounded-full px-6">
+              🔍 {{ 'common.search' | translate }}
+            </button>
+            @if (dropdownOpen()) {
+              <ul
+                class="absolute top-full right-2 left-2 z-30 mt-2 max-h-[300px] overflow-y-auto rounded-2xl border border-gray-100 bg-white text-left shadow-xl"
+                role="listbox"
+              >
+                @if (searching()) {
+                  <li class="px-4 py-3 text-sm text-gray-500">
+                    {{ 'common.loading' | translate }}
                   </li>
+                } @else if (results().length === 0) {
+                  <li class="px-4 py-3 text-sm text-gray-500">
+                    {{ 'category.noResults' | translate }}
+                  </li>
+                } @else {
+                  @for (item of results(); track item.id) {
+                    <li>
+                      <button
+                        type="button"
+                        class="w-full px-4 py-3 text-left hover:bg-[#fff9e6]"
+                        role="option"
+                        (click)="pick(item)"
+                      >
+                        <span class="block text-sm font-semibold text-[#212121]">{{
+                          item.name
+                        }}</span>
+                        <span class="block text-xs text-gray-500"
+                          >{{ item.category }} • {{ item.serviceType || item.category }} •
+                          {{ placeLabel(item) || ('common.anywhere' | translate) }}</span
+                        >
+                        <span class="mt-1 flex flex-wrap gap-1">
+                          @for (tag of tags(item); track tag) {
+                            <span
+                              class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600"
+                              >{{ tag }}</span
+                            >
+                          }
+                        </span>
+                      </button>
+                    </li>
+                  }
                 }
-              }
-            </ul>
-          }
-        </form>
-      </div>
+              </ul>
+            }
+          </form>
+        </div>
       }
     </header>
   `,

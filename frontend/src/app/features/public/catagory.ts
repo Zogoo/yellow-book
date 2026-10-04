@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 
 import { ApiService } from '../../core/services/api.service';
 import {
@@ -129,7 +129,9 @@ const API_PAGE = 100;
                 >
                   <option value="">{{ 'common.all' | translate }}</option>
                   @for (option of districtOptions(); track option) {
-                    <option [value]="option">{{ option }}</option>
+                    <option [value]="option" [selected]="option === district()">
+                      {{ option }}
+                    </option>
                   }
                 </select>
               </div>
@@ -343,8 +345,10 @@ const API_PAGE = 100;
                           class="text-xl"
                           [attr.aria-pressed]="favorites.isFavorite(item)"
                           [attr.aria-label]="
-                            (favorites.isFavorite(item) ? 'common.removeFavourite' : 'common.saveFavourite')
-                              | translate
+                            (favorites.isFavorite(item)
+                              ? 'common.removeFavourite'
+                              : 'common.saveFavourite'
+                            ) | translate
                           "
                           (click)="$event.stopPropagation(); favorites.toggle(item, true)"
                         >
@@ -498,8 +502,9 @@ export class CatagoryPage implements OnInit {
       this.specializations(),
     ),
   );
+  // The search term is applied by the API (Cyrillic/Latin folded); re-filtering it here with a
+  // plain substring hid every "khan bank" → "Хаан Банк" match.
   readonly filtered = computed(() => {
-    const q = this.queryTerm().toLowerCase();
     return this.listings().filter((l) => {
       if (this.services().size && !this.services().has(l.serviceType ?? '')) return false;
       if (this.specializations().size && !this.specializations().has(l.specialization ?? ''))
@@ -509,8 +514,6 @@ export class CatagoryPage implements OnInit {
       if (Number(l.price ?? 0) > this.maxPrice()) return false;
       if (this.ratings().size && !this.ratings().has(Math.floor(l.rating))) return false;
       if (this.district() && l.district !== this.district()) return false;
-      if (q && !`${l.name} ${l.location ?? ''} ${l.website ?? ''}`.toLowerCase().includes(q))
-        return false;
       return true;
     });
   });
@@ -576,7 +579,14 @@ export class CatagoryPage implements OnInit {
       this.page.set(Number(params.get('page') ?? 1) || 1);
       this.services.set(new Set(params.getAll('type')));
       this.specializations.set(new Set(params.getAll('spec')));
-      this.ratings.set(new Set(params.getAll('rating').map(Number).filter((n) => n >= 1 && n <= 5)));
+      this.ratings.set(
+        new Set(
+          params
+            .getAll('rating')
+            .map(Number)
+            .filter((n) => n >= 1 && n <= 5),
+        ),
+      );
       this.district.set(params.get('district') ?? '');
       const key = `${params.get('name') ?? ''}|${params.get('q') ?? ''}`;
       if (key !== this.lastKey) {
@@ -592,14 +602,16 @@ export class CatagoryPage implements OnInit {
     try {
       const all: Listing[] = [];
       for (let page = 1; page <= 20; page++) {
-        const result = await this.api.list<Listing>('listings', {
-          category: this.categoryName(),
-          limit: API_PAGE,
-          page,
-          search: this.queryTerm(),
-        });
-        all.push(...result.items);
-        if (!result.meta?.hasNext) break;
+        const response = await firstValueFrom(
+          this.api.get<{ listings: Listing[] }>('listings', {
+            category: this.categoryName(),
+            limit: API_PAGE,
+            page,
+            search: this.queryTerm(),
+          }),
+        );
+        all.push(...(response?.data?.listings ?? []));
+        if (!response?.meta?.hasNext) break;
       }
       this.listings.set(all.map(enrichListing));
     } catch {

@@ -9,7 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Chart, registerables } from 'chart.js';
 
 import { ApiService } from '../../core/services/api.service';
@@ -93,6 +93,7 @@ Chart.register(...registerables);
 export class CompanyDashboardPage implements OnInit, AfterViewInit {
   readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
+  private readonly translate = inject(TranslateService);
   readonly stats = signal<AgencyDashboard | null>(null);
   /** The API sends the raw status; the panel shows it in the caller's language. */
   readonly verificationLabel = computed(() => {
@@ -101,6 +102,10 @@ export class CompanyDashboardPage implements OnInit, AfterViewInit {
     return `company.status.${known.includes(status) ? status : 'unknown'}`;
   });
   readonly recent = signal<ReviewRecord[]>([]);
+  /** A line of zeros is noise; show the chart once there is at least one review. */
+  readonly hasTrend = computed(() =>
+    (this.stats()?.monthlyReviewTrend ?? []).some((t) => t.count > 0),
+  );
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('chart');
   private chart: Chart | null = null;
 
@@ -115,7 +120,8 @@ export class CompanyDashboardPage implements OnInit, AfterViewInit {
     ]);
     this.stats.set(stats);
     this.recent.set(reviews?.items ?? []);
-    this.renderChart();
+    // The canvas only exists after the next render (it sits behind @if (hasTrend())).
+    setTimeout(() => this.renderChart());
   }
 
   ngAfterViewInit(): void {
@@ -133,7 +139,7 @@ export class CompanyDashboardPage implements OnInit, AfterViewInit {
         labels: trend.map((t) => t.month),
         datasets: [
           {
-            label: 'Reviews',
+            label: this.translate.instant('common.reviews'),
             data: trend.map((t) => t.count),
             borderColor: '#fcc207',
             backgroundColor: 'rgba(252,194,7,0.2)',

@@ -195,6 +195,7 @@ const PERMISSIONS = [
   `,
 })
 export class CreateSubAdminPage {
+  readonly label = titleCase;
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);

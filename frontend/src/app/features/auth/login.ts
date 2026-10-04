@@ -2,7 +2,6 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-
 import { AuthService } from '../../core/services/auth.service';
 import { resolvePostLoginRedirect } from '../../core/utils/role-access';
 import { AuthUserSummary } from '../../shared/auth-user-summary';

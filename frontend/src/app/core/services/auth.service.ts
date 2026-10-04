@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthResponse, AuthUser } from '../models';
@@ -51,7 +51,9 @@ function safeStorage(kind: 'local' | 'session'): Storage | null {
 export class AuthService {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
-  private readonly translate = inject(TranslateService);
+  // Resolved lazily: translations load over HTTP, and the auth interceptor needs this
+  // service, so injecting TranslateService eagerly is a circular dependency (NG0200).
+  private readonly injector = inject(Injector);
   private readonly router = inject(Router);
 
   readonly user = signal<AuthUser | null>(null);
@@ -99,7 +101,7 @@ export class AuthService {
     const storage = safeStorage('local');
     storage?.removeItem(TOKEN_KEY);
     storage?.removeItem(USER_KEY);
-    if (options.notify) this.toast.success(this.translate.instant('auth.toastLoggedOut'));
+    if (options.notify) this.toast.success(this.t('auth.toastLoggedOut'));
   }
 
   async login(payload: { email: string; password: string }): Promise<AuthResponse> {
@@ -165,7 +167,10 @@ export class AuthService {
       { toast: { showError: false } },
     );
     this.pendingChallenge.set(null);
-    return this.adoptSession(data, purpose === 'signup' ? 'auth.toastWelcome' : 'auth.toastSignedIn');
+    return this.adoptSession(
+      data,
+      purpose === 'signup' ? 'auth.toastWelcome' : 'auth.toastSignedIn',
+    );
   }
 
   /** Customer sign-up: the same endpoint as a business, without a company. */
@@ -283,6 +288,10 @@ export class AuthService {
     return this.fetchMe();
   }
 
+  private t(key: string, params?: Record<string, unknown>): string {
+    return this.injector.get(TranslateService).instant(key, params);
+  }
+
   /** `messageKey` is an i18n key; one toast per sign-in, whichever screen started it. */
   private async adoptSession(data: AuthResponse, messageKey: string): Promise<AuthResponse> {
     const token = data?.token;
@@ -298,7 +307,7 @@ export class AuthService {
         if (error instanceof ApiClientError && error.status === 401) throw error;
       }
     }
-    this.toast.success(this.translate.instant(messageKey, { name: user?.name || user?.email || '' }));
+    this.toast.success(this.t(messageKey, { name: user?.name || user?.email || '' }));
     return { token, user };
   }
 

@@ -22,7 +22,14 @@ RSpec.describe "Search engine endpoints", type: :request do
 
   describe "SPA fallback status" do
     let(:index) { Rails.root.join("public", "index.html") }
-    let!(:created_index) { index.exist? ? false : (File.write(index, "<!doctype html><app-root></app-root>") && true) }
+    # A fresh checkout has no public/ at all (it only holds the built frontend).
+    let!(:created_index) do
+      next false if index.exist?
+
+      FileUtils.mkdir_p(index.dirname)
+      File.write(index, "<!doctype html><app-root></app-root>")
+      true
+    end
 
     after { File.delete(index) if created_index }
 

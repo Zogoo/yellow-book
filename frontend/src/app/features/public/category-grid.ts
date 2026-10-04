@@ -89,9 +89,7 @@ export class CategoryGrid implements OnInit {
     return this.limit() ? all.slice(0, this.limit()) : all;
   });
 
-  readonly placeholders = computed(() =>
-    Array.from({ length: this.limit() || 8 }, (_, i) => i),
-  );
+  readonly placeholders = computed(() => Array.from({ length: this.limit() || 8 }, (_, i) => i));
 
   ngOnInit(): void {
     void this.directory.ensureHydrated();

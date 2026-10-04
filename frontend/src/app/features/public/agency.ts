@@ -64,357 +64,365 @@ interface AgencyView {
         <nav [attr.aria-label]="'common.breadcrumb' | translate" class="text-gray-500">
           {{ 'agency.breadcrumb' | translate }} <span class="mx-1">›</span>
           <span class="text-sky-500">{{
-            notFound() ? ('common.pageNotFound' | translate) : agency().name || ('common.loading' | translate)
+            notFound()
+              ? ('common.pageNotFound' | translate)
+              : agency().name || ('common.loading' | translate)
           }}</span>
         </nav>
       </div>
 
       @if (notFound()) {
         <section class="yb-card mx-auto my-16 max-w-xl p-10 text-center">
-          <h1 class="text-2xl font-bold text-[#212121]">{{ 'agency.notFoundTitle' | translate }}</h1>
+          <h1 class="text-2xl font-bold text-[#212121]">
+            {{ 'agency.notFoundTitle' | translate }}
+          </h1>
           <p class="mt-2 text-gray-600">{{ 'agency.notFoundLead' | translate }}</p>
           <a routerLink="/category" class="yb-btn yb-btn-gold mt-6 inline-flex">
             {{ 'agency.browseCategories' | translate }}
           </a>
         </section>
       } @else {
-
-      <section class="relative mb-16">
-        @if (agency().heroImage) {
-          <!-- Logos and photos share this field: contain, never crop. -->
+        <section class="relative mb-16">
+          @if (agency().heroImage) {
+            <!-- Logos and photos share this field: contain, never crop. -->
+            <div
+              class="flex h-56 w-full items-center justify-center rounded-3xl border border-gray-100 bg-white md:h-72"
+            >
+              <img
+                [src]="agency().heroImage"
+                [alt]="agency().name"
+                class="max-h-full max-w-full object-contain p-8"
+              />
+            </div>
+          } @else {
+            <div
+              class="h-28 w-full rounded-3xl bg-gradient-to-br from-[#fff3c4] to-[#feecb2] md:h-36"
+              aria-hidden="true"
+            ></div>
+          }
           <div
-            class="flex h-56 w-full items-center justify-center rounded-3xl border border-gray-100 bg-white md:h-72"
+            class="absolute -bottom-10 left-1/2 -translate-x-1/2 rounded-2xl border-4 border-white bg-white shadow-lg"
           >
-            <img
-              [src]="agency().heroImage"
-              [alt]="agency().name"
-              class="max-h-full max-w-full object-contain p-8"
-            />
-          </div>
-        } @else {
-          <div
-            class="h-28 w-full rounded-3xl bg-gradient-to-br from-[#fff3c4] to-[#feecb2] md:h-36"
-            aria-hidden="true"
-          ></div>
-        }
-        <div
-          class="absolute -bottom-10 left-1/2 -translate-x-1/2 rounded-2xl border-4 border-white bg-white shadow-lg"
-        >
-          @if (agency().logoImage) {
-            <img
-              [src]="agency().logoImage"
-              [alt]="agency().name"
-              class="h-20 w-20 rounded-xl bg-white object-contain p-1"
-            />
-          } @else {
-            <app-avatar [name]="agency().name" [size]="80" />
-          }
-        </div>
-      </section>
-      <section class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-[#212121]">
-          {{ agency().name || ('common.loading' | translate) }}
-        </h1>
-        @if (agency().tagline) {
-          <p class="mt-1 text-gray-500">{{ agency().tagline }}</p>
-        }
-        <div class="mt-2 flex items-center justify-center gap-2">
-          <app-rating-stars
-            [rating]="overallRating()"
-            size="sm"
-            color="#FFC107"
-            emptyColor="#E0E0E0"
-            [showValue]="false"
-          />
-          <span class="font-bold">{{ overallRating().toFixed(1) }}</span>
-          <span class="text-sm text-gray-500">
-            {{ reviewCountLabel() | translate: { count: publishedReviews().length } }}
-          </span>
-        </div>
-        <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
-          @if (agency().phone) {
-            <a [href]="'tel:' + agency().phone.replace(' ', '')" class="yb-btn yb-btn-gold">
-              📞 {{ 'common.call' | translate }} {{ formatPhone(agency().phone) }}
-            </a>
-          }
-          @if (agency().facebookUrl) {
-            <a
-              [href]="agency().facebookUrl"
-              target="_blank"
-              rel="noopener nofollow"
-              class="yb-btn yb-btn-outline"
-            >
-              {{ 'common.facebook' | translate }} ↗
-            </a>
-          }
-          @if (agency().website) {
-            <a
-              [href]="websiteHref()"
-              target="_blank"
-              rel="noopener nofollow"
-              class="yb-btn yb-btn-outline"
-              >{{ 'agency.visitWebsite' | translate }} ↗</a
-            >
-          }
-          @if (agency().id) {
-            <button
-              type="button"
-              class="yb-btn yb-btn-outline"
-              [attr.aria-pressed]="isFavourite()"
-              (click)="toggleFavourite()"
-            >
-              {{ isFavourite() ? '❤' : '♡' }}
-              {{ (isFavourite() ? 'common.removeFavourite' : 'common.saveFavourite') | translate }}
-            </button>
-          }
-        </div>
-      </section>
-
-      @if (agency().about) {
-        <section class="mb-8 rounded-3xl bg-[#fff5f5] p-6">
-          <h2 class="mb-2 text-xl font-bold text-[#212121]">{{ 'agency.about' | translate }}</h2>
-          <p class="text-gray-600">{{ agency().about }}</p>
-        </section>
-      }
-
-      <section class="mb-10 grid gap-6 md:grid-cols-2">
-        <div class="yb-card p-6">
-          <h2 class="mb-4 text-lg font-bold text-[#212121]">
-            {{ 'agency.companyInformation' | translate }}
-          </h2>
-          @if (contactRows().length === 0) {
-            <p class="text-sm text-gray-500">{{ 'agency.noContact' | translate }}</p>
-          } @else {
-            <dl class="space-y-3 text-sm">
-              @for (row of contactRows(); track row.label) {
-                <div class="flex gap-2">
-                  <dt class="w-44 text-gray-500">{{ row.icon }} {{ row.label | translate }}</dt>
-                  <dd>
-                    @if (row.href) {
-                      <a
-                        [href]="row.href"
-                        target="_blank"
-                        rel="noopener nofollow"
-                        class="text-blue-600 hover:underline"
-                        >{{ row.value }}</a
-                      >
-                    } @else {
-                      {{ row.value }}
-                    }
-                  </dd>
-                </div>
-              }
-            </dl>
-          }
-        </div>
-        @if (agency().ownerName) {
-          <div class="yb-card flex flex-col items-center p-6 text-center">
-            <app-avatar [name]="agency().ownerName" [size]="88" />
-            <h3 class="mt-3 text-lg font-semibold">{{ agency().ownerName }}</h3>
-            @if (agency().ownerTitle) {
-              <p class="text-sm text-gray-500">{{ agency().ownerTitle }}</p>
+            @if (agency().logoImage) {
+              <img
+                [src]="agency().logoImage"
+                [alt]="agency().name"
+                class="h-20 w-20 rounded-xl bg-white object-contain p-1"
+              />
+            } @else {
+              <app-avatar [name]="agency().name" [size]="80" />
             }
-            <p class="mt-3 text-sm text-gray-500">
-              {{ 'agency.ownerOf' | translate: { company: agency().name } }}
-            </p>
           </div>
-        }
-      </section>
+        </section>
+        <section class="mb-8 text-center">
+          <h1 class="text-3xl font-bold text-[#212121]">
+            {{ agency().name || ('common.loading' | translate) }}
+          </h1>
+          @if (agency().tagline) {
+            <p class="mt-1 text-gray-500">{{ agency().tagline }}</p>
+          }
+          <div class="mt-2 flex items-center justify-center gap-2">
+            <app-rating-stars
+              [rating]="overallRating()"
+              size="sm"
+              color="#FFC107"
+              emptyColor="#E0E0E0"
+              [showValue]="false"
+            />
+            <span class="font-bold">{{ overallRating().toFixed(1) }}</span>
+            <span class="text-sm text-gray-500">
+              {{ reviewCountLabel() | translate: { count: publishedReviews().length } }}
+            </span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+            @if (agency().phone) {
+              <a [href]="'tel:' + agency().phone.replace(' ', '')" class="yb-btn yb-btn-gold">
+                📞 {{ 'common.call' | translate }} {{ formatPhone(agency().phone) }}
+              </a>
+            }
+            @if (agency().facebookUrl) {
+              <a
+                [href]="agency().facebookUrl"
+                target="_blank"
+                rel="noopener nofollow"
+                class="yb-btn yb-btn-outline"
+              >
+                {{ 'common.facebook' | translate }} ↗
+              </a>
+            }
+            @if (agency().website) {
+              <a
+                [href]="websiteHref()"
+                target="_blank"
+                rel="noopener nofollow"
+                class="yb-btn yb-btn-outline"
+                >{{ 'agency.visitWebsite' | translate }} ↗</a
+              >
+            }
+            @if (agency().id) {
+              <button
+                type="button"
+                class="yb-btn yb-btn-outline"
+                [attr.aria-pressed]="isFavourite()"
+                (click)="toggleFavourite()"
+              >
+                {{ isFavourite() ? '❤' : '♡' }}
+                {{
+                  (isFavourite() ? 'common.removeFavourite' : 'common.saveFavourite') | translate
+                }}
+              </button>
+            }
+          </div>
+        </section>
 
-      <section class="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div>
-          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 class="flex items-center gap-2 text-xl font-bold text-[#212121]">
-              💬 {{ 'agency.customerReviews' | translate }}
+        @if (agency().about) {
+          <section class="mb-8 rounded-3xl bg-[#fff5f5] p-6">
+            <h2 class="mb-2 text-xl font-bold text-[#212121]">{{ 'agency.about' | translate }}</h2>
+            <p class="text-gray-600">{{ agency().about }}</p>
+          </section>
+        }
+
+        <section class="mb-10 grid gap-6 md:grid-cols-2">
+          <div class="yb-card p-6">
+            <h2 class="mb-4 text-lg font-bold text-[#212121]">
+              {{ 'agency.companyInformation' | translate }}
             </h2>
-            <div class="flex items-center gap-2">
-              <div class="relative">
-                <button
-                  type="button"
-                  class="yb-btn yb-btn-outline"
-                  (click)="filterOpen.set(!filterOpen())"
-                  [attr.aria-expanded]="filterOpen()"
-                >
-                  {{ 'agency.filter' | translate }} <span [class.rotate-180]="filterOpen()">⌄</span>
-                </button>
-                @if (filterOpen()) {
-                  <div
-                    class="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl"
-                  >
-                    <h3 class="mb-2 text-sm font-semibold">{{ 'agency.filter' | translate }}</h3>
-                    <p class="mb-1 text-xs text-gray-500">{{ 'agency.reviewScore' | translate }}</p>
-                    @for (star of [1, 2, 3, 4, 5]; track star) {
-                      <label class="flex items-center gap-2 py-0.5 text-sm"
-                        ><input
-                          type="checkbox"
-                          [checked]="scoreFilter().has(star)"
-                          (change)="toggleScore(star)"
-                        />
-                        {{ 'category.chipStar' | translate: { count: star } }}</label
-                      >
-                    }
-                    <p class="mt-3 mb-1 text-xs text-gray-500">
-                      {{ 'agency.dateFilter' | translate }}
-                    </p>
-                    @for (option of dateOptions; track option.value) {
-                      <label class="flex items-center gap-2 py-0.5 text-sm"
-                        ><input
-                          type="radio"
-                          name="dateFilter"
-                          [checked]="dateFilter() === option.value"
-                          (change)="dateFilter.set(option.value)"
-                        />
-                        {{ option.label | translate }}</label
-                      >
-                    }
+            @if (contactRows().length === 0) {
+              <p class="text-sm text-gray-500">{{ 'agency.noContact' | translate }}</p>
+            } @else {
+              <dl class="space-y-3 text-sm">
+                @for (row of contactRows(); track row.label) {
+                  <div class="flex gap-2">
+                    <dt class="w-44 text-gray-500">{{ row.icon }} {{ row.label | translate }}</dt>
+                    <dd>
+                      @if (row.href) {
+                        <a
+                          [href]="row.href"
+                          target="_blank"
+                          rel="noopener nofollow"
+                          class="text-blue-600 hover:underline"
+                          >{{ row.value }}</a
+                        >
+                      } @else {
+                        {{ row.value }}
+                      }
+                    </dd>
                   </div>
                 }
+              </dl>
+            }
+          </div>
+          @if (agency().ownerName) {
+            <div class="yb-card flex flex-col items-center p-6 text-center">
+              <app-avatar [name]="agency().ownerName" [size]="88" />
+              <h3 class="mt-3 text-lg font-semibold">{{ agency().ownerName }}</h3>
+              @if (agency().ownerTitle) {
+                <p class="text-sm text-gray-500">{{ agency().ownerTitle }}</p>
+              }
+              <p class="mt-3 text-sm text-gray-500">
+                {{ 'agency.ownerOf' | translate: { company: agency().name } }}
+              </p>
+            </div>
+          }
+        </section>
+
+        <section class="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div>
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="flex items-center gap-2 text-xl font-bold text-[#212121]">
+                💬 {{ 'agency.customerReviews' | translate }}
+              </h2>
+              <div class="flex items-center gap-2">
+                <div class="relative">
+                  <button
+                    type="button"
+                    class="yb-btn yb-btn-outline"
+                    (click)="filterOpen.set(!filterOpen())"
+                    [attr.aria-expanded]="filterOpen()"
+                  >
+                    {{ 'agency.filter' | translate }}
+                    <span [class.rotate-180]="filterOpen()">⌄</span>
+                  </button>
+                  @if (filterOpen()) {
+                    <div
+                      class="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 shadow-xl"
+                    >
+                      <h3 class="mb-2 text-sm font-semibold">{{ 'agency.filter' | translate }}</h3>
+                      <p class="mb-1 text-xs text-gray-500">
+                        {{ 'agency.reviewScore' | translate }}
+                      </p>
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <label class="flex items-center gap-2 py-0.5 text-sm"
+                          ><input
+                            type="checkbox"
+                            [checked]="scoreFilter().has(star)"
+                            (change)="toggleScore(star)"
+                          />
+                          {{ 'category.chipStar' | translate: { count: star } }}</label
+                        >
+                      }
+                      <p class="mt-3 mb-1 text-xs text-gray-500">
+                        {{ 'agency.dateFilter' | translate }}
+                      </p>
+                      @for (option of dateOptions; track option.value) {
+                        <label class="flex items-center gap-2 py-0.5 text-sm"
+                          ><input
+                            type="radio"
+                            name="dateFilter"
+                            [checked]="dateFilter() === option.value"
+                            (change)="dateFilter.set(option.value)"
+                          />
+                          {{ option.label | translate }}</label
+                        >
+                      }
+                    </div>
+                  }
+                </div>
               </div>
+            </div>
+
+            @if (reviewsLoading()) {
+              <p class="py-10 text-center text-gray-500">{{ 'common.loading' | translate }}</p>
+            } @else if (filteredReviews().length === 0) {
+              <p class="py-10 text-center text-gray-500">{{ 'agency.noReviews' | translate }}</p>
+            }
+            <div class="space-y-4">
+              @for (review of filteredReviews(); track review.id) {
+                <article
+                  [id]="'agency-review-' + review.id"
+                  class="yb-card p-5"
+                  [class.ring-2]="isHighlighted(review)"
+                  [class.ring-amber-400]="isHighlighted(review)"
+                  [class.ring-offset-2]="isHighlighted(review)"
+                  [class.shadow-lg]="isHighlighted(review)"
+                >
+                  <div class="flex items-start gap-3">
+                    <app-avatar [name]="review.reviewerName" [size]="48" />
+                    <div class="flex-1">
+                      <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="flex items-center gap-2 font-semibold text-[#212121]">
+                          {{ review.reviewerName }}
+                          @if (review.status && review.status !== 'approved') {
+                            <span
+                              class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
+                            >
+                              {{ 'agency.pendingReview' | translate }}
+                            </span>
+                          }
+                        </h3>
+                        <app-star-rating-box
+                          [rating]="review.rating"
+                          [readonly]="true"
+                          [boxSize]="28"
+                          [iconSize]="16"
+                        />
+                      </div>
+                      <p class="mt-2 text-gray-600 italic">“{{ review.content }}”</p>
+                      <p class="mt-1 text-xs text-gray-400">
+                        {{ 'common.date' | translate }}: {{ review.date }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="mt-4 flex items-center gap-6 border-t border-gray-100 pt-3 text-sm">
+                    <button
+                      type="button"
+                      class="flex items-center gap-1"
+                      [class.text-gray-400]="!canLikeDislike()"
+                      [attr.title]="canLikeDislike() ? null : ('review.signInToReact' | translate)"
+                      (click)="react(review, 'like')"
+                      [attr.aria-label]="'agency.likeReview' | translate"
+                    >
+                      <img src="/thumb_up.svg" alt="" class="h-4 w-4" /> {{ review.likes }}
+                    </button>
+                    <button
+                      type="button"
+                      class="flex items-center gap-1"
+                      [class.text-gray-400]="!canLikeDislike()"
+                      [attr.title]="canLikeDislike() ? null : ('review.signInToReact' | translate)"
+                      (click)="react(review, 'dislike')"
+                      [attr.aria-label]="'agency.dislikeReview' | translate"
+                    >
+                      <img src="/Frame.svg" alt="" class="h-4 w-4" /> {{ review.dislikes }}
+                    </button>
+                  </div>
+                  @if (review.companyResponse) {
+                    <div class="mt-4 ml-6 border-l-2 border-[#fcc207] pl-4">
+                      <div class="flex items-center gap-2">
+                        <app-avatar
+                          [name]="review.companyResponse.name || agency().name"
+                          [size]="32"
+                        />
+                        <div>
+                          <p class="text-sm font-semibold">
+                            {{ review.companyResponse.name || agency().name }}
+                          </p>
+                          <p class="text-xs text-gray-400">
+                            {{ 'common.date' | translate }}: {{ review.companyResponse.date }}
+                          </p>
+                        </div>
+                      </div>
+                      <p class="mt-2 text-sm text-gray-600 italic">
+                        {{ review.companyResponse.text }}
+                      </p>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+
+            <div class="yb-card mt-6 flex flex-col items-center gap-3 p-6 text-center">
+              @if (myReview(); as mine) {
+                <h3 class="text-lg font-semibold text-[#212121]">
+                  {{ 'agency.youReviewed' | translate }}
+                </h3>
+                <app-rating-stars [rating]="mine.rating" size="md" [showValue]="false" />
+                <p class="max-w-lg text-sm text-gray-600">{{ mine.content }}</p>
+                <button type="button" class="yb-btn yb-btn-outline" (click)="openReviewModal()">
+                  {{ 'agency.editYourReview' | translate }}
+                </button>
+              } @else if (isOwnCompany()) {
+                <h3 class="text-lg font-semibold text-[#212121]">
+                  {{ 'agency.ownCompany' | translate }}
+                </h3>
+                <p class="text-sm text-gray-600">
+                  {{ 'agency.ownCompanyHint' | translate }}
+                </p>
+              } @else {
+                <h3 class="text-lg font-semibold text-[#212121]">
+                  {{ 'agency.haveYouUsed' | translate: { company: agency().name } }}
+                </h3>
+                <p class="text-sm text-gray-600">
+                  {{ 'agency.shareWhatHappened' | translate }}
+                </p>
+                <button type="button" class="yb-btn yb-btn-gold" (click)="openReviewModal()">
+                  {{ 'agency.writeReview' | translate }}
+                </button>
+              }
             </div>
           </div>
 
-          @if (reviewsLoading()) {
-            <p class="py-10 text-center text-gray-500">{{ 'common.loading' | translate }}</p>
-          } @else if (filteredReviews().length === 0) {
-            <p class="py-10 text-center text-gray-500">{{ 'agency.noReviews' | translate }}</p>
-          }
-          <div class="space-y-4">
-            @for (review of filteredReviews(); track review.id) {
-              <article
-                [id]="'agency-review-' + review.id"
-                class="yb-card p-5"
-                [class.ring-2]="isHighlighted(review)"
-                [class.ring-amber-400]="isHighlighted(review)"
-                [class.ring-offset-2]="isHighlighted(review)"
-                [class.shadow-lg]="isHighlighted(review)"
-              >
-                <div class="flex items-start gap-3">
-                  <app-avatar [name]="review.reviewerName" [size]="48" />
-                  <div class="flex-1">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                      <h3 class="flex items-center gap-2 font-semibold text-[#212121]">
-                        {{ review.reviewerName }}
-                        @if (review.status && review.status !== 'approved') {
-                          <span
-                            class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
-                          >
-                            {{ 'agency.pendingReview' | translate }}
-                          </span>
-                        }
-                      </h3>
-                      <app-star-rating-box
-                        [rating]="review.rating"
-                        [readonly]="true"
-                        [boxSize]="28"
-                        [iconSize]="16"
-                      />
-                    </div>
-                    <p class="mt-2 text-gray-600 italic">“{{ review.content }}”</p>
-                    <p class="mt-1 text-xs text-gray-400">
-                      {{ 'common.date' | translate }}: {{ review.date }}
-                    </p>
+          <aside class="yb-card h-fit p-6 text-center">
+            <p class="text-5xl font-bold text-[#212121]">{{ overallRating().toFixed(1) }}</p>
+            <p class="text-sm font-semibold text-[#e5b106]">{{ ratingLabel() | translate }}</p>
+            <div class="my-2 flex justify-center">
+              <app-rating-stars [rating]="5" size="md" [showValue]="false" />
+            </div>
+            <p class="text-xs text-gray-500">
+              {{ reviewCountLabel() | translate: { count: publishedReviews().length } }}
+            </p>
+            <div class="mt-4 space-y-2">
+              @for (row of breakdown(); track row.star) {
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-10 text-left">{{ row.star }} ★</span>
+                  <div class="h-2 flex-1 rounded-full bg-gray-100">
+                    <div class="h-2 rounded-full bg-[#fcc207]" [style.width.%]="row.percent"></div>
                   </div>
+                  <span class="w-6 text-right">{{ row.count }}</span>
                 </div>
-                <div class="mt-4 flex items-center gap-6 border-t border-gray-100 pt-3 text-sm">
-                  <button
-                    type="button"
-                    class="flex items-center gap-1"
-                    [class.text-gray-400]="!canLikeDislike()"
-                    [attr.title]="canLikeDislike() ? null : ('review.signInToReact' | translate)"
-                    (click)="react(review, 'like')"
-                    [attr.aria-label]="'agency.likeReview' | translate"
-                  >
-                    <img src="/thumb_up.svg" alt="" class="h-4 w-4" /> {{ review.likes }}
-                  </button>
-                  <button
-                    type="button"
-                    class="flex items-center gap-1"
-                    [class.text-gray-400]="!canLikeDislike()"
-                    [attr.title]="canLikeDislike() ? null : ('review.signInToReact' | translate)"
-                    (click)="react(review, 'dislike')"
-                    [attr.aria-label]="'agency.dislikeReview' | translate"
-                  >
-                    <img src="/Frame.svg" alt="" class="h-4 w-4" /> {{ review.dislikes }}
-                  </button>
-                </div>
-                @if (review.companyResponse) {
-                  <div class="mt-4 ml-6 border-l-2 border-[#fcc207] pl-4">
-                    <div class="flex items-center gap-2">
-                      <app-avatar
-                        [name]="review.companyResponse.name || agency().name"
-                        [size]="32"
-                      />
-                      <div>
-                        <p class="text-sm font-semibold">
-                          {{ review.companyResponse.name || agency().name }}
-                        </p>
-                        <p class="text-xs text-gray-400">
-                          {{ 'common.date' | translate }}: {{ review.companyResponse.date }}
-                        </p>
-                      </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-600 italic">
-                      {{ review.companyResponse.text }}
-                    </p>
-                  </div>
-                }
-              </article>
-            }
-          </div>
-
-          <div class="yb-card mt-6 flex flex-col items-center gap-3 p-6 text-center">
-            @if (myReview(); as mine) {
-              <h3 class="text-lg font-semibold text-[#212121]">
-                {{ 'agency.youReviewed' | translate }}
-              </h3>
-              <app-rating-stars [rating]="mine.rating" size="md" [showValue]="false" />
-              <p class="max-w-lg text-sm text-gray-600">{{ mine.content }}</p>
-              <button type="button" class="yb-btn yb-btn-outline" (click)="openReviewModal()">
-                {{ 'agency.editYourReview' | translate }}
-              </button>
-            } @else if (isOwnCompany()) {
-              <h3 class="text-lg font-semibold text-[#212121]">
-                {{ 'agency.ownCompany' | translate }}
-              </h3>
-              <p class="text-sm text-gray-600">
-                {{ 'agency.ownCompanyHint' | translate }}
-              </p>
-            } @else {
-              <h3 class="text-lg font-semibold text-[#212121]">
-                {{ 'agency.haveYouUsed' | translate: { company: agency().name } }}
-              </h3>
-              <p class="text-sm text-gray-600">
-                {{ 'agency.shareWhatHappened' | translate }}
-              </p>
-              <button type="button" class="yb-btn yb-btn-gold" (click)="openReviewModal()">
-                {{ 'agency.writeReview' | translate }}
-              </button>
-            }
-          </div>
-        </div>
-
-        <aside class="yb-card h-fit p-6 text-center">
-          <p class="text-5xl font-bold text-[#212121]">{{ overallRating().toFixed(1) }}</p>
-          <p class="text-sm font-semibold text-[#e5b106]">{{ ratingLabel() | translate }}</p>
-          <div class="my-2 flex justify-center">
-            <app-rating-stars [rating]="5" size="md" [showValue]="false" />
-          </div>
-          <p class="text-xs text-gray-500">
-            {{ reviewCountLabel() | translate: { count: publishedReviews().length } }}
-          </p>
-          <div class="mt-4 space-y-2">
-            @for (row of breakdown(); track row.star) {
-              <div class="flex items-center gap-2 text-xs">
-                <span class="w-10 text-left">{{ row.star }} ★</span>
-                <div class="h-2 flex-1 rounded-full bg-gray-100">
-                  <div class="h-2 rounded-full bg-[#fcc207]" [style.width.%]="row.percent"></div>
-                </div>
-                <span class="w-6 text-right">{{ row.count }}</span>
-              </div>
-            }
-          </div>
-        </aside>
-      </section>
+              }
+            </div>
+          </aside>
+        </section>
       }
     </div>
 
@@ -704,9 +712,7 @@ export class AgencyPage implements OnInit {
     }
     const name = listing?.name || this.company()?.name;
     this.notFound.set(!name);
-    this.title.setTitle(
-      `${name || this.translate.instant('common.pageNotFound')} • Yellow Book`,
-    );
+    this.title.setTitle(`${name || this.translate.instant('common.pageNotFound')} • Yellow Book`);
     await this.loadReviews();
   }
 

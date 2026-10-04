@@ -20,9 +20,9 @@ import { StatusDropdown } from '../../shared/status-dropdown';
         Overview of companies awaiting verification and new reviews assigned to you.
       </p>
       <p class="mt-2 text-sm text-gray-500">
-        @if (taskCount() > 0) {
-          You have {{ taskCount() }} task(s) waiting. Review the queues below and take action on each
-          item.
+        @if (totalTasks() > 0) {
+          You have {{ totalTasks() }} task(s) waiting. Review the queues below and take action on
+          each item.
         } @else {
           You're all caught up — nothing is waiting for you right now.
         }

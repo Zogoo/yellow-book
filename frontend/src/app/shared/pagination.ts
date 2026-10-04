@@ -25,19 +25,19 @@ import { pageWindow } from '../core/utils/page-window';
         @if (p === null) {
           <span class="px-1 text-gray-400" aria-hidden="true">…</span>
         } @else {
-        <button
-          type="button"
-          class="min-w-10 rounded-lg px-3 py-2 text-sm font-medium"
-          [class.bg-[#facc15]]="p === page()"
-          [class.text-[#212121]]="p === page()"
-          [class.shadow-[0_0_0_4px_rgba(250,204,21,0.25)]]="p === page()"
-          [class.border]="p !== page()"
-          [class.border-gray-200]="p !== page()"
-          [attr.aria-current]="p === page() ? 'page' : null"
-          (click)="go(p)"
-        >
-          {{ p }}
-        </button>
+          <button
+            type="button"
+            class="min-w-10 rounded-lg px-3 py-2 text-sm font-medium"
+            [class.bg-[#facc15]]="p === page()"
+            [class.text-[#212121]]="p === page()"
+            [class.shadow-[0_0_0_4px_rgba(250,204,21,0.25)]]="p === page()"
+            [class.border]="p !== page()"
+            [class.border-gray-200]="p !== page()"
+            [attr.aria-current]="p === page() ? 'page' : null"
+            (click)="go(p)"
+          >
+            {{ p }}
+          </button>
         }
       }
       <button
