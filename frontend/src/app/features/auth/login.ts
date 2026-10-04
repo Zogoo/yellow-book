@@ -1,12 +1,9 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Title } from '@angular/platform-browser';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
-import { ToastService } from '../../core/services/toast.service';
 import { resolvePostLoginRedirect } from '../../core/utils/role-access';
 import { AuthUserSummary } from '../../shared/auth-user-summary';
 import { SignInFlow } from '../../shared/sign-in-flow';
@@ -65,7 +62,9 @@ import { SignInFlow } from '../../shared/sign-in-flow';
             <p class="mt-6 text-sm text-gray-500">
               @if (signUp()) {
                 {{ 'auth.alreadyHaveAccount' | translate }}
-                <a routerLink="/auth/login" class="font-semibold text-[#1877f2]">Sign in</a>
+                <a routerLink="/auth/login" class="font-semibold text-[#1877f2]">{{
+                  'nav.logIn' | translate
+                }}</a>
               } @else {
                 {{ 'auth.newToYellowBook' | translate }}
                 <a routerLink="/auth/signup" class="font-semibold text-[#1877f2]">{{
@@ -81,8 +80,6 @@ import { SignInFlow } from '../../shared/sign-in-flow';
 })
 export class LoginPage {
   readonly auth = inject(AuthService);
-  private readonly toast = inject(ToastService);
-  private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly signUp = signal(false);
@@ -91,7 +88,6 @@ export class LoginPage {
   private handled = false;
 
   constructor() {
-    inject(Title).setTitle(`${this.translate.instant('nav.logIn')} • Yellow Book`);
     this.signUp.set(this.route.snapshot.data['mode'] === 'signup');
     this.nextPath.set(this.route.snapshot.queryParamMap.get('next') ?? '');
     this.intro.set(this.route.snapshot.queryParamMap.get('reason') ?? '');
@@ -104,9 +100,7 @@ export class LoginPage {
     if (this.handled) return;
     this.handled = true;
     const user = this.auth.user();
-    this.toast.success(
-      this.translate.instant('auth.signedInAs', { name: user?.name || user?.email }),
-    );
+    // AuthService already confirmed the sign-in with a toast.
     await this.router.navigateByUrl(resolvePostLoginRedirect(user, this.nextPath()));
   }
 }

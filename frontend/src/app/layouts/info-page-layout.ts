@@ -6,7 +6,7 @@ import { map } from 'rxjs';
 import { Footer } from './footer';
 import { InfoPageNav } from './info-page-nav';
 
-/** Nav + footer shell; hides its nav on the category detail view (`/catagory?name=`). */
+/** Nav + footer shell; hides its nav on the category detail view (`/category?name=`). */
 @Component({
   selector: 'app-info-page-layout',
   imports: [RouterOutlet, InfoPageNav, Footer],
@@ -28,6 +28,6 @@ export class InfoPageLayout {
     { initialValue: '' },
   );
   readonly hideNav = computed(
-    () => this.router.url.startsWith('/catagory') && this.query().trim().length > 0,
+    () => this.router.url.startsWith('/category') && this.query().trim().length > 0,
   );
 }

@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+
+import { AuthService } from '../core/services/auth.service';
+import { getDefaultRouteForUser } from '../core/utils/role-access';
 
 @Component({
   selector: 'app-footer',
@@ -18,7 +21,7 @@ import { TranslatePipe } from '@ngx-translate/core';
           </h4>
           <ul class="space-y-2 text-sm text-[#616161]">
             <li>
-              <a routerLink="/catagory">{{ 'nav.category' | translate }}</a>
+              <a routerLink="/category">{{ 'nav.category' | translate }}</a>
             </li>
             <li>
               <a routerLink="/popular-list">{{ 'nav.popular' | translate }}</a>
@@ -49,12 +52,18 @@ import { TranslatePipe } from '@ngx-translate/core';
             {{ 'footer.accounts' | translate }}
           </h4>
           <ul class="space-y-2 text-sm text-[#616161]">
-            <li>
-              <a routerLink="/auth/login">{{ 'footer.signIn' | translate }}</a>
-            </li>
-            <li>
-              <a routerLink="/auth/signup">{{ 'footer.createAccount' | translate }}</a>
-            </li>
+            @if (auth.isAuthenticated()) {
+              <li>
+                <a [routerLink]="dashboardTo()">{{ 'nav.myDashboard' | translate }}</a>
+              </li>
+            } @else {
+              <li>
+                <a routerLink="/auth/login">{{ 'footer.signIn' | translate }}</a>
+              </li>
+              <li>
+                <a routerLink="/auth/signup">{{ 'footer.createAccount' | translate }}</a>
+              </li>
+            }
             <li>
               <a routerLink="/business/signup">{{ 'auth.listYourBusiness' | translate }}</a>
             </li>
@@ -68,5 +77,9 @@ import { TranslatePipe } from '@ngx-translate/core';
   `,
 })
 export class Footer {
+  readonly auth = inject(AuthService);
+  dashboardTo(): string {
+    return getDefaultRouteForUser(this.auth.user());
+  }
   readonly year = new Date().getFullYear();
 }

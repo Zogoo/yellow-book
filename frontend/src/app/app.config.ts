@@ -3,7 +3,7 @@ import {
   importProvidersFrom,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { TitleStrategy, provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -48,9 +48,13 @@ import {
   Users,
   Utensils,
   XCircle,
+  Factory,
+  Briefcase,
+  Clapperboard,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
+import { TranslatedTitleStrategy } from './core/services/translated-title.strategy';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { environment } from '../environments/environment';
@@ -62,6 +66,7 @@ export const appConfig: ApplicationConfig = {
       routes,
       withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
     ),
+    { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideTranslateService({
       loader: provideTranslateHttpLoader({ prefix: '/assets/i18n/', suffix: '.json' }),
@@ -79,6 +84,9 @@ export const appConfig: ApplicationConfig = {
         Scale,
         ShoppingBag,
         PartyPopper,
+        Factory,
+        Briefcase,
+        Clapperboard,
         CheckCircle,
         Clock,
         DollarSign,

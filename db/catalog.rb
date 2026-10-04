@@ -52,7 +52,17 @@ module Catalog
                    specializations: { label: "Чиглэл", options: [ "Нохой", "Муур", "Бусад амьтад" ] }, emergencyService: true } },
       { name: "Shops & retail", name_mn: "Дэлгүүр, худалдаа", slug: "shops-retail", icon: "ShoppingBag", color: "text-violet-500",
         filters: { serviceTypes: { label: "Төрөл", options: [ "Хүнсний дэлгүүр", "Хувцас", "Цахилгаан бараа", "Барилгын материал" ] },
-                   specializations: { label: "Чиглэл", options: [ "Онлайн худалдаа", "Их дэлгүүр", "Мэргэжлийн дэлгүүр" ] }, emergencyService: false } }
+                   specializations: { label: "Чиглэл", options: [ "Онлайн худалдаа", "Их дэлгүүр", "Мэргэжлийн дэлгүүр" ] }, emergencyService: false } },
+      # Large employers (mining, manufacturing, media, corporate offices) had nowhere to live.
+      { name: "Industry & energy", name_mn: "Үйлдвэр, эрчим хүч", slug: "industry-energy", icon: "Factory", color: "text-yellow-700",
+        filters: { serviceTypes: { label: "Төрөл", options: [ "Уул уурхай", "Үйлдвэр", "Хүнсний үйлдвэр", "Эрчим хүч", "Групп компани" ] },
+                   emergencyService: false } },
+      { name: "Media & entertainment", name_mn: "Хэвлэл мэдээлэл, энтертайнмент", slug: "media-entertainment", icon: "Clapperboard", color: "text-purple-500",
+        filters: { serviceTypes: { label: "Төрөл", options: [ "Телевиз", "Хэвлэл мэдээлэл", "Кино театр", "Караоке, клуб" ] },
+                   emergencyService: false } },
+      { name: "Business services", name_mn: "Бизнесийн үйлчилгээ", slug: "business-services", icon: "Briefcase", color: "text-cyan-700",
+        filters: { serviceTypes: { label: "Төрөл", options: [ "Компани", "Мэргэжлийн үйлчилгээ", "Бизнесийн үйлчилгээ", "Нийлүүлэгч" ] },
+                   emergencyService: false } }
   ].freeze
 
   SPECIALIZATIONS = [

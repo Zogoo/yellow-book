@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../core/services/api.service';
 import { AuthService } from '../core/services/auth.service';
@@ -17,6 +17,8 @@ import { LoginModalService } from '../core/services/login-modal.service';
 import { Listing } from '../core/models';
 import { getDefaultRouteForUser } from '../core/utils/role-access';
 import { normalizeName, slugify } from '../core/utils/status-class';
+import { formatTugrik, placeLabel } from '../core/utils/mongolia';
+import { companyPath } from '../core/utils/company-path';
 import { PanelProfileMenu } from '../shared/panel-profile-menu';
 import { LanguageSwitcher } from '../shared/language-switcher';
 
@@ -35,16 +37,16 @@ import { LanguageSwitcher } from '../shared/language-switcher';
         /></a>
         <nav class="hidden items-center gap-8 md:flex">
           <a
-            routerLink="/catagory"
+            routerLink="/category"
             class="text-sm font-medium"
-            [class.text-[#212121]]="isActive('/catagory')"
-            [class.text-[#616161]]="!isActive('/catagory')"
+            [class.text-[#212121]]="isActive('/category')"
+            [class.text-[#616161]]="!isActive('/category')"
             >{{ 'nav.category' | translate }}</a
           >
           <a
-            href="/#home-popular-listings"
+            routerLink="/popular-list"
             class="text-sm font-medium text-[#616161]"
-            (click)="scrollPopular($event)"
+            (click)="menuOpen.set(false)"
             >{{ 'nav.popular' | translate }}</a
           >
           <a
@@ -101,16 +103,18 @@ import { LanguageSwitcher } from '../shared/language-switcher';
           >
             ✕
           </button>
-          <a routerLink="/catagory" (click)="menuOpen.set(false)" class="text-base font-medium">{{
+          <a routerLink="/category" (click)="menuOpen.set(false)" class="text-base font-medium">{{
             'nav.category' | translate
           }}</a>
           <a
-            href="/#home-popular-listings"
-            (click)="scrollPopular($event)"
+            routerLink="/popular-list"
+            (click)="menuOpen.set(false)"
             class="text-base font-medium"
             >{{ 'nav.popular' | translate }}</a
           >
-          <a routerLink="/faq" (click)="menuOpen.set(false)" class="text-base font-medium">FAQ</a>
+          <a routerLink="/faq" (click)="menuOpen.set(false)" class="text-base font-medium">{{
+            'nav.faq' | translate
+          }}</a>
           <a
             routerLink="/business/signup"
             (click)="menuOpen.set(false)"
@@ -137,14 +141,16 @@ import { LanguageSwitcher } from '../shared/language-switcher';
               {{ 'nav.logIn' | translate }}
             </button>
             <a routerLink="/auth/signup" (click)="menuOpen.set(false)" class="yb-btn yb-btn-gold"
-              >Sign up</a
+              >{{ 'nav.signUp' | translate }}</a
             >
           }
         </aside>
       }
 
+      <!-- The headline and big search belong to the home page only. -->
+      @if (isHome()) {
       <div class="mx-auto max-w-4xl px-4 pt-10 pb-16 text-center">
-        <h1 class="text-3xl font-bold leading-tight text-[#212121] md:text-5xl">
+        <h1 class="text-3xl leading-tight font-bold text-balance text-[#212121] md:text-5xl">
           {{ 'home.headline' | translate }}
         </h1>
         <p class="mt-4 text-sm text-[#616161] md:text-base">
@@ -194,7 +200,7 @@ import { LanguageSwitcher } from '../shared/language-switcher';
                       }}</span>
                       <span class="block text-xs text-gray-500"
                         >{{ item.category }} • {{ item.serviceType || item.category }} •
-                        {{ item.location || 'Anywhere' }}</span
+                        {{ placeLabel(item) || ('common.anywhere' | translate) }}</span
                       >
                       <span class="mt-1 flex flex-wrap gap-1">
                         @for (tag of tags(item); track tag) {
@@ -212,6 +218,7 @@ import { LanguageSwitcher } from '../shared/language-switcher';
           }
         </form>
       </div>
+      }
     </header>
   `,
 })
@@ -227,7 +234,12 @@ export class Navbar implements OnInit {
   readonly results = signal<Listing[]>([]);
   readonly dashboardTo = computed(() => getDefaultRouteForUser(this.auth.user()));
   query = '';
+  /** The term `results` belong to; Enter must never act on a previous query's results. */
+  private resultsFor = '';
+  private requestSeq = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  readonly placeLabel = placeLabel;
+  private readonly translate = inject(TranslateService);
 
   ngOnInit(): void {
     void this.search('');
@@ -236,6 +248,10 @@ export class Navbar implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.host.nativeElement.contains(event.target as Node)) this.dropdownOpen.set(false);
+  }
+
+  isHome(): boolean {
+    return this.router.url.split(/[?#]/)[0] === '/';
   }
 
   isActive(path: string): boolean {
@@ -249,6 +265,7 @@ export class Navbar implements OnInit {
   }
 
   async search(term: string): Promise<void> {
+    const seq = ++this.requestSeq;
     this.searching.set(true);
     try {
       const data = await this.api.getData<{ listings: Listing[] }>(
@@ -256,11 +273,13 @@ export class Navbar implements OnInit {
         { search: term, limit: 12 },
         { toast: { showError: false } },
       );
+      if (seq !== this.requestSeq) return; // a newer keystroke already asked again
       this.results.set(data?.listings ?? []);
+      this.resultsFor = term;
     } catch {
-      this.results.set([]);
+      if (seq === this.requestSeq) this.results.set([]);
     } finally {
-      this.searching.set(false);
+      if (seq === this.requestSeq) this.searching.set(false);
     }
   }
 
@@ -268,8 +287,10 @@ export class Navbar implements OnInit {
     const list = [
       item.revenue,
       item.specialization,
-      item.price ? `Avg. $${item.price}` : null,
-      item.emergencyService ? '24/7 support' : null,
+      item.price
+        ? `${this.translate.instant('common.averagePrice')}: ${formatTugrik(Number(item.price))}`
+        : null,
+      item.emergencyService ? this.translate.instant('category.emergency') : null,
     ];
     return list.filter((t): t is string => Boolean(t)).slice(0, 3);
   }
@@ -277,27 +298,19 @@ export class Navbar implements OnInit {
   pick(item: Listing): void {
     this.query = item.name;
     this.dropdownOpen.set(false);
-    void this.router.navigate(['/agency'], {
-      queryParams: { slug: item.slug || slugify(item.name), id: item.id },
-    });
+    void this.router.navigate(companyPath({ id: item.id, slug: item.slug || slugify(item.name) }));
   }
 
+  /** Enter opens a company only on an exact name match; anything else shows the results page. */
   submitSearch(): void {
-    const exact = this.results().find((r) => normalizeName(r.name) === normalizeName(this.query));
-    const target = exact ?? this.results()[0];
-    if (target) {
-      this.pick(target);
-    } else if (this.query.trim()) {
-      void this.router.navigate(['/catagory'], { queryParams: { q: this.query.trim() } });
-    }
-  }
-
-  scrollPopular(event: Event): void {
-    this.menuOpen.set(false);
-    if (this.router.url.split('?')[0] === '/') {
-      event.preventDefault();
-      document.getElementById('home-popular-listings')?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (this.timer) clearTimeout(this.timer);
+    const term = this.query.trim();
+    if (!term) return;
+    const current = this.resultsFor === this.query ? this.results() : [];
+    const exact = current.find((r) => normalizeName(r.name) === normalizeName(term));
+    this.dropdownOpen.set(false);
+    if (exact) this.pick(exact);
+    else void this.router.navigate(['/category'], { queryParams: { q: term } });
   }
 
   signIn(): void {

@@ -117,3 +117,11 @@ export function transliterate(value: unknown): string {
     .map((char) => TRANSLITERATION[char] ?? char)
     .join('');
 }
+
+/** "Улаанбаатар, Сүхбаатар": city first, then district, so every card reads the same way. */
+export function placeLabel(place: { location?: string | null; district?: string | null }): string {
+  const city = (place.location ?? '').trim();
+  const district = (place.district ?? '').trim();
+  if (city && district && city !== district) return `${city}, ${district}`;
+  return city || district;
+}

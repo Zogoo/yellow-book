@@ -5,6 +5,7 @@ import { AuthResponse, AuthUser } from '../models';
 import { resolveUserRole } from '../utils/role-access';
 import { ApiClientError, ApiService } from './api.service';
 import { ToastService } from './toast.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
@@ -50,6 +51,7 @@ function safeStorage(kind: 'local' | 'session'): Storage | null {
 export class AuthService {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
 
   readonly user = signal<AuthUser | null>(null);
@@ -97,7 +99,7 @@ export class AuthService {
     const storage = safeStorage('local');
     storage?.removeItem(TOKEN_KEY);
     storage?.removeItem(USER_KEY);
-    if (options.notify) this.toast.success('Logged out successfully');
+    if (options.notify) this.toast.success(this.translate.instant('auth.toastLoggedOut'));
   }
 
   async login(payload: { email: string; password: string }): Promise<AuthResponse> {
@@ -109,7 +111,7 @@ export class AuthService {
       email,
       password: payload.password,
     });
-    return this.adoptSession(data, 'Logged in successfully');
+    return this.adoptSession(data, 'auth.toastSignedIn');
   }
 
   async fetchMe(): Promise<AuthUser> {
@@ -163,7 +165,7 @@ export class AuthService {
       { toast: { showError: false } },
     );
     this.pendingChallenge.set(null);
-    return this.adoptSession(data, purpose === 'signup' ? 'Welcome to Yellow Book' : 'Signed in');
+    return this.adoptSession(data, purpose === 'signup' ? 'auth.toastWelcome' : 'auth.toastSignedIn');
   }
 
   /** Customer sign-up: the same endpoint as a business, without a company. */
@@ -178,7 +180,7 @@ export class AuthService {
       },
       { toast: { showError: false } },
     );
-    return this.adoptSession(data, 'Welcome to Yellow Book');
+    return this.adoptSession(data, 'auth.toastWelcome');
   }
 
   /** Change the password of the signed-in account; other sessions end server-side. */
@@ -208,7 +210,7 @@ export class AuthService {
       companyName,
       role: 'company',
     });
-    return this.adoptSession(data, 'Registration completed successfully');
+    return this.adoptSession(data, 'auth.toastRegistered');
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -272,7 +274,7 @@ export class AuthService {
       provider,
       ...payload,
     });
-    return this.adoptSession(data, 'Logged in successfully');
+    return this.adoptSession(data, 'auth.toastSignedIn');
   }
 
   /** Accepts a token issued by the server-side OAuth redirect (`?token=`). */
@@ -281,7 +283,8 @@ export class AuthService {
     return this.fetchMe();
   }
 
-  private async adoptSession(data: AuthResponse, message: string): Promise<AuthResponse> {
+  /** `messageKey` is an i18n key; one toast per sign-in, whichever screen started it. */
+  private async adoptSession(data: AuthResponse, messageKey: string): Promise<AuthResponse> {
     const token = data?.token;
     if (!token) throw new AuthFlowError('Token missing from response', 'TOKEN_MISSING', 401);
     let user = data.user ?? null;
@@ -295,7 +298,7 @@ export class AuthService {
         if (error instanceof ApiClientError && error.status === 401) throw error;
       }
     }
-    this.toast.success(message);
+    this.toast.success(this.translate.instant(messageKey, { name: user?.name || user?.email || '' }));
     return { token, user };
   }
 

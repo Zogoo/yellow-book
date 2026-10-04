@@ -5,6 +5,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { DirectoryListing, DirectoryService } from '../../core/services/directory.service';
 import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
+import { placeLabel } from '../../core/utils/mongolia';
+import { companyPath } from '../../core/utils/company-path';
 
 /** Highest-rated listings on the home page. */
 @Component({
@@ -24,6 +26,7 @@ import { Avatar } from '../../shared/avatar';
             class="cursor-pointer overflow-hidden rounded-2xl border border-[#eee] bg-white shadow-sm transition hover:shadow-lg"
             role="link"
             tabindex="0"
+            [attr.aria-label]="item.title"
             (click)="open(item)"
             (keydown.enter)="open(item)"
             (keydown.space)="open(item); $event.preventDefault()"
@@ -32,7 +35,7 @@ import { Avatar } from '../../shared/avatar';
               <img
                 [src]="item.image"
                 [alt]="item.title"
-                class="h-[200px] w-full object-cover md:h-[220px]"
+                class="h-[200px] w-full border-b border-[#eee] bg-white object-contain p-6 md:h-[220px]"
               />
             } @else {
               <div
@@ -51,7 +54,7 @@ import { Avatar } from '../../shared/avatar';
                 [iconSize]="14"
               />
               <p class="flex items-center gap-1 text-xs text-gray-500">
-                📍 {{ item.district || item.location || ('common.location' | translate) }}
+                📍 {{ placeLabel(item) || ('common.location' | translate) }}
               </p>
               @if (item.phone) {
                 <a
@@ -88,11 +91,13 @@ export class PopularListings implements OnInit {
       .slice(0, this.limit());
   });
 
+  readonly placeLabel = placeLabel;
+
   ngOnInit(): void {
     void this.directory.ensureHydrated();
   }
 
   open(item: DirectoryListing): void {
-    void this.router.navigate(['/agency'], { queryParams: { slug: item.slug, id: item.id } });
+    void this.router.navigate(companyPath(item));
   }
 }

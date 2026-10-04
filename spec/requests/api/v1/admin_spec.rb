@@ -60,6 +60,19 @@ RSpec.describe "Admin panel", type: :request do
     end
   end
 
+  describe "own admin account" do
+    it "cannot be deactivated or demoted by its owner" do
+      put "/api/v1/admins/#{super_admin.id}", params: { status: "inactive" }, headers: auth_headers(super_admin), as: :json
+      expect(response).to have_http_status(:forbidden)
+      put "/api/v1/admins/#{super_admin.id}", params: { role: "agent" }, headers: auth_headers(super_admin), as: :json
+      expect(response).to have_http_status(:forbidden)
+      expect(super_admin.reload).to have_attributes(status: "active", role: "super_admin")
+
+      put "/api/v1/admins/#{super_admin.id}", params: { name: "Still Me" }, headers: auth_headers(super_admin), as: :json
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   describe "companies" do
     let!(:company) { create(:company, :pending, name: "Pending Co") }
 

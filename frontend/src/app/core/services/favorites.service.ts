@@ -1,3 +1,4 @@
+import { TranslateService } from '@ngx-translate/core';
 import { Injectable, effect, inject, signal } from '@angular/core';
 
 import { FavoriteRecord } from '../models';
@@ -10,6 +11,7 @@ import { LoginModalService } from './login-modal.service';
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
   private readonly api = inject(ApiService);
+  private readonly translate = inject(TranslateService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly loginModal = inject(LoginModalService);
@@ -80,19 +82,20 @@ export class FavoritesService {
         rating: listing.rating,
       });
       this.loginModal.openModal('favourite', {
-        reason: 'Sign in to save companies to your list.',
+        reason: this.translate.instant('favourites.signInReason'),
       });
       return;
     }
     const key = listing.slug || String(listing.id);
-    const label = named ? `${listing.name ?? 'Listing'} ` : '';
     try {
       const existing = this.find(listing);
       if (existing) {
         await this.api.deleteData(`favorites/${existing.id}`, { toast: { showError: false } });
         this.favorites.update((list) => list.filter((f) => f.id !== existing.id));
         this.toast.success(
-          named ? `${listing.name} removed from favourites` : 'Removed from favourites',
+          this.translate.instant(named ? 'favourites.removedNamed' : 'favourites.removed', {
+            name: listing.name,
+          }),
         );
       } else {
         const created = await this.api.postData<FavoriteRecord>(
@@ -109,10 +112,14 @@ export class FavoritesService {
           { toast: { showError: false } },
         );
         this.favorites.update((list) => [...list, created]);
-        this.toast.success(named ? `${listing.name} saved to favourites` : 'Saved to favourites');
+        this.toast.success(
+          this.translate.instant(named ? 'favourites.savedNamed' : 'favourites.saved', {
+            name: listing.name,
+          }),
+        );
       }
     } catch {
-      this.toast.alert(`${label ? '' : ''}Unable to update favourites right now.`);
+      this.toast.alert(this.translate.instant('favourites.failed'));
     } finally {
       this.busyKeys.update((set) => {
         const next = new Set(set);

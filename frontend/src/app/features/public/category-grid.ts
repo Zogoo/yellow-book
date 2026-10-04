@@ -26,6 +26,9 @@ const ICONS = new Set([
   'Building2',
   'ShoppingBag',
   'PartyPopper',
+  'Factory',
+  'Briefcase',
+  'Clapperboard',
 ]);
 
 /**
@@ -40,12 +43,18 @@ const ICONS = new Set([
       <div class="mb-6 flex items-end justify-between gap-4">
         <h2 class="text-2xl font-bold text-[#212121]">{{ heading() | translate }}</h2>
         @if (limit() && directory.categories().length > limit()) {
-          <a routerLink="/catagory" class="text-sm font-semibold text-[#1877f2]">
+          <a routerLink="/category" class="text-sm font-semibold text-[#1877f2]">
             {{ 'home.viewAllCategories' | translate }} →
           </a>
         }
       </div>
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        @if (visible().length === 0) {
+          <!-- Placeholder tiles while the first request is in flight. -->
+          @for (tile of placeholders(); track tile) {
+            <div class="h-[150px] animate-pulse rounded-2xl bg-gray-100 md:h-[170px]"></div>
+          }
+        }
         @for (category of visible(); track category.slug || category.name) {
           <button
             type="button"
@@ -80,6 +89,10 @@ export class CategoryGrid implements OnInit {
     return this.limit() ? all.slice(0, this.limit()) : all;
   });
 
+  readonly placeholders = computed(() =>
+    Array.from({ length: this.limit() || 8 }, (_, i) => i),
+  );
+
   ngOnInit(): void {
     void this.directory.ensureHydrated();
   }
@@ -95,6 +108,6 @@ export class CategoryGrid implements OnInit {
   }
 
   open(category: CategoryDefinition): void {
-    void this.router.navigate(['/catagory'], { queryParams: { name: category.name } });
+    void this.router.navigate(['/category'], { queryParams: { name: category.name } });
   }
 }

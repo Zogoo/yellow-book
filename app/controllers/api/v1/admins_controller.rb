@@ -41,6 +41,10 @@ module Api
       def update
         admin = find_admin
         body = body_params
+        if admin.id == current_account.id && (body.key?("status") || body.key?("role"))
+          # Deactivating or demoting yourself revokes your session and can lock out the last super admin.
+          raise Api::Forbidden, "You cannot change the status or role of your own account"
+        end
         attrs = {}
         attrs[:name] = Api::Params.string(body["name"]) if body.key?("name")
         if body.key?("email")

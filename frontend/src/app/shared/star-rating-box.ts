@@ -1,14 +1,16 @@
 import { Component, computed, input, model } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /** Five bordered boxes; click sets the rating, clicking the same value again clears it. */
 @Component({
   selector: 'app-star-rating-box',
+  imports: [TranslatePipe],
   template: `
     @if (readonly()) {
       <span
         class="inline-flex items-center gap-1"
         role="img"
-        [attr.aria-label]="ariaLabel() + ': ' + rating() + ' out of 5'"
+        [attr.aria-label]="'review.ratingOutOf5' | translate: { rating: rating() }"
       >
         @for (star of stars; track star) {
           <span
@@ -33,13 +35,17 @@ import { Component, computed, input, model } from '@angular/core';
         }
       </span>
     } @else {
-      <div class="inline-flex items-center gap-1" role="radiogroup" [attr.aria-label]="ariaLabel()">
+      <div
+        class="inline-flex items-center gap-1"
+        role="radiogroup"
+        [attr.aria-label]="'common.rating' | translate"
+      >
         @for (star of stars; track star) {
           <button
             type="button"
             role="radio"
             [attr.aria-checked]="star <= rating()"
-            [attr.aria-label]="star + ' star'"
+            [attr.aria-label]="'category.chipStar' | translate: { count: star }"
             (click)="select(star)"
             class="flex items-center justify-center rounded border"
             [style.width.px]="boxSize()"
@@ -73,7 +79,6 @@ export class StarRatingBox {
   readonly filledColor = input('#FBBF24');
   readonly emptyColor = input('#9CA3AF');
   readonly borderColor = input('#9CA3AF');
-  readonly ariaLabel = input('Rating');
   readonly stars = [1, 2, 3, 4, 5];
   readonly rounded = computed(() => Math.round(this.rating()));
 

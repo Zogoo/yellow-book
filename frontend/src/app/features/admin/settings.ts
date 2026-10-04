@@ -1,3 +1,4 @@
+import { TranslateService } from '@ngx-translate/core';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -102,6 +103,7 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class AdminSettingsPage {
   readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
   readonly toast = inject(ToastService);
   private readonly api = inject(ApiService);
   readonly tab = signal<'password' | 'roles'>('password');
@@ -124,8 +126,8 @@ export class AdminSettingsPage {
   async updatePassword(): Promise<void> {
     this.ok.set(false);
     const problem = passwordProblem(this.pw.next);
-    if (!this.pw.current) return this.message.set('Enter your current password.');
-    if (problem) return this.message.set(problem);
+    if (!this.pw.current) return this.message.set(this.translate.instant('auth.passwordCurrent'));
+    if (problem) return this.message.set(this.translate.instant(problem));
     if (this.pw.next !== this.pw.confirm) return this.message.set('New passwords do not match.');
 
     this.busy.set(true);

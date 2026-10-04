@@ -12,7 +12,7 @@ import { FavoriteRecord, ReviewRecord } from '../../core/models';
   template: `
     <header class="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-pink-500/10 p-6">
       <h1 class="text-2xl font-bold text-[#212121]">
-        Welcome back, {{ auth.user()?.name || 'there' }}
+        {{ 'user.welcomeBack' | translate: { name: auth.user()?.name || '' } }}
       </h1>
       <p class="text-sm text-gray-600">{{ 'user.trackReviews' | translate }}</p>
     </header>

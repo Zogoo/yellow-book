@@ -1,4 +1,4 @@
-import { formatPhone, formatTugrik, transliterate } from './mongolia';
+import { formatPhone, formatTugrik, placeLabel, transliterate } from './mongolia';
 import { normalizeName, slugify } from './status-class';
 
 describe('Mongolian text helpers', () => {
@@ -24,5 +24,19 @@ describe('Mongolian text helpers', () => {
 
   it('prices in tugrik, not dollars', () => {
     expect(formatTugrik(45000)).toBe('45,000₮');
+  });
+});
+
+describe('placeLabel', () => {
+  it('joins city and district', () => {
+    expect(placeLabel({ location: 'Улаанбаатар', district: 'Сүхбаатар' })).toBe(
+      'Улаанбаатар, Сүхбаатар',
+    );
+  });
+
+  it('falls back to whichever part is present', () => {
+    expect(placeLabel({ location: 'Дархан', district: null })).toBe('Дархан');
+    expect(placeLabel({ location: '', district: 'Хан-Уул' })).toBe('Хан-Уул');
+    expect(placeLabel({})).toBe('');
   });
 });

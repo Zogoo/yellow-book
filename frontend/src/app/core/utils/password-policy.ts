@@ -1,16 +1,15 @@
 /**
  * One password policy, stated and enforced identically everywhere.
- * It mirrors `Api::Params.parse_password` on the server.
+ * It mirrors `Api::Params.parse_password` on the server. Messages are i18n keys.
  */
-export const PASSWORD_RULE_TEXT =
-  'At least 12 characters, with an upper case letter, a lower case letter, a number and a symbol.';
+export const PASSWORD_RULE_TEXT = 'auth.passwordRule';
 
 export function passwordProblem(password: string): string | null {
-  if (!password) return 'Enter a password.';
-  if (password.length < 12) return 'Use at least 12 characters.';
-  if (!/[a-z]/.test(password)) return 'Add a lower case letter.';
-  if (!/[A-Z]/.test(password)) return 'Add an upper case letter.';
-  if (!/\d/.test(password)) return 'Add a number.';
-  if (!/[^A-Za-z0-9]/.test(password)) return 'Add a symbol.';
+  if (!password) return 'auth.passwordEnter';
+  if (password.length < 12) return 'auth.passwordLength';
+  if (!/[a-z]/.test(password)) return 'auth.passwordLower';
+  if (!/[A-Z]/.test(password)) return 'auth.passwordUpper';
+  if (!/\d/.test(password)) return 'auth.passwordNumber';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'auth.passwordSymbol';
   return null;
 }

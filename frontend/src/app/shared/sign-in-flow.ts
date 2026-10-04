@@ -128,7 +128,7 @@ type Step = 'email' | 'code' | 'password' | 'create' | 'create-code';
               [(ngModel)]="password"
               required
             />
-            <p class="mt-1 text-xs text-gray-500">{{ ruleText }}</p>
+            <p class="mt-1 text-xs text-gray-500">{{ ruleText | translate }}</p>
           </div>
         }
         @case ('create-code') {
@@ -366,7 +366,7 @@ export class SignInFlow {
     }
     const problem = passwordProblem(this.password);
     if (problem) {
-      this.error.set(problem);
+      this.error.set(this.translate.instant(problem));
       return;
     }
     this.busy.set(true);

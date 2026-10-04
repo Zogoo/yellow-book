@@ -1,5 +1,7 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -17,6 +19,7 @@ import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
 import { LoginModalService } from '../../core/services/login-modal.service';
 import { formatPhone } from '../../core/utils/mongolia';
+import { FavoritesService } from '../../core/services/favorites.service';
 
 interface AgencyView {
   id: number | null;
@@ -45,10 +48,13 @@ interface AgencyView {
   profileImage: string;
 }
 
-/** `/agency?slug=&id=&title=&reviewId=` — public company profile with reviews. */
+/**
+ * `/companies/:id/:slug` (and the legacy `/agency?slug=&id=&title=&reviewId=`) — public
+ * company profile with reviews.
+ */
 @Component({
   selector: 'app-agency-page',
-  imports: [FormsModule, Footer, RatingStars, StarRatingBox, Avatar, TranslatePipe],
+  imports: [FormsModule, RouterLink, Footer, RatingStars, StarRatingBox, Avatar, TranslatePipe],
   template: `
     <div class="container mx-auto px-4 py-6">
       <div class="mb-4 flex items-center gap-4 text-sm">
@@ -57,23 +63,39 @@ interface AgencyView {
         </button>
         <nav [attr.aria-label]="'common.breadcrumb' | translate" class="text-gray-500">
           {{ 'agency.breadcrumb' | translate }} <span class="mx-1">›</span>
-          <span class="text-sky-500">{{ agency().name || 'Unknown' }}</span>
+          <span class="text-sky-500">{{
+            notFound() ? ('common.pageNotFound' | translate) : agency().name || ('common.loading' | translate)
+          }}</span>
         </nav>
       </div>
 
+      @if (notFound()) {
+        <section class="yb-card mx-auto my-16 max-w-xl p-10 text-center">
+          <h1 class="text-2xl font-bold text-[#212121]">{{ 'agency.notFoundTitle' | translate }}</h1>
+          <p class="mt-2 text-gray-600">{{ 'agency.notFoundLead' | translate }}</p>
+          <a routerLink="/category" class="yb-btn yb-btn-gold mt-6 inline-flex">
+            {{ 'agency.browseCategories' | translate }}
+          </a>
+        </section>
+      } @else {
+
       <section class="relative mb-16">
         @if (agency().heroImage) {
-          <img
-            [src]="agency().heroImage"
-            [alt]="agency().name"
-            class="h-64 w-full rounded-3xl object-cover md:h-[50vh]"
-          />
+          <!-- Logos and photos share this field: contain, never crop. -->
+          <div
+            class="flex h-56 w-full items-center justify-center rounded-3xl border border-gray-100 bg-white md:h-72"
+          >
+            <img
+              [src]="agency().heroImage"
+              [alt]="agency().name"
+              class="max-h-full max-w-full object-contain p-8"
+            />
+          </div>
         } @else {
           <div
-            class="flex h-48 w-full items-center justify-center rounded-3xl bg-gradient-to-br from-[#fff3c4] to-[#feecb2] md:h-64"
-          >
-            <span class="text-sm text-[#a67c00]">{{ 'common.noPhoto' | translate }}</span>
-          </div>
+            class="h-28 w-full rounded-3xl bg-gradient-to-br from-[#fff3c4] to-[#feecb2] md:h-36"
+            aria-hidden="true"
+          ></div>
         }
         <div
           class="absolute -bottom-10 left-1/2 -translate-x-1/2 rounded-2xl border-4 border-white bg-white shadow-lg"
@@ -82,7 +104,7 @@ interface AgencyView {
             <img
               [src]="agency().logoImage"
               [alt]="agency().name"
-              class="h-20 w-20 rounded-xl object-cover"
+              class="h-20 w-20 rounded-xl bg-white object-contain p-1"
             />
           } @else {
             <app-avatar [name]="agency().name" [size]="80" />
@@ -91,7 +113,7 @@ interface AgencyView {
       </section>
       <section class="mb-8 text-center">
         <h1 class="text-3xl font-bold text-[#212121]">
-          {{ agency().name || 'Loading agency...' }}
+          {{ agency().name || ('common.loading' | translate) }}
         </h1>
         @if (agency().tagline) {
           <p class="mt-1 text-gray-500">{{ agency().tagline }}</p>
@@ -106,7 +128,7 @@ interface AgencyView {
           />
           <span class="font-bold">{{ overallRating().toFixed(1) }}</span>
           <span class="text-sm text-gray-500">
-            {{ reviewCountLabel() | translate: { count: reviews().length } }}
+            {{ reviewCountLabel() | translate: { count: publishedReviews().length } }}
           </span>
         </div>
         <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -124,6 +146,26 @@ interface AgencyView {
             >
               {{ 'common.facebook' | translate }} ↗
             </a>
+          }
+          @if (agency().website) {
+            <a
+              [href]="websiteHref()"
+              target="_blank"
+              rel="noopener nofollow"
+              class="yb-btn yb-btn-outline"
+              >{{ 'agency.visitWebsite' | translate }} ↗</a
+            >
+          }
+          @if (agency().id) {
+            <button
+              type="button"
+              class="yb-btn yb-btn-outline"
+              [attr.aria-pressed]="isFavourite()"
+              (click)="toggleFavourite()"
+            >
+              {{ isFavourite() ? '❤' : '♡' }}
+              {{ (isFavourite() ? 'common.removeFavourite' : 'common.saveFavourite') | translate }}
+            </button>
           }
         </div>
       </section>
@@ -208,7 +250,7 @@ interface AgencyView {
                           [checked]="scoreFilter().has(star)"
                           (change)="toggleScore(star)"
                         />
-                        {{ star }} Star</label
+                        {{ 'category.chipStar' | translate: { count: star } }}</label
                       >
                     }
                     <p class="mt-3 mb-1 text-xs text-gray-500">
@@ -228,15 +270,6 @@ interface AgencyView {
                   </div>
                 }
               </div>
-              @if (agency().website) {
-                <a
-                  [href]="websiteHref()"
-                  target="_blank"
-                  rel="noopener nofollow"
-                  class="yb-btn yb-btn-gold"
-                  >{{ 'agency.visitWebsite' | translate }} ↗</a
-                >
-              }
             </div>
           </div>
 
@@ -259,7 +292,16 @@ interface AgencyView {
                   <app-avatar [name]="review.reviewerName" [size]="48" />
                   <div class="flex-1">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                      <h3 class="font-semibold text-[#212121]">{{ review.reviewerName }}</h3>
+                      <h3 class="flex items-center gap-2 font-semibold text-[#212121]">
+                        {{ review.reviewerName }}
+                        @if (review.status && review.status !== 'approved') {
+                          <span
+                            class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
+                          >
+                            {{ 'agency.pendingReview' | translate }}
+                          </span>
+                        }
+                      </h3>
                       <app-star-rating-box
                         [rating]="review.rating"
                         [readonly]="true"
@@ -278,7 +320,7 @@ interface AgencyView {
                     type="button"
                     class="flex items-center gap-1"
                     [class.text-gray-400]="!canLikeDislike()"
-                    [attr.title]="canLikeDislike() ? null : 'Sign in to react to reviews'"
+                    [attr.title]="canLikeDislike() ? null : ('review.signInToReact' | translate)"
                     (click)="react(review, 'like')"
                     [attr.aria-label]="'agency.likeReview' | translate"
                   >
@@ -288,7 +330,7 @@ interface AgencyView {
                     type="button"
                     class="flex items-center gap-1"
                     [class.text-gray-400]="!canLikeDislike()"
-                    [attr.title]="canLikeDislike() ? null : 'Sign in to react to reviews'"
+                    [attr.title]="canLikeDislike() ? null : ('review.signInToReact' | translate)"
                     (click)="react(review, 'dislike')"
                     [attr.aria-label]="'agency.dislikeReview' | translate"
                   >
@@ -358,7 +400,7 @@ interface AgencyView {
             <app-rating-stars [rating]="5" size="md" [showValue]="false" />
           </div>
           <p class="text-xs text-gray-500">
-            {{ reviewCountLabel() | translate: { count: reviews().length } }}
+            {{ reviewCountLabel() | translate: { count: publishedReviews().length } }}
           </p>
           <div class="mt-4 space-y-2">
             @for (row of breakdown(); track row.star) {
@@ -373,6 +415,7 @@ interface AgencyView {
           </div>
         </aside>
       </section>
+      }
     </div>
 
     @if (modalOpen()) {
@@ -443,15 +486,23 @@ export class AgencyPage implements OnInit {
   readonly formatPhone = formatPhone;
   /** Mongolian has no plural form; English needs one. */
   readonly reviewCountLabel = computed(() =>
-    this.reviews().length === 1 ? 'common.reviewsCountOne' : 'common.reviewsCount',
+    this.publishedReviews().length === 1 ? 'common.reviewsCountOne' : 'common.reviewsCount',
+  );
+  /** Authors also see their own pending review; it must not count until a moderator approves it. */
+  readonly publishedReviews = computed(() =>
+    this.reviews().filter((r) => !r.status || r.status === 'approved'),
   );
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly title = inject(Title);
+  private readonly favorites = inject(FavoritesService);
 
   readonly listing = signal<DirectoryListing | null>(null);
   readonly company = signal<CompanyRecord | null>(null);
   readonly reviews = signal<ReviewRecord[]>([]);
   readonly reviewsLoading = signal(true);
+  /** Set once lookup finished and neither the directory nor the API knows this company. */
+  readonly notFound = signal(false);
   readonly highlightReviewId = signal<string>('');
   readonly filterOpen = signal(false);
   readonly scoreFilter = signal(new Set<number>());
@@ -484,7 +535,7 @@ export class AgencyPage implements OnInit {
     return this.auth.isAuthenticated() && (role === 'user' || role === 'company');
   });
   readonly overallRating = computed(() => {
-    const list = this.reviews();
+    const list = this.publishedReviews();
     if (!list.length) return this.listing()?.rating ?? this.company()?.rating ?? 0;
     return list.reduce((sum, r) => sum + Number(r.rating || 0), 0) / list.length;
   });
@@ -498,9 +549,11 @@ export class AgencyPage implements OnInit {
     return 'agency.noRatings';
   });
   readonly breakdown = computed(() => {
-    const total = this.reviews().length || 1;
+    const total = this.publishedReviews().length || 1;
     return [5, 4, 3, 2, 1].map((star) => {
-      const count = this.reviews().filter((r) => Math.round(Number(r.rating)) === star).length;
+      const count = this.publishedReviews().filter(
+        (r) => Math.round(Number(r.rating)) === star,
+      ).length;
       return { star, count, percent: (count / total) * 100 };
     });
   });
@@ -584,15 +637,30 @@ export class AgencyPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.queryParamMap.subscribe((params) => {
+    void this.favorites.load();
+    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([path, params]) => {
       this.highlightReviewId.set((params.get('reviewId') ?? '').trim());
       void this.resolve(
-        params.get('slug'),
-        params.get('id'),
+        path.get('slug') ?? params.get('slug'),
+        path.get('id') ?? params.get('id'),
         params.get('title'),
         params.get('reviewId'),
       );
     });
+  }
+
+  readonly isFavourite = computed(() => {
+    const id = this.agency().id;
+    return id != null && this.favorites.isFavorite({ id, slug: this.agency().slug });
+  });
+
+  toggleFavourite(): void {
+    const a = this.agency();
+    if (a.id == null) return;
+    void this.favorites.toggle(
+      { id: a.id, slug: a.slug, name: a.name, category: a.category, rating: a.rating },
+      true,
+    );
   }
 
   private async resolve(
@@ -601,6 +669,7 @@ export class AgencyPage implements OnInit {
     title: string | null,
     reviewId: string | null,
   ): Promise<void> {
+    this.notFound.set(false);
     await this.directory.ensureHydrated();
     let review: ReviewRecord | null = null;
     if (reviewId) {
@@ -633,6 +702,11 @@ export class AgencyPage implements OnInit {
         this.company.set(null);
       }
     }
+    const name = listing?.name || this.company()?.name;
+    this.notFound.set(!name);
+    this.title.setTitle(
+      `${name || this.translate.instant('common.pageNotFound')} • Yellow Book`,
+    );
     await this.loadReviews();
   }
 
@@ -691,7 +765,7 @@ export class AgencyPage implements OnInit {
         href: this.websiteHref(),
       });
     if (a.email)
-      rows.push({ icon: '✉', label: 'Email', value: a.email, href: `mailto:${a.email}` });
+      rows.push({ icon: '✉', label: 'common.email', value: a.email, href: `mailto:${a.email}` });
     if (a.district) rows.push({ icon: '📍', label: 'common.district', value: a.district });
     if (a.location) rows.push({ icon: '🏙', label: 'common.location', value: a.location });
     if (a.registrationNumber)
@@ -700,7 +774,8 @@ export class AgencyPage implements OnInit {
         label: 'agency.registrationNumber',
         value: a.registrationNumber,
       });
-    if (a.industry) rows.push({ icon: '🏭', label: 'agency.industry', value: a.industry });
+    if (a.industry && a.industry !== a.category)
+      rows.push({ icon: '🏭', label: 'agency.industry', value: a.industry });
     if (a.category) rows.push({ icon: '🏷', label: 'common.category', value: a.category });
     if (a.employees) rows.push({ icon: '👥', label: 'agency.employees', value: a.employees });
     if (a.revenue) rows.push({ icon: '💲', label: 'agency.revenue', value: a.revenue });

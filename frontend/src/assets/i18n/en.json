@@ -63,7 +63,8 @@
     "closeMenu": "Close menu",
     "mobileMenu": "Menu",
     "toggleSidebar": "Show or hide the menu",
-    "sidebar": "Panel menu"
+    "sidebar": "Panel menu",
+    "removeFilter": "Remove filter: {{label}}"
   },
   "nav": {
     "category": "Categories",
@@ -162,10 +163,14 @@
     "poor": "Poor",
     "noRatings": "No ratings yet",
     "breadcrumb": "Company",
-    "taglineIn": "{{service}} in {{location}}",
+    "taglineIn": "{{service}} · {{location}}",
     "likeReview": "Like review",
     "dislikeReview": "Dislike review",
-    "ownerOf": "Runs {{company}} and answers reviews here."
+    "ownerOf": "Runs {{company}} and answers reviews here.",
+    "notFoundTitle": "Company not found",
+    "notFoundLead": "There is no company at this address, or it has been removed.",
+    "browseCategories": "Browse categories",
+    "pendingReview": "Awaiting moderation"
   },
   "auth": {
     "signIn": "Sign in to Yellow Book",
@@ -175,7 +180,7 @@
     "lead": "One account for everything: write reviews, save companies you like, and — if you run a business — manage your page and reply to customers.",
     "benefit1": "Reviews published under your own name",
     "benefit2": "You are told when a company replies",
-    "benefit3": "No password needed — a one-time code works",
+    "benefit3": "Sign in with a password or a one-time code",
     "runningBusiness": "Running a business?",
     "listYourBusiness": "List your business",
     "emailAddress": "Email address",
@@ -235,7 +240,19 @@
     "sending": "Sending…",
     "resetLead": "At least 12 characters with upper and lower case letters, a number and a symbol.",
     "requestNewLink": "forgot password page",
-    "updatePassword": "Update password"
+    "updatePassword": "Update password",
+    "passwordRule": "At least 12 characters, with an upper case letter, a lower case letter, a number and a symbol.",
+    "passwordEnter": "Enter a password.",
+    "passwordLength": "Use at least 12 characters.",
+    "passwordLower": "Add a lower case letter.",
+    "passwordUpper": "Add an upper case letter.",
+    "passwordNumber": "Add a number.",
+    "passwordSymbol": "Add a symbol.",
+    "passwordCurrent": "Enter your current password.",
+    "toastLoggedOut": "Logged out",
+    "toastSignedIn": "Signed in as {{name}}",
+    "toastWelcome": "Welcome to Yellow Book!",
+    "toastRegistered": "Registration complete"
   },
   "business": {
     "registration": "Business registration",
@@ -404,7 +421,11 @@
     "sending": "Sending…",
     "received": "Message received",
     "receivedLead": "Thanks {{name}} — we have your message and will reply to {{email}}.",
-    "sendAnother": "Send another message"
+    "sendAnother": "Send another message",
+    "errName": "Tell us your name.",
+    "errEmail": "Enter an email address we can reply to.",
+    "errMessage": "Please describe the problem in a sentence or two.",
+    "errSend": "We could not send your message."
   },
   "about": {
     "title": "About us",
@@ -428,7 +449,9 @@
       "rejected": "Rejected",
       "on_hold": "On hold",
       "banned": "Banned"
-    }
+    },
+    "signInToReact": "Sign in to react to reviews",
+    "ratingOutOf5": "Rating: {{rating}} out of 5"
   },
   "faq": {
     "lead": "Everything you need to know about using Yellow Book. Cannot find your answer? Write to us any time.",
@@ -439,19 +462,28 @@
     "q3": "How are reviews checked?",
     "a3": "Every review is read by a moderator before it is published. You can see the state of your own review at any time, and rejected reviews come with a reason.",
     "q4": "Can a business reply?",
-    "a4": "Yes. The owner can post one public reply to each review. The reply is moderated as well, so both sides are held to the same standard."
+    "a4": "Yes. The owner can post one public reply to each review. The reply is moderated as well, so both sides are held to the same standard.",
+    "heading": "Frequently asked questions"
   },
   "popular": {
     "badge": "Popular right now",
     "title": "Popular list",
-    "lead": "Businesses people in Mongolia rate highly. Compare ratings, see what they do, and call them when you are ready.",
+    "lead": "Mongolia's best-known businesses. Compare ratings, see what they do, and call them when you are ready.",
     "searchPlaceholder": "Search by company, service or city",
-    "updatedDaily": "Updated daily",
+    "updatedDaily": "Ratings come from real reviews",
     "loading": "Loading companies…",
     "noMatch": "No companies match your search yet. Try another word.",
     "showing": "Showing {{from}}–{{to}} of {{total}} companies",
     "emptyTitle": "We could not find anything",
     "emptyLead": "Try another keyword, or open a category and browse from there.",
     "pageOf": "Page {{page}} of {{pages}}"
+  },
+  "favourites": {
+    "signInReason": "Sign in to save companies to your list.",
+    "saved": "Saved to favourites",
+    "savedNamed": "{{name}} saved to favourites",
+    "removed": "Removed from favourites",
+    "removedNamed": "{{name}} removed from favourites",
+    "failed": "Unable to update favourites right now."
   }
 }

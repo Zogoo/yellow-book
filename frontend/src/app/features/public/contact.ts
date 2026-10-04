@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Title } from '@angular/platform-browser';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
@@ -83,6 +82,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class ContactPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
   readonly busy = signal(false);
   readonly sent = signal(false);
   readonly error = signal<string | null>(null);
@@ -92,17 +92,13 @@ export class ContactPage {
     message: '',
   };
 
-  constructor() {
-    inject(Title).setTitle(`${inject(TranslateService).instant('contact.title')} • Yellow Book`);
-  }
-
   async submit(): Promise<void> {
     this.error.set(null);
-    if (!this.form.name.trim()) return this.error.set('Tell us your name.');
+    if (!this.form.name.trim()) return this.error.set(this.translate.instant('contact.errName'));
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim()))
-      return this.error.set('Enter an email address we can reply to.');
+      return this.error.set(this.translate.instant('contact.errEmail'));
     if (this.form.message.trim().length < 10)
-      return this.error.set('Please describe the problem in a sentence or two.');
+      return this.error.set(this.translate.instant('contact.errMessage'));
 
     this.busy.set(true);
     try {
@@ -117,7 +113,7 @@ export class ContactPage {
       );
       this.sent.set(true);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'We could not send your message.');
+      this.error.set(e instanceof Error ? e.message : this.translate.instant('contact.errSend'));
     } finally {
       this.busy.set(false);
     }

@@ -53,12 +53,22 @@ Chart.register(...registerables);
     <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
       <section class="yb-card p-5">
         <h2 class="mb-3 text-lg font-semibold">{{ 'company.reviewTrend' | translate }}</h2>
-        <canvas #chart height="120" [attr.aria-label]="'company.monthlyTrend' | translate"></canvas>
+        @if (hasTrend()) {
+          <canvas
+            #chart
+            height="120"
+            [attr.aria-label]="'company.monthlyTrend' | translate"
+          ></canvas>
+        } @else {
+          <p class="py-10 text-center text-sm text-gray-500">
+            {{ 'company.noReviewsYet' | translate }}
+          </p>
+        }
       </section>
       <section class="yb-card p-5">
-        <div class="mb-3 flex items-center justify-between">
+        <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 class="text-lg font-semibold">{{ 'company.recentReviews' | translate }}</h2>
-          <a routerLink="/company/review" class="text-sm text-[#1877f2]">{{
+          <a routerLink="/company/review" class="text-sm whitespace-nowrap text-[#1877f2]">{{
             'company.viewAll' | translate
           }}</a>
         </div>

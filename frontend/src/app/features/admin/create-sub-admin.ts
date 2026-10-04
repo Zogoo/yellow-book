@@ -138,7 +138,7 @@ const PERMISSIONS = [
               ><select class="yb-input" name="role" [(ngModel)]="form.role">
                 <option value="">Select Role</option>
                 @for (r of ['agent', 'moderator', 'support', 'viewer']; track r) {
-                  <option [value]="r">{{ r }}</option>
+                  <option [value]="r">{{ label(r) }}</option>
                 }
               </select>
             </div>
@@ -147,7 +147,7 @@ const PERMISSIONS = [
               ><select class="yb-input" name="status" [(ngModel)]="form.status">
                 <option value="">Select Status</option>
                 @for (s of ['active', 'inactive', 'suspended']; track s) {
-                  <option [value]="s">{{ s }}</option>
+                  <option [value]="s">{{ label(s) }}</option>
                 }
               </select>
             </div>

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -104,6 +104,7 @@ import { PASSWORD_RULE_TEXT, passwordProblem } from '../../core/utils/password-p
 })
 export class CompanySettingsPage implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly translate = inject(TranslateService);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
   readonly passwordRule = PASSWORD_RULE_TEXT;
@@ -141,8 +142,8 @@ export class CompanySettingsPage implements OnInit {
   async updatePassword(): Promise<void> {
     this.ok.set(false);
     const problem = passwordProblem(this.pw.next);
-    if (!this.pw.current) return this.message.set('Enter your current password.');
-    if (problem) return this.message.set(problem);
+    if (!this.pw.current) return this.message.set(this.translate.instant('auth.passwordCurrent'));
+    if (problem) return this.message.set(this.translate.instant(problem));
     if (this.pw.next !== this.pw.confirm) return this.message.set('New passwords do not match.');
 
     this.busy.set(true);

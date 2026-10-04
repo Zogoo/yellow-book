@@ -129,6 +129,9 @@ Rails.application.routes.draw do
     end
   end
 
+  get "robots.txt", to: "seo#robots"
+  get "sitemap.xml", to: "seo#sitemap"
+
   # SPA catch-all: everything except the API, health check and asset-like paths
   # is served by the built Angular app.
   get "*path", to: "spa#index", constraints: ->(req) {

@@ -279,13 +279,13 @@ interface RegistrationOptions {
                 type="password"
                 id="biz-password"
                 name="password"
-                [attr.placeholder]="ruleText"
+                [attr.placeholder]="ruleText | translate"
                 [(ngModel)]="form.password"
                 required
               />
             </div>
             <p class="text-xs text-gray-500">
-              {{ ruleText }}
+              {{ ruleText | translate }}
             </p>
           }
           @if (error()) {
@@ -294,14 +294,18 @@ interface RegistrationOptions {
             </p>
           }
           <div class="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              class="yb-btn yb-btn-outline"
-              [disabled]="step() === 1 || busy()"
-              (click)="prev()"
-            >
-              {{ 'common.previous' | translate }}
-            </button>
+            @if (step() > 1) {
+              <button
+                type="button"
+                class="yb-btn yb-btn-outline"
+                [disabled]="busy()"
+                (click)="prev()"
+              >
+                {{ 'common.previous' | translate }}
+              </button>
+            } @else {
+              <span></span>
+            }
             <button type="submit" class="yb-btn yb-btn-gold" [disabled]="busy()">
               {{
                 step() === 3

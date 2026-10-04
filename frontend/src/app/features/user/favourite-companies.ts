@@ -6,6 +6,7 @@ import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FavoriteRecord } from '../../core/models';
 import { RatingStars } from '../../shared/rating-stars';
+import { companyPath } from '../../core/utils/company-path';
 
 @Component({
   selector: 'app-favourite-companies-page',
@@ -64,7 +65,7 @@ export class FavouriteCompaniesPage implements OnInit {
   }
 
   open(fav: FavoriteRecord): void {
-    void this.router.navigate(['/agency'], { queryParams: { slug: fav.slug, id: fav.listingId } });
+    void this.router.navigate(companyPath({ id: fav.listingId, slug: fav.slug }));
   }
 
   async remove(fav: FavoriteRecord): Promise<void> {

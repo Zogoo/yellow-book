@@ -8,7 +8,8 @@ module Api
           {
             verifiedCompanies: Company.approved.where(verified: true).count,
             companies: Company.approved.count,
-            users: User.where(status: "active").count,
+            # System accounts (e.g. the directory import owner) are not members.
+            users: User.where(status: "active").where.not(signup_method: "System").count,
             reviews: Review.approved.count,
             categories: Category.count
           }

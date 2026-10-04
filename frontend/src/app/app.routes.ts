@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { accessGuard } from './core/guards/access.guard';
 
-/** Paths mirror the original Nuxt site one-to-one (including `/catagory`). */
+/** Paths mirror the original Nuxt site; legacy spellings (`/catagory`, `/agency`) still resolve. */
 export const routes: Routes = [
   {
     path: '',
@@ -19,24 +19,29 @@ export const routes: Routes = [
           },
           {
             path: 'about',
+            title: 'about.title',
             loadComponent: () => import('./features/public/about').then((m) => m.AboutPage),
           },
           {
             path: 'contact',
+            title: 'contact.title',
             loadComponent: () => import('./features/public/contact').then((m) => m.ContactPage),
           },
           {
             path: 'business/signup',
+            title: 'business.title',
             loadComponent: () => import('./features/auth/register').then((m) => m.RegisterPage),
           },
           { path: 'auth/register', redirectTo: 'business/signup' },
           {
             path: 'auth/forgot-password',
+            title: 'auth.forgotTitle',
             loadComponent: () =>
               import('./features/auth/forgot-password').then((m) => m.ForgotPasswordPage),
           },
           {
             path: 'auth/reset-password',
+            title: 'auth.resetTitle',
             loadComponent: () =>
               import('./features/auth/reset-password').then((m) => m.ResetPasswordPage),
           },
@@ -53,18 +58,29 @@ export const routes: Routes = [
         children: [
           {
             path: 'faq',
+            title: 'nav.faq',
             loadComponent: () => import('./features/public/faq').then((m) => m.FaqPage),
           },
           {
             path: 'popular-list',
+            title: 'popular.title',
             loadComponent: () =>
               import('./features/public/popular-list').then((m) => m.PopularListPage),
           },
           {
-            path: 'catagory',
+            path: 'category',
+            title: 'nav.category',
             loadComponent: () => import('./features/public/catagory').then((m) => m.CatagoryPage),
           },
         ],
+      },
+      {
+        path: 'companies/:id/:slug',
+        loadComponent: () => import('./features/public/agency').then((m) => m.AgencyPage),
+      },
+      {
+        path: 'companies/:id',
+        loadComponent: () => import('./features/public/agency').then((m) => m.AgencyPage),
       },
       {
         path: 'agency',
@@ -72,20 +88,23 @@ export const routes: Routes = [
       },
       {
         path: 'auth/login',
+        title: 'nav.logIn',
         loadComponent: () => import('./features/auth/login').then((m) => m.LoginPage),
       },
       {
         path: 'auth/signup',
+        title: 'nav.signUp',
         data: { mode: 'signup' },
         loadComponent: () => import('./features/auth/login').then((m) => m.LoginPage),
       },
       // One credential, one door: the old role-specific pages lead there now.
       { path: 'auth/company/login', redirectTo: 'auth/login' },
       { path: 'auth/staff/login', redirectTo: 'auth/login' },
-      // The category page has always been reachable at a misspelled path; keep it working.
-      { path: 'category', redirectTo: 'catagory' },
+      // The category page used to live at a misspelled path; old links keep working.
+      { path: 'catagory', redirectTo: 'category' },
       {
         path: 'user',
+        title: 'common.dashboard',
         loadComponent: () => import('./layouts/user-panel-layout').then((m) => m.UserPanelLayout),
         children: [
           {
@@ -117,6 +136,7 @@ export const routes: Routes = [
       },
       {
         path: 'company',
+        title: 'common.dashboard',
         loadComponent: () =>
           import('./layouts/company-panel-layout').then((m) => m.CompanyPanelLayout),
         children: [
@@ -166,6 +186,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
+        title: 'common.dashboard',
         loadComponent: () => import('./layouts/admin-panel-layout').then((m) => m.AdminPanelLayout),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -214,6 +235,7 @@ export const routes: Routes = [
       },
       {
         path: 'agent',
+        title: 'common.dashboard',
         loadComponent: () => import('./layouts/agent-panel-layout').then((m) => m.AgentPanelLayout),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'dashboard' },

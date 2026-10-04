@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService, emptyMeta } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 import { AdminRecord, ApiMeta } from '../../core/models';
 import { formatDate, getRoleClass, titleCase, toApiStatus } from '../../core/utils/status-class';
 import { DetailItem, DetailModal } from '../../shared/detail-modal';
@@ -115,11 +116,16 @@ import { StatusDropdown } from '../../shared/status-dropdown';
                   >
                 </td>
                 <td class="px-3 py-3">
-                  <app-status-dropdown
-                    [value]="title(a.status)"
-                    [options]="statuses"
-                    (changed)="setStatus(a, $event)"
-                  />
+                  @if (isMe(a)) {
+                    <!-- The API refuses self-deactivation; don't offer it. -->
+                    <span class="text-xs text-gray-500">{{ title(a.status) }} (you)</span>
+                  } @else {
+                    <app-status-dropdown
+                      [value]="title(a.status)"
+                      [options]="statuses"
+                      (changed)="setStatus(a, $event)"
+                    />
+                  }
                 </td>
                 <td class="px-3 py-3 text-gray-500">{{ date(a.createdOn || a.createdAt) }}</td>
                 <td class="px-3 py-3 text-gray-500">{{ date(a.lastLogin) }}</td>
@@ -143,15 +149,17 @@ import { StatusDropdown } from '../../shared/status-dropdown';
                     >
                       ✎
                     </button>
-                    <button
-                      type="button"
-                      class="text-red-600"
-                      [attr.data-testid]="'admin-delete-admin-' + a.id"
-                      [attr.aria-label]="'Delete ' + a.name"
-                      (click)="remove(a)"
-                    >
-                      🗑
-                    </button>
+                    @if (!isMe(a) && a.role !== 'Super Admin') {
+                      <button
+                        type="button"
+                        class="text-red-600"
+                        [attr.data-testid]="'admin-delete-admin-' + a.id"
+                        [attr.aria-label]="'Delete ' + a.name"
+                        (click)="remove(a)"
+                      >
+                        🗑
+                      </button>
+                    }
                   </div>
                 </td>
               </tr>
@@ -275,6 +283,11 @@ import { StatusDropdown } from '../../shared/status-dropdown';
 export class AdminManagementPage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
+
+  isMe(admin: AdminRecord): boolean {
+    return String(admin.id) === String(this.auth.user()?.id);
+  }
   readonly rows = signal<AdminRecord[]>([]);
   readonly all = signal<AdminRecord[]>([]);
   readonly meta = signal<ApiMeta>(emptyMeta({ limit: 10 }));

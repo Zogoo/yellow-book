@@ -7,7 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   template: `
     <section class="space-y-3">
       @if (heading()) {
-        <h2 class="mb-4 text-2xl font-bold text-[#212121]">{{ heading() }}</h2>
+        <h2 class="mb-4 text-2xl font-bold text-[#212121]">{{ heading() | translate }}</h2>
       }
       @for (item of items; track item.q; let i = $index) {
         <div class="rounded-2xl bg-[#feecb2]">
@@ -33,7 +33,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   `,
 })
 export class FrequentFaq {
-  readonly heading = input('Frequently Asked Questions');
+  readonly heading = input('faq.heading');
   readonly open = signal<number | null>(0);
   // Four questions, in whichever language the reader picked.
   readonly items = [

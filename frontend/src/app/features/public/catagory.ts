@@ -18,8 +18,27 @@ import { getFilterChipClass } from '../../core/utils/status-class';
 import { Pagination } from '../../shared/pagination';
 import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
-import { formatPhone, formatTugrik } from '../../core/utils/mongolia';
+import { formatPhone, formatTugrik, placeLabel } from '../../core/utils/mongolia';
 import { CategoryGrid } from './category-grid';
+import { companyPath } from '../../core/utils/company-path';
+
+interface FilterOption {
+  value: string;
+  count: number;
+}
+
+function filterOptions(
+  curated: string[],
+  values: (string | null | undefined)[],
+  selected: Set<string>,
+): FilterOption[] {
+  const counts = new Map<string, number>();
+  for (const value of values) if (value) counts.set(value, (counts.get(value) ?? 0) + 1);
+  const ordered = [...new Set([...curated, ...[...counts.keys()].sort()])];
+  return ordered
+    .map((value) => ({ value, count: counts.get(value) ?? 0 }))
+    .filter((option) => option.count > 0 || selected.has(option.value));
+}
 
 interface Chip {
   type: string;
@@ -27,9 +46,11 @@ interface Chip {
   label: string;
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
+/** The listings API caps a page at 100 rows. */
+const API_PAGE = 100;
 
-/** `/catagory`: category grid, or the filtered listing view when `?name=` is set. */
+/** `/category`: category grid, or the filtered listing view when `?name=` is set. */
 @Component({
   selector: 'app-catagory-page',
   imports: [FormsModule, CategoryGrid, Pagination, StarRatingBox, TranslatePipe, Avatar],
@@ -169,14 +190,15 @@ const PAGE_SIZE = 5;
                     }}
                   </h3>
                   <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
-                    @for (option of serviceOptions(); track option) {
+                    @for (option of serviceOptions(); track option.value) {
                       <label class="flex items-center gap-2"
                         ><input
                           type="checkbox"
-                          [checked]="services().has(option)"
-                          (change)="toggleSet('services', option)"
+                          [checked]="services().has(option.value)"
+                          (change)="toggleSet('services', option.value)"
                         />
-                        {{ option }}</label
+                        {{ option.value }}
+                        <span class="text-xs text-gray-400">({{ option.count }})</span></label
                       >
                     }
                   </div>
@@ -191,14 +213,15 @@ const PAGE_SIZE = 5;
                     }}
                   </h3>
                   <div class="max-h-64 space-y-2 overflow-y-auto text-sm">
-                    @for (option of specializationOptions(); track option) {
+                    @for (option of specializationOptions(); track option.value) {
                       <label class="flex items-center gap-2"
                         ><input
                           type="checkbox"
-                          [checked]="specializations().has(option)"
-                          (change)="toggleSet('specializations', option)"
+                          [checked]="specializations().has(option.value)"
+                          (change)="toggleSet('specializations', option.value)"
                         />
-                        {{ option }}</label
+                        {{ option.value }}
+                        <span class="text-xs text-gray-400">({{ option.count }})</span></label
                       >
                     }
                   </div>
@@ -242,7 +265,7 @@ const PAGE_SIZE = 5;
                           [checked]="ratings().has(star)"
                           (change)="toggleRating(star)"
                         />
-                        {{ star }} star</label
+                        {{ 'category.chipStar' | translate: { count: star } }}</label
                       >
                     }
                   </div>
@@ -256,7 +279,7 @@ const PAGE_SIZE = 5;
                   {{ chip.label }}
                   <button
                     type="button"
-                    [attr.aria-label]="'Remove ' + chip.label"
+                    [attr.aria-label]="'common.removeFilter' | translate: { label: chip.label }"
                     (click)="removeChip(chip)"
                   >
                     ×
@@ -294,6 +317,7 @@ const PAGE_SIZE = 5;
                     class="yb-card flex cursor-pointer flex-col gap-4 p-4 md:flex-row"
                     role="link"
                     tabindex="0"
+                    [attr.aria-label]="item.title"
                     (click)="open(item)"
                     (keydown.enter)="open(item)"
                     (keydown.space)="open(item); $event.preventDefault()"
@@ -302,7 +326,7 @@ const PAGE_SIZE = 5;
                       <img
                         [src]="item.image"
                         [alt]="item.title"
-                        class="h-40 w-full rounded-xl object-cover md:w-52"
+                        class="h-40 w-full rounded-xl border border-gray-100 bg-white object-contain p-3 md:w-52"
                       />
                     } @else {
                       <div
@@ -319,9 +343,8 @@ const PAGE_SIZE = 5;
                           class="text-xl"
                           [attr.aria-pressed]="favorites.isFavorite(item)"
                           [attr.aria-label]="
-                            favorites.isFavorite(item)
-                              ? 'Remove from favourites'
-                              : 'Save to favourites'
+                            (favorites.isFavorite(item) ? 'common.removeFavourite' : 'common.saveFavourite')
+                              | translate
                           "
                           (click)="$event.stopPropagation(); favorites.toggle(item, true)"
                         >
@@ -340,7 +363,7 @@ const PAGE_SIZE = 5;
                         <p class="text-sm text-gray-600">🌐 {{ item.website }}</p>
                       }
                       <p class="text-sm text-gray-600">
-                        📍 {{ item.district || item.location || ('common.location' | translate) }}
+                        📍 {{ placeLabel(item) || ('common.location' | translate) }}
                       </p>
                       @if (item.phone) {
                         <a
@@ -460,28 +483,21 @@ export class CatagoryPage implements OnInit {
   readonly priceValue = computed(() =>
     Number.isFinite(this.maxPrice()) ? this.maxPrice() : this.priceBounds().max,
   );
-  readonly serviceOptions = computed(() => {
-    const configured = this.category().filters.serviceTypes?.options ?? [];
-    if (configured.length) return configured;
-    return [
-      ...new Set(
-        this.listings()
-          .map((l) => l.serviceType)
-          .filter((s): s is string => Boolean(s)),
-      ),
-    ].sort();
-  });
-  readonly specializationOptions = computed(() => {
-    const configured = this.category().filters.specializations?.options ?? [];
-    if (configured.length) return configured;
-    return [
-      ...new Set(
-        this.listings()
-          .map((l) => l.specialization)
-          .filter((s): s is string => Boolean(s)),
-      ),
-    ].sort();
-  });
+  /** Curated options first, then whatever the listings really contain; empty options are hidden. */
+  readonly serviceOptions = computed(() =>
+    filterOptions(
+      this.category().filters.serviceTypes?.options ?? [],
+      this.listings().map((l) => l.serviceType),
+      this.services(),
+    ),
+  );
+  readonly specializationOptions = computed(() =>
+    filterOptions(
+      this.category().filters.specializations?.options ?? [],
+      this.listings().map((l) => l.specialization),
+      this.specializations(),
+    ),
+  );
   readonly filtered = computed(() => {
     const q = this.queryTerm().toLowerCase();
     return this.listings().filter((l) => {
@@ -550,12 +566,18 @@ export class CatagoryPage implements OnInit {
     return formatPhone(value);
   }
 
+  readonly placeLabel = placeLabel;
+
   ngOnInit(): void {
     void this.directory.ensureHydrated();
     void this.favorites.load();
     this.route.queryParamMap.subscribe((params) => {
       this.searchInput = params.get('q') ?? '';
       this.page.set(Number(params.get('page') ?? 1) || 1);
+      this.services.set(new Set(params.getAll('type')));
+      this.specializations.set(new Set(params.getAll('spec')));
+      this.ratings.set(new Set(params.getAll('rating').map(Number).filter((n) => n >= 1 && n <= 5)));
+      this.district.set(params.get('district') ?? '');
       const key = `${params.get('name') ?? ''}|${params.get('q') ?? ''}`;
       if (key !== this.lastKey) {
         this.lastKey = key;
@@ -568,12 +590,18 @@ export class CatagoryPage implements OnInit {
   async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const data = await this.api.getData<{ listings: Listing[] }>('listings', {
-        category: this.categoryName(),
-        limit: 60,
-        search: this.queryTerm(),
-      });
-      this.listings.set((data?.listings ?? []).map(enrichListing));
+      const all: Listing[] = [];
+      for (let page = 1; page <= 20; page++) {
+        const result = await this.api.list<Listing>('listings', {
+          category: this.categoryName(),
+          limit: API_PAGE,
+          page,
+          search: this.queryTerm(),
+        });
+        all.push(...result.items);
+        if (!result.meta?.hasNext) break;
+      }
+      this.listings.set(all.map(enrichListing));
     } catch {
       this.listings.set([]);
     } finally {
@@ -594,29 +622,22 @@ export class CatagoryPage implements OnInit {
   }
 
   toggleSet(kind: 'services' | 'specializations', value: string): void {
-    const target = kind === 'services' ? this.services : this.specializations;
-    target.update((set) => {
-      const next = new Set(set);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
-    this.setPage(1);
+    const current = kind === 'services' ? this.services() : this.specializations();
+    const next = new Set(current);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    this.writeFilters({ [kind === 'services' ? 'type' : 'spec']: [...next] });
   }
 
   toggleRating(star: number): void {
-    this.ratings.update((set) => {
-      const next = new Set(set);
-      if (next.has(star)) next.delete(star);
-      else next.add(star);
-      return next;
-    });
-    this.setPage(1);
+    const next = new Set(this.ratings());
+    if (next.has(star)) next.delete(star);
+    else next.add(star);
+    this.writeFilters({ rating: [...next].map(String) });
   }
 
   setDistrict(event: Event): void {
-    this.district.set((event.target as HTMLSelectElement).value);
-    this.setPage(1);
+    this.writeFilters({ district: (event.target as HTMLSelectElement).value || null });
   }
 
   setEmergency(value: boolean): void {
@@ -634,7 +655,7 @@ export class CatagoryPage implements OnInit {
     if (chip.type === 'service') this.toggleSet('services', chip.value);
     else if (chip.type === 'specialization') this.toggleSet('specializations', chip.value);
     else if (chip.type === 'rating') this.toggleRating(Number(chip.value));
-    else if (chip.type === 'district') this.district.set('');
+    else if (chip.type === 'district') this.writeFilters({ district: null });
     else if (chip.type === 'emergency') this.emergency.set(null);
     else if (chip.type === 'price') this.maxPrice.set(Number.POSITIVE_INFINITY);
     else if (chip.type === 'query')
@@ -653,9 +674,17 @@ export class CatagoryPage implements OnInit {
     this.maxPrice.set(Number.POSITIVE_INFINITY);
     this.filtersOpen.set(false);
     void this.router.navigate([], {
-      queryParams: { q: null, page: null },
+      queryParams: { q: null, page: null, type: null, spec: null, rating: null, district: null },
       queryParamsHandling: 'merge',
     });
+  }
+
+  private writeFilters(changes: Record<string, string | string[] | null>): void {
+    const queryParams: Record<string, string | string[] | null> = { page: null };
+    for (const [key, value] of Object.entries(changes)) {
+      queryParams[key] = Array.isArray(value) && value.length === 0 ? null : value;
+    }
+    void this.router.navigate([], { queryParams, queryParamsHandling: 'merge' });
   }
 
   setPage(p: number): void {
@@ -672,6 +701,6 @@ export class CatagoryPage implements OnInit {
   }
 
   open(item: DirectoryListing): void {
-    void this.router.navigate(['/agency'], { queryParams: { slug: item.slug, id: item.id } });
+    void this.router.navigate(companyPath(item));
   }
 }

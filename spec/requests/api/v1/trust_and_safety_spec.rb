@@ -185,6 +185,15 @@ RSpec.describe "Trust and safety", type: :request do
       expect(data["reviews"]).to eq(Review.approved.count)
     end
 
+    it "does not count system accounts as members" do
+      Rails.cache.clear
+      create(:user)
+      create(:user, email: "directory@yellowbook.invalid", signup_method: "System")
+      get "/api/v1/stats"
+      expect(data["users"]).to eq(User.where.not(signup_method: "System").where(status: "active").count)
+      expect(data["users"]).to be < User.count
+    end
+
     it "accepts a contact message and queues it for admins" do
       create(:admin, :super_admin)
       post "/api/v1/support/messages", params: { name: "Visitor", email: "visitor@example.com", message: "How do I edit my review?" }, as: :json

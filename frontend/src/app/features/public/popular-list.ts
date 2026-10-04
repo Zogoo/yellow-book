@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Title } from '@angular/platform-browser';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiService } from '../../core/services/api.service';
@@ -11,8 +10,10 @@ import { DirectoryListing, enrichListing } from '../../core/services/directory.s
 import { StarRatingBox } from '../../shared/star-rating-box';
 import { Avatar } from '../../shared/avatar';
 import { formatTugrik } from '../../core/utils/mongolia';
+import { companyPath } from '../../core/utils/company-path';
+import { pageWindow } from '../../core/utils/page-window';
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 12;
 
 /** Curated "Popular List" with search, favourites and pagination. */
 @Component({
@@ -79,7 +80,7 @@ const PAGE_SIZE = 6;
                   <img
                     [src]="item.image"
                     [alt]="item.title"
-                    class="h-48 w-full cursor-pointer object-cover"
+                    class="h-48 w-full cursor-pointer border-b border-gray-100 bg-white object-contain p-6"
                     (click)="open(item)"
                   />
                 } @else {
@@ -169,16 +170,21 @@ const PAGE_SIZE = 6;
             >
               {{ 'common.previous' | translate }}
             </button>
-            @for (p of pageNumbers(); track p) {
-              <button
-                type="button"
-                class="yb-btn"
-                [class.yb-btn-gold]="p === page()"
-                [class.yb-btn-outline]="p !== page()"
-                (click)="goPage(p)"
-              >
-                {{ p }}
-              </button>
+            @for (p of pageNumbers(); track $index) {
+              @if (p === null) {
+                <span class="px-1 text-gray-400" aria-hidden="true">…</span>
+              } @else {
+                <button
+                  type="button"
+                  class="yb-btn"
+                  [class.yb-btn-gold]="p === page()"
+                  [class.yb-btn-outline]="p !== page()"
+                  [attr.aria-current]="p === page() ? 'page' : null"
+                  (click)="goPage(p)"
+                >
+                  {{ p }}
+                </button>
+              }
             }
             <button
               type="button"
@@ -226,14 +232,11 @@ export class PopularListPage implements OnInit {
     this.meta().total === 0 ? 0 : (this.page() - 1) * PAGE_SIZE + 1,
   );
   readonly rangeEnd = computed(() => Math.min(this.meta().total, this.page() * PAGE_SIZE));
-  readonly pageNumbers = computed(() => {
-    const total = this.meta().totalPages;
-    const start = Math.max(1, Math.min(this.page() - 2, total - 4));
-    return Array.from({ length: Math.min(5, total) }, (_, i) => start + i);
-  });
+  readonly pageNumbers = computed(() => pageWindow(this.page(), this.meta().totalPages));
 
   constructor() {
-    inject(Title).setTitle(`${this.translate.instant('popular.title')} • Yellow Book`);
+    // Category labels come from the API in the chosen language, so refetch on a switch.
+    this.translate.onLangChange.subscribe(() => void this.load());
     effect(() => {
       const p = this.page();
       const current = this.route.snapshot.queryParamMap.get('page');
@@ -288,6 +291,6 @@ export class PopularListPage implements OnInit {
   }
 
   open(item: DirectoryListing): void {
-    void this.router.navigate(['/agency'], { queryParams: { slug: item.slug, id: item.id } });
+    void this.router.navigate(companyPath(item));
   }
 }

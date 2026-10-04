@@ -20,7 +20,7 @@ import { LanguageSwitcher } from '../shared/language-switcher';
         /></a>
         <nav class="hidden items-center gap-8 md:flex">
           <a
-            routerLink="/catagory"
+            routerLink="/category"
             class="text-sm font-medium text-[#616161] hover:text-[#212121]"
             >{{ 'nav.category' | translate }}</a
           >
@@ -77,7 +77,7 @@ import { LanguageSwitcher } from '../shared/language-switcher';
           >
             ✕
           </button>
-          <a routerLink="/catagory" (click)="open.set(false)">{{ 'nav.category' | translate }}</a>
+          <a routerLink="/category" (click)="open.set(false)">{{ 'nav.category' | translate }}</a>
           <a routerLink="/popular-list" (click)="open.set(false)">{{
             'nav.popular' | translate
           }}</a>

@@ -1,7 +1,9 @@
 import { Component, computed, input, model } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
-/** ‹ 1 2 3 › pager with the gold active page. */
+import { pageWindow } from '../core/utils/page-window';
+
+/** ‹ 1 … 4 5 6 … 20 › pager with the gold active page. */
 @Component({
   selector: 'app-pagination',
   imports: [TranslatePipe],
@@ -19,7 +21,10 @@ import { TranslatePipe } from '@ngx-translate/core';
       >
         ‹
       </button>
-      @for (p of pages(); track p) {
+      @for (p of pages(); track $index) {
+        @if (p === null) {
+          <span class="px-1 text-gray-400" aria-hidden="true">…</span>
+        } @else {
         <button
           type="button"
           class="min-w-10 rounded-lg px-3 py-2 text-sm font-medium"
@@ -33,6 +38,7 @@ import { TranslatePipe } from '@ngx-translate/core';
         >
           {{ p }}
         </button>
+        }
       }
       <button
         type="button"
@@ -49,15 +55,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class Pagination {
   readonly page = model(1);
   readonly totalPages = input(1);
-  readonly maxVisible = input(5);
-  readonly pages = computed(() => {
-    const total = Math.max(1, this.totalPages());
-    const visible = Math.min(this.maxVisible(), total);
-    let start = Math.max(1, this.page() - Math.floor(visible / 2));
-    const end = Math.min(total, start + visible - 1);
-    start = Math.max(1, end - visible + 1);
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  });
+  readonly pages = computed(() => pageWindow(this.page(), Math.max(1, this.totalPages())));
 
   go(target: number): void {
     const clamped = Math.max(1, Math.min(this.totalPages(), target));
